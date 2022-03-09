@@ -1,7 +1,7 @@
 {
     "name": "@titan-reactor-community/repmastered-recent",
     "description": "Repmastered.app - Recent Replays",
-    "version": "v1",
+    "version": "0.0.1",
     "author": "Dark Matter",
     "keywords": ["titan-reactor-plugin"],
     "config": {

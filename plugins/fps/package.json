@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-community/fps",
-    "version": "v1",
+    "version": "0.0.1",
     "description": "FPS Meter",
     "author": "Dark Matter",
     "keywords": ["titan-reactor-plugin"],
