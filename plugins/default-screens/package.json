@@ -1,7 +1,7 @@
 {
-    "name": "@darkmatter/loading-screen",
+    "name": "@titan-reactor-community/default-screens",
     "version": "v1",
-    "description": "Titan Loading Screen",
+    "description": "Default Screens",
     "author": "Dark Matter",
     "keywords": ["titan-reactor-plugin"]
 }

@@ -8,4 +8,7 @@
   },
   "author": "Alex Pineda <alexpineda@fastmail.com>",
   "license": "MIT",
+  "devDependencies": {
+    "lerna": "^4.0.0"
+  }
 }
