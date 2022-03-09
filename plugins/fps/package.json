@@ -1,5 +1,5 @@
 {
-    "name": "@titan-reactor-community/fps",
+    "name": "@titan-reactor-plugins/fps",
     "version": "0.0.3",
     "description": "FPS Meter",
     "author": "Dark Matter",
@@ -11,5 +11,5 @@
             "value": "16px"
         }
     },
-    "gitHead": "d8ad4b016cfc5aa7c0982c0429ec726fd8b55278"
+    "gitHead": "e47a73f384a275e14c56d8ada4a9bb4dc2cb53a0"
 }

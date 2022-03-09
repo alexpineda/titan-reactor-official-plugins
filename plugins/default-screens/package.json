@@ -1,10 +1,10 @@
 {
-    "name": "@titan-reactor-community/default-screens",
+    "name": "@titan-reactor-plugins/default-screens",
     "version": "0.0.3",
     "description": "Default Screens",
     "author": "Dark Matter",
     "keywords": [
         "titan-reactor-plugin"
     ],
-    "gitHead": "d8ad4b016cfc5aa7c0982c0429ec726fd8b55278"
+    "gitHead": "e47a73f384a275e14c56d8ada4a9bb4dc2cb53a0"
 }
