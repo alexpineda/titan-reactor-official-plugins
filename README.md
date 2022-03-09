@@ -1,15 +1,12 @@
 # Community Approved Plugins
 
-This repository serves as a plugin respository for Titan Reactor. It provides a place for us to approve plugins for a certain level of quality for the community.
-
-Code for the plugins does not need to live in this repository although that is an option that is available to developers.
+Your plugin is **NOT** required to be in this repository. You are free to publish your plugin to `npm` without prior approval. This repository simply aims to be a service to make publishing easier.
 
 ## Adding your plugin
 
 1) Create a **Pull Request**
-2) If including your files in this repository, make sure they live in their own unique directory and that it follows the standards found in the [CREATING PLUGINS](https://github.com/imbateam-gg/titan-reactor/blob/dev/CREATING_PLUGINS.md) documentation.
-3) If your plugin lives elsewhere, Titan Reactor supports the same repositories that NPM does, including github / gitlab repos and npm packages.
-4) In the PR make sure to include your plugin repository url to `plugins.json`
+2) Make sure your plugin lives in their own unique directory and that it follows the standards found in the [CREATING PLUGINS](https://github.com/imbateam-gg/titan-reactor/blob/dev/CREATING_PLUGINS.md) documentation.
+3) Once approved, your plugin will be published to npm under the **@titan-reactor-community** scope.
 
 ## Running these plugins
 
