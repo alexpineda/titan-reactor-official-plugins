@@ -57,7 +57,7 @@ registerComponent({ pluginId: "_plugin_id_", screen: "@home/ready" }, () => {
         Titan Reactor
       </h1>
       <p style={{ marginTop: "2rem", opacity: "0.9", textAlign: "center" }}>
-        Menu: ALT, Fullscreen: F11, Plugins: F12
+        Menu: ALT, Fullscreen: F11, Plugins: F10
       </p>
     </div>
   );
