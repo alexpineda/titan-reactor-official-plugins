@@ -1,0 +1,17 @@
+{
+    "name": "@titan-reactor-plugins/players-bar",
+    "version": "0.0.1",
+    "description": "Classic Style Players Bar",
+    "author": "Dark Matter",
+    "keywords": [
+        "titan-reactor-plugin"
+    ],
+    "config": {
+        "showWorkers": {
+            "value": true
+        },
+        "showApm": {
+            "value": true
+        }
+    }
+}

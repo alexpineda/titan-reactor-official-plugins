@@ -37,8 +37,6 @@ registerComponent({ pluginId: "_plugin_id_", screen: "@home/ready" }, () => {
     setLogoVals([1, 1]);
   }, []);
 
-  console.log("loader", logoOpacity, logoScale);
-
   return (
     <div
       style={{
@@ -49,14 +47,12 @@ registerComponent({ pluginId: "_plugin_id_", screen: "@home/ready" }, () => {
         transform: `translate(-50%, -50%) scale(${logoScale})`,
         opacity: `${logoOpacity}`,
         transition: "all ease-in 10s",
-        color: "#ffeedd",
-        fontSize: "130%",
       }}
     >
-      <h1 style={{ fontFamily: "Conthrax", fontSize: "4rem" }}>
+      <h1 style={{ fontFamily: "Conthrax", color: "var(--orange-5)" }}>
         Titan Reactor
       </h1>
-      <p style={{ marginTop: "2rem", opacity: "0.9", textAlign: "center" }}>
+      <p style={{ marginTop: "var(--size-2)", textAlign: "center", color: "var(--gray-4)"}}>
         Menu: ALT, Fullscreen: F11, Plugins: F10
       </p>
     </div>
