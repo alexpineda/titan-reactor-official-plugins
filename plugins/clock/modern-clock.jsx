@@ -25,7 +25,7 @@ export default ({ config, time, styles }) => {
       <span style={{ display: "flex" }}>
         <span
           style={{
-            color: styles.textGray400,
+            color: config.textColor2.value,
             background: styles.bgGray700,
             paddingLeft: "0.2rem",
             paddingRight: "0.2rem",

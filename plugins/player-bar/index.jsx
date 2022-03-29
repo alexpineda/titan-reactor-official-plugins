@@ -7,6 +7,25 @@ import {
   RollingResource,
 } from "titan-reactor";
 
+// const injectColorsCss = (colors) => {
+//   setStyleSheet(
+//     "player-colors-glow",
+//     colors.reduce((css: string, color) => {
+//       return `
+//     ${css}
+//     @keyframes glow-${color.playerId} {
+//       from {
+//         box-shadow: 0 0 10px -10px ${color.hex}55;
+//       }
+//       to {
+//         box-shadow: 0 0 10px 10px ${color.hex}55;
+//       }
+//     }
+//     `;
+//     }, "")
+//   );
+// };
+
 const _divStyle = {
   display: "flex",
   alignItems: "center",
@@ -19,17 +38,13 @@ const _imgStyle = {
   marginRight: "var(--size-1)",
 };
 
-const _tableStyle = {
-  background: "black",
-  borderRadius: "var(--radius-2)",
-  padding: "var(--size-2)",
-};
+
 
 registerComponent(
   { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "top-right" },
   ({ config }) => {
     const players = useStore((state) =>
-      state.world.replay ? state.world.replay.header.players : []
+      state.world?.replay?.header?.players ?? []
     );
     const playerData = useStore((state) => state.frame.playerData);
 
@@ -37,6 +52,12 @@ registerComponent(
       return null;
     }
 
+    const _tableStyle = {
+      background: config.backgroundColor.value,
+      borderRadius: "var(--radius-2)",
+      padding: "var(--size-2)",
+    };
+    
     return (
       <table style={_tableStyle}>
         <tbody>
@@ -47,7 +68,7 @@ registerComponent(
             )}`;
 
             return (
-              <tr key={player.id} style={{ color: "var(--gray-3)" }}>
+              <tr key={player.id} style={{ color: config.textColor.value }}>
                 <td style={{ color: player.color.hex }}>{player.name}</td>
                 <td>
                   <div style={_divStyle}>

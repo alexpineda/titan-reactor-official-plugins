@@ -15,10 +15,24 @@
             ]
         },
         "fontSize": {
+            "label": "Font Size",
             "value": "16px"
         },
         "textColor": {
-            "value": "rgb(203, 213, 225)"
+            "label": "Text 1",
+            "value": "rgb(255, 255, 255)"
+        },
+        "textColor2": {
+            "label": "Text 2",
+            "value": "rgb(20, 20, 20)"
+        },
+        "bgDark": {
+            "label": "Background 1",
+            "value": "#2d3748"
+        },
+        "bgLight": {
+            "label": "Background 2",
+            "value": "#4a5568"
         }
     },
     "gitHead": "e47a73f384a275e14c56d8ada4a9bb4dc2cb53a0"

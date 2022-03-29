@@ -8,10 +8,20 @@
     ],
     "config": {
         "showWorkers": {
+            "label": "Show Workers",
             "value": true
         },
         "showApm": {
+            "label": "Show APM",
             "value": true
+        },
+        "textColor": {
+            "label": "Text",
+            "value": "rgb(255, 255, 255)"
+        },
+        "backgroundColor": {
+            "label": "Background",
+            "value": "#000000"
         }
     },
     "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5"

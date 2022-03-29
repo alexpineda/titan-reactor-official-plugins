@@ -28,7 +28,7 @@ registerComponent(
     return (
       <p
         ref={fpsElRef}
-        style={{ fontSize: config.fontSize.value, color: "white" }}
+        style={{ color: "white" }}
       ></p>
     );
   }

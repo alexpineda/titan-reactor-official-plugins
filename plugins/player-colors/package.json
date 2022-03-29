@@ -1,0 +1,46 @@
+{
+    "name": "@titan-reactor-plugins/player-colors",
+    "version": "1.0.0",
+    "description": "Player Colors",
+    "author": "Dark Matter",
+    "keywords": [
+        "titan-reactor-plugin"
+    ],
+    "config": {
+        "enabled": {
+            "value": false
+        },
+        "player_1": {
+            "label": "Player 1",
+            "value": "#00cff8"
+        },
+        "player_2": {
+            "label": "Player 2",
+            "value": "#0c48cc"
+        },
+        "player_3": {
+            "label": "Player 3",
+            "value": "#2cb494"
+        },
+        "player_4": {
+            "label": "Player 4",
+            "value": "#88409c"
+        },
+        "player_5": {
+            "label": "Player 5",
+            "value": "#f88c14"
+        },
+        "player_6": {
+            "label": "Player 6",
+            "value": "#703014"
+        },
+        "player_7": {
+            "label": "Player 7",
+            "value": "#cce0d0"
+        },
+        "player_8": {
+            "label": "Player 8",
+            "value": "#fcfc38"
+        }
+    }
+}

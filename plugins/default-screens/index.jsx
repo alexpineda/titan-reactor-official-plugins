@@ -1,12 +1,13 @@
 import { registerComponent, useStore } from "titan-reactor";
 import React, { useState, useEffect } from "react";
 
-const LoadingScreen = () => {
+const LoadingScreen = ({ config, type }) => {
   const world = useStore((store) => store.world);
 
   return (
     <h1
       style={{
+        display: config[type].value ? "block" : "none",
         color: "white",
       }}
     >
@@ -22,15 +23,15 @@ const LoadingScreen = () => {
 
 registerComponent(
   { pluginId: "_plugin_id_", screen: "@replay/loading", snap: "center" },
-  LoadingScreen
+  ({config}) => <LoadingScreen config={config} type="replay" />
 );
 
 registerComponent(
   { pluginId: "_plugin_id_", screen: "@map/loading", snap: "center" },
-  LoadingScreen
+  ({config}) => <LoadingScreen config={config} type="map" />
 );
 
-registerComponent({ pluginId: "_plugin_id_", screen: "@home/ready" }, () => {
+registerComponent({ pluginId: "_plugin_id_", screen: "@home/ready" }, ({config}) => {
   const [[logoOpacity, logoScale], setLogoVals] = useState([0.1, 3]);
 
   useEffect(() => {
@@ -40,6 +41,7 @@ registerComponent({ pluginId: "_plugin_id_", screen: "@home/ready" }, () => {
   return (
     <div
       style={{
+        display: config.splash.value ? "block" : "none",
         position: "absolute",
         zIndex: "-999",
         left: "50%",
