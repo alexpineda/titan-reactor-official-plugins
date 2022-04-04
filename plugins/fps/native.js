@@ -1,5 +1,5 @@
-let config, THREE, stores, fps;
-
+let config, THREE, stores, fps, sendUIMessage;
+let _lastSend = 0;
 
 /**
  * https://github.com/vanruesc/postprocessing/blob/main/manual/js/src/utils/FPSMeter.js
@@ -38,6 +38,8 @@ return {
         config = _config;
         THREE = deps.THREE;
         stores = deps.stores;
+        sendUIMessage = deps.sendUIMessage;
+
         fps = new FPSMeter();
       },
 
@@ -47,9 +49,14 @@ return {
 
     onGameStart: function() {
         fps = new FPSMeter();
+        _lastSend = 0;
     },
 
     onRender: function(delta, elapsed) {
         fps.update(elapsed);
+        if (elapsed > _lastSend) {
+            _lastSend = elapsed + 2000;
+            sendUIMessage(fps.fps);
+        }   
     }
 }

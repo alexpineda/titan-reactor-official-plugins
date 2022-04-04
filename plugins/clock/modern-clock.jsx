@@ -1,13 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { useStore } from "titan-reactor";
 
 const _mapSelector = (store) => store.world.map;
 
-export default ({ config, time, styles }) => {
+export default ({ config, time, pct, styles }) => {
   const map = useStore(_mapSelector);
+  const [showPct, setShowPct] = useState(false);
 
   return (
-    <div style={{ width: "var(--minimap-width)" }}>
+    <div style={{ width: "var(--minimap-width)" }} onClick={() => setShowPct(!showPct)}>
       <div
         style={{
           color: config.textColor.value,
@@ -19,7 +20,7 @@ export default ({ config, time, styles }) => {
           width: "100%",
         }}
       >
-        <span style={{ display: "inline" }}>{time}</span>
+        <span style={{ display: "inline" }}>{showPct ? pct : time}</span>
       </div>
 
       <span style={{ display: "flex" }}>

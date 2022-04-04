@@ -42,7 +42,7 @@ const _imgStyle = {
 
 registerComponent(
   { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "top-right" },
-  ({ config }) => {
+  ({ config, sendMessage }) => {
     const players = useStore((state) =>
       state.world?.replay?.header?.players ?? []
     );
@@ -68,7 +68,9 @@ registerComponent(
             )}`;
 
             return (
-              <tr key={player.id} style={{ color: config.textColor.value }}>
+              <tr key={player.id} style={{ color: config.textColor.value }}
+                onClick={() => sendMessage({ action: "toggle-fog", playerId: player.id })}
+                >
                 <td style={{ color: player.color.hex }}>{player.name}</td>
                 <td>
                   <div style={_divStyle}>

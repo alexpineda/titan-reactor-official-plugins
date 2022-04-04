@@ -1,5 +1,7 @@
-import React from "react";
-export default ({ time, styles, config }) => {
+import React, { useState } from "react";
+export default ({ time, pct, styles, config }) => {
+  const [showPct, setShowPct] = useState(false);
+
   return (
     <div
       style={{
@@ -12,7 +14,7 @@ export default ({ time, styles, config }) => {
         pointerEvents: "auto",
         lineHeight: "1.2rem",
       }}
-      onClick={() => alert("hi")}
+      onClick={() => setShowPct(!showPct)}
     >
       <div
         style={{
@@ -40,7 +42,7 @@ export default ({ time, styles, config }) => {
       >
         &nbsp;
       </div>
-      <p>{time}</p>
+      <p>{showPct ? pct : time}</p>
     </div>
   );
 };
