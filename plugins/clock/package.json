@@ -19,18 +19,22 @@
             "value": "16px"
         },
         "textColor": {
+            "folder": "Color",
             "label": "Text 1",
             "value": "rgb(255, 255, 255)"
         },
         "textColor2": {
+            "folder": "Color",
             "label": "Text 2",
             "value": "rgb(213, 213, 213)"
         },
         "bgDark": {
+            "folder": "Color",
             "label": "Background 1",
             "value": "#2d3748"
         },
         "bgLight": {
+            "folder": "Color",
             "label": "Background 2",
             "value": "#4a5568"
         }

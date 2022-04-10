@@ -1,4 +1,4 @@
-let config, THREE, stores, fps, sendUIMessage;
+let THREE, stores, fps;
 let _lastSend = 0;
 
 /**
@@ -34,20 +34,14 @@ let _lastSend = 0;
   }
 
 return {
-    onInitialized(_config, deps) {
-        config = _config;
+    onInitialized(deps) {
         THREE = deps.THREE;
         stores = deps.stores;
-        sendUIMessage = deps.sendUIMessage;
 
         fps = new FPSMeter();
       },
 
-    onConfigChanged: function(_config) {
-        config = _config;
-    },
-
-    onGameStart: function() {
+    onGameReady: function() {
         fps = new FPSMeter();
         _lastSend = 0;
     },
@@ -56,7 +50,7 @@ return {
         fps.update(elapsed);
         if (elapsed > _lastSend) {
             _lastSend = elapsed + 2000;
-            sendUIMessage(fps.fps);
+            this.sendUIMessage(fps.fps);
         }   
     }
 }

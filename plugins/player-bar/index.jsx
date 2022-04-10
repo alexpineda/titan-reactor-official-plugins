@@ -69,9 +69,9 @@ registerComponent(
 
             return (
               <tr key={player.id} style={{ color: config.textColor.value }}
-                onClick={() => sendMessage({ action: "toggle-fog", playerId: player.id })}
+                onClick={() => sendMessage({ action: "player-bar-click", playerId: player.id })}
                 >
-                <td style={{ color: player.color.hex }}>{player.name}</td>
+                <td style={{ color: player.color }}>{player.name}</td>
                 <td>
                   <div style={_divStyle}>
                     <img style={_imgStyle} src={assets.gameIcons.minerals} />

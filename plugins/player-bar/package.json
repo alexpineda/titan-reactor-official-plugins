@@ -16,10 +16,12 @@
             "value": false
         },
         "textColor": {
+            "folder": "Color",
             "label": "Text",
             "value": "rgb(255, 255, 255)"
         },
         "backgroundColor": {
+            "folder": "Color",
             "label": "Background",
             "value": "#000000"
         }

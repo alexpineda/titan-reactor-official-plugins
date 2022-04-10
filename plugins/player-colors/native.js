@@ -1,15 +1,15 @@
-let config, THREE, stores, originalColors;
+let THREE, stores, originalColors;
 
-const updateColors = (enabled) => {
+const updateColors = (config, isEnabled) => {
   const replay = stores.useWorldStore.getState().replay;
 
   if (!originalColors) {
-    originalColors = replay.header.players.map(player => player.color.hex);
+    originalColors = replay.header.players.map(player => player.color);
   }
 
   if (replay) {
       replay.header.players.forEach((player, i) => {
-        player.color.hex = enabled ? config[`player_${i+1}`].value : originalColors[i];
+        player.color = (config.enabled.value && isEnabled) ? config[`player_${i+1}`].value : originalColors[i];
       });
       stores.useWorldStore.setState({replay: {...replay} })
   }
@@ -17,22 +17,20 @@ const updateColors = (enabled) => {
 }
 
 return {
-    onInitialized(_config, deps) {
-        config = _config;
+    onInitialized(deps) {
         THREE = deps.THREE;
         stores = deps.stores;
       },
 
     onGameReady: function() {
-      updateColors(config.enabled.value);
+      updateColors(this.config, this.isEnabled);
     },
 
-    onConfigChanged: function(_config) {
-        config = _config;
-        updateColors(config.enabled.value);
+    onConfigChanged: function() {
+      updateColors(this.config, this.isEnabled);
     },
 
     onDisabled: function() {
-      updateColors(false);
+      updateColors(this.config, this.isEnabled);
     }
 }

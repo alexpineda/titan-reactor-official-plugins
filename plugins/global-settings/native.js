@@ -1,34 +1,31 @@
-let config, THREE, stores;
+let THREE, stores;
 
 return {
-  onInitialized(_config, deps) {
-    config = _config;
+  onInitialized(deps) {
     stores = deps.stores;
   },
 
-  onConfigChanged: function (_config) {
+  onConfigChanged: function (newConfig, oldConfig) {
     if (
-      _config.global.value !== config.global.value ||
-      _config.music.value !== config.music.value ||
-      _config.sound.value !== config.sound.value || 
-      _config.gamma.value !== config.gamma.value
+      oldConfig.global.value !== newConfig.global.value ||
+      oldConfig.music.value !== newConfig.music.value ||
+      oldConfig.sound.value !== newConfig.sound.value || 
+      oldConfig.gamma.value !== newConfig.gamma.value
     ) {
       const state = stores.useSettingsStore.getState();
       state.save({
         audio: {
-          global: _config.global.value,
-          music: _config.music.value,
-          sound: _config.sound.value,
+          global: newConfig.global.value,
+          music: newConfig.music.value,
+          sound: newConfig.sound.value,
           
         },
         graphics: {
           ...state.graphics,
-          gamma: _config.gamma.value,
+          gamma: newConfig.gamma.value,
         }
 
       });
     }
-
-    config = _config;
   },
 };

@@ -1,0 +1,41 @@
+{
+    "name": "@titan-reactor-plugins/replay-control",
+    "version": "1.0.0",
+    "description": "Replay Control",
+    "author": "Dark Matter",
+    "keywords": [
+        "titan-reactor-plugin"
+    ],
+    "config": {
+        "pause": {
+            "label": "Pause",
+            "folder": "Hotkeys",
+            "type": "keyboard-shortcut",
+            "value": "KeyF"
+        },
+        "speedUp": {
+            "label": "Speed Up",
+            "folder": "Hotkeys",
+            "type": "keyboard-shortcut",
+            "value": "KeyU"
+        },
+        "speedDown": {
+            "label": "Speed Down",
+            "folder": "Hotkeys",
+            "type": "keyboard-shortcut",
+            "value": "KeyD"
+        },
+        "skipBackwards": {
+            "label": "Skip Backwards",
+            "folder": "Hotkeys",
+            "type": "keyboard-shortcut",
+            "value": "BracketLeft"
+        },
+        "skipForwards": {
+            "label": "Skip Forwards",
+            "folder": "Hotkeys",
+            "type": "keyboard-shortcut",
+            "value": "BracketRight"
+        }
+    }
+}
