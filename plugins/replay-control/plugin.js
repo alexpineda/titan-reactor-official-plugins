@@ -1,8 +1,6 @@
 
 return {
-
-    onGameReady() {
-        console.log("ON GAME READY")
+    _registerHotkeys() {
         this.clearHotkeys();
         this.registerHotkey(this.config.pause.value, () => {
             this.togglePause();
@@ -23,5 +21,13 @@ return {
         this.registerHotkey(this.config.skipBackwards.value, () => {
             this.skipBackward();
         });
+    },
+
+    onConfigChanged() {
+        this._registerHotkeys();
+    },
+
+    onGameReady() {
+        this._registerHotkeys();
     }
 }

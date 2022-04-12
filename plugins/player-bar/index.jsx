@@ -1,11 +1,36 @@
 import React from "react";
 import {
   registerComponent,
-  useStore,
-  getPlayerInfo,
+  usePlayers,
+  usePlayerFrame,
   assets,
   RollingResource,
 } from "titan-reactor";
+// export const createAltColors = (color: string): AltColors => {
+//   let darken = new Color(0.1, 0.1, 0.1);
+//   const test = { h: 0, s: 0, l: 0 };
+//   new Color().setStyle(color).getHSL(test);
+
+//   if (test.l > 0.6) {
+//     darken = new Color(0.2, 0.2, 0.2);
+//   }
+//   const darker = `#${new Color().setStyle(color).sub(darken).getHexString()}`;
+
+//   const hueShift = `#${new Color()
+//     .setStyle(darker)
+//     .offsetHSL(0.01, 0, 0)
+//     .getHexString()}66`;
+//   const lightShift = `#${new Color()
+//     .setStyle(darker)
+//     .offsetHSL(0, 0, 0.1)
+//     .getHexString()}`;
+
+//   return {
+//     darker,
+//     hueShift,
+//     lightShift,
+//   };
+// };
 
 // const injectColorsCss = (colors) => {
 //   setStyleSheet(
@@ -43,10 +68,8 @@ const _imgStyle = {
 registerComponent(
   { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "top-right" },
   ({ config, sendMessage }) => {
-    const players = useStore((state) =>
-      state.world?.replay?.header?.players ?? []
-    );
-    const playerData = useStore((state) => state.frame.playerData);
+    const players = usePlayers();
+    const getPlayerFrameInfo = usePlayerFrame();
 
     if (!assets.ready) {
       return null;
@@ -62,7 +85,7 @@ registerComponent(
       <table style={_tableStyle}>
         <tbody>
           {players.map((player) => {
-            const playerInfo = getPlayerInfo(player.id, playerData);
+            const playerInfo = getPlayerFrameInfo(player.id);
             const vespeneIcon = `vespene${player.race[0].toUpperCase()}${player.race.substring(
               1
             )}`;

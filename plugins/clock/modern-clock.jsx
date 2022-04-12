@@ -1,10 +1,8 @@
 import React, { useState } from "react";
-import { useStore } from "titan-reactor";
-
-const _mapSelector = (store) => store.world.map;
+import { useMap } from "titan-reactor";
 
 export default ({ config, time, pct, styles }) => {
-  const map = useStore(_mapSelector);
+  const map = useMap();
   const [showPct, setShowPct] = useState(false);
 
   return (
@@ -44,7 +42,7 @@ export default ({ config, time, pct, styles }) => {
               overflow: "hidden",
             }}
           >
-            {map.title}
+            {map?.title}
           </p>
         </span>
         <span

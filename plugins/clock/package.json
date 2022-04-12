@@ -6,6 +6,9 @@
     "keywords": [
         "titan-reactor-plugin"
     ],
+    "peerDependencies": {
+        "titan-reactor": "0.5.0"
+    },
     "config": {
         "style": {
             "value": "modern",

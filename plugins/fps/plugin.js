@@ -1,5 +1,4 @@
-let THREE, stores, fps;
-let _lastSend = 0;
+const { THREE, stores } = arguments[0];
 
 /**
  * https://github.com/vanruesc/postprocessing/blob/main/manual/js/src/utils/FPSMeter.js
@@ -33,24 +32,18 @@ let _lastSend = 0;
   
   }
 
+
 return {
-    onInitialized(deps) {
-        THREE = deps.THREE;
-        stores = deps.stores;
-
-        fps = new FPSMeter();
-      },
-
-    onGameReady: function() {
-        fps = new FPSMeter();
-        _lastSend = 0;
+    onGameReady() {
+        this._fps = new FPSMeter();
+        this._lastSend = 0;
     },
 
-    onRender: function(delta, elapsed) {
-        fps.update(elapsed);
-        if (elapsed > _lastSend) {
-            _lastSend = elapsed + 2000;
-            this.sendUIMessage(fps.fps);
+    onRender(delta, elapsed) {
+        this._fps.update(elapsed);
+        if (elapsed > this._lastSend) {
+            this._lastSend = elapsed + 2000;
+            this.sendUIMessage(this._fps.fps);
         }   
     }
 }

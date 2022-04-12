@@ -1,8 +1,9 @@
-import { registerComponent, useStore } from "titan-reactor";
+import { registerComponent, useReplay, useMap } from "titan-reactor";
 import React, { useState, useEffect } from "react";
 
 const LoadingScreen = ({ config, type }) => {
-  const world = useStore((store) => store.world);
+  const replay = useReplay();
+  const map = useMap();
 
   return (
     <h1
@@ -11,10 +12,8 @@ const LoadingScreen = ({ config, type }) => {
         color: "white",
       }}
     >
-      <p>{world && world.map && world.map.title}</p>
-      {world &&
-        world.replay &&
-        world.replay.header.players.map((player) => (
+      <p>{map?.title}</p>
+      {replay?.header?.players.map((player) => (
           <p key={player.id}>{player.name}</p>
         ))}
     </h1>

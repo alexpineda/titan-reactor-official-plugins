@@ -1,1 +1,1 @@
-The default map, replay and home screens by @darkmatter.
+Displays basic information about the map and replay being loaded.

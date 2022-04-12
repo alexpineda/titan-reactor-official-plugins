@@ -1,0 +1,55 @@
+{
+    "name": "@titan-reactor-plugins/camera-battle",
+    "version": "1.0.0",
+    "description": "Battle Camera Mode",
+    "author": "Dark Matter",
+    "keywords": [
+        "titan-reactor-plugin"
+    ],
+    "peerDependencies": {
+        "titan-reactor": "0.5.0"
+    },
+    "config": {
+        "cameraModeKey": {
+            "label": "Toggle Battle Cam",
+            "type": "keyboard-shortcut",
+            "value": "F5"
+        },
+        "elevateAmount": {
+            "folder": "Mouse Wheel",
+            "value": 2,
+            "min": 1,
+            "max": 10
+        },
+        "fogOfWarOpacity": {
+            "folder": "Visual Effects",
+            "label": "Fog of War Opacity",
+            "value": 0.5,
+            "min": 0,
+            "max": 1
+        },
+        "scanlineOpacity": {
+            "folder": "Visual Effects",
+            "label": "Scanline Opacity",
+            "value": 0.5,
+            "min": 0,
+            "max": 1
+        },
+        "shakeMultiplier": {
+            "folder": "Visual Effects",
+            "label": "Shake Multiplier",
+            "value": 0.5,
+            "min": 0,
+            "max": 1
+        },
+        "isDepthOfFieldEnabled": {
+            "folder": "Visual Effects",
+            "label": "Depth Of Field",
+            "value": true
+        },
+        "rotateSpeed": {
+            "label": "Rotate Speed",
+            "value": 1
+        }
+    }
+}

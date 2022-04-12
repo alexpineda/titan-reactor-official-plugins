@@ -6,14 +6,17 @@
     "keywords": [
         "titan-reactor-plugin"
     ],
+    "peerDependencies": {
+        "titan-reactor": "0.5.0"
+    },
     "config": {
         "showWorkers": {
             "label": "Show Workers",
-            "value": false
+            "value": true
         },
         "showApm": {
             "label": "Show APM",
-            "value": false
+            "value": true
         },
         "textColor": {
             "folder": "Color",

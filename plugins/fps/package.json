@@ -6,5 +6,8 @@
     "keywords": [
         "titan-reactor-plugin"
     ],
+    "peerDependencies": {
+        "titan-reactor": "0.5.0"
+    },
     "gitHead": "e47a73f384a275e14c56d8ada4a9bb4dc2cb53a0"
 }

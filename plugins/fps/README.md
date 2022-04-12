@@ -1,0 +1,1 @@
+Shows the frames per second on the top left corner of the screen.

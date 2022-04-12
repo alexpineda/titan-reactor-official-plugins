@@ -1,4 +1,5 @@
-let THREE, stores, originalColors;
+const { THREE, stores } = arguments[0];
+let originalColors = null;
 
 const updateColors = (config, isEnabled) => {
   const replay = stores.useWorldStore.getState().replay;
@@ -17,20 +18,15 @@ const updateColors = (config, isEnabled) => {
 }
 
 return {
-    onInitialized(deps) {
-        THREE = deps.THREE;
-        stores = deps.stores;
-      },
-
-    onGameReady: function() {
+    onGameReady() {
       updateColors(this.config, this.isEnabled);
     },
 
-    onConfigChanged: function() {
+    onConfigChanged() {
       updateColors(this.config, this.isEnabled);
     },
 
-    onDisabled: function() {
+    onDisabled() {
       updateColors(this.config, this.isEnabled);
     }
 }

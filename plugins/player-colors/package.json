@@ -6,17 +6,20 @@
     "keywords": [
         "titan-reactor-plugin"
     ],
+    "peerDependencies": {
+        "titan-reactor": "0.5.0"
+    },
     "config": {
         "enabled": {
             "value": true
         },
         "player_1": {
             "label": "Player 1",
-            "value": "#f40404"
+            "value": "#ff0000"
         },
         "player_2": {
             "label": "Player 2",
-            "value": "#0c48cc"
+            "value": "#0c92cc"
         },
         "player_3": {
             "label": "Player 3",
