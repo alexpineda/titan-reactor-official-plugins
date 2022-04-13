@@ -13,7 +13,7 @@
         "cameraModeKey": {
             "label": "Toggle Default Cam",
             "type": "keyboard-shortcut",
-            "value": "F2"
+            "value": "Escape"
         },
         "dollyAmount": {
             "folder": "Mouse Wheel",

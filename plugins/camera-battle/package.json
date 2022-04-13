@@ -13,7 +13,7 @@
         "cameraModeKey": {
             "label": "Toggle Battle Cam",
             "type": "keyboard-shortcut",
-            "value": "F5"
+            "value": "F2"
         },
         "elevateAmount": {
             "folder": "Mouse Wheel",

@@ -6,52 +6,59 @@ const intersections = [];
 const OVERVIEW_FAR = 1000;
 
 return  {
-    minimap: false,
-    pip: true,
     unitScale: 2.5,
 
-    async onEnterCameraMode(controls, camera, prevTarget) {
+    async onEnterCameraMode(prevData, camera) {
+
+        this._exitCamera = prevData;
+
         camera.far = OVERVIEW_FAR;
         camera.fov = 15;
         camera.updateProjectionMatrix();
-        controls.orbit.setLookAt(0, Math.max(mapWidth, mapHeight) * 4, 0, 0, 0, 0, false);
-        await controls.orbit.zoomTo(1, false);   
-        await controls.orbit.setTarget(controls.oldTarget.x, 0, controls.oldTarget.z, false);
+
+        this.orbit.setLookAt(0, Math.max(this.terrain.mapWidth, this.terrain.mapHeight) * 4, 0, 0, 0, 0, false);
+        await this.orbit.zoomTo(1, false);   
     },
 
-    onExitCameraMode() {
-        // define target?
+    onExitCameraMode(target, position) {
+        return this._exitCamera;
     },
 
     onShouldHideUnit(unit) {
-        return bwDat.units[unit.typeId].isAddon;
+        return unit.extras.dat.isAddon;
     },
 
-    onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, clicked) {
+    onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clicked) {
         if (clicked && clicked.z === 0) {
             rayCaster.setFromCamera(clicked, this.orbit.camera);
             intersections.length = 0;
-            rayCaster.intersectObject(terrain, false, intersections);
+            rayCaster.intersectObject(this.terrain.terrain, false, intersections);
             if (intersections.length) {
-                this.orbit.moveTo(intersections[0].point.x, 0, intersections[0].point.z, false);
-                controls.keys.onToggleCameraMode(CameraMode.Default);
+                this._exitCamera = {
+                    target: {
+                        isVector3: true,
+                        x: intersections[0].point.x, 
+                        y: 0, 
+                        z: intersections[0].point.z
+                    }
+                };
+                this.exitCameraMode();
             }
         }
 
-        if (!clicked && this._mouse.z === 2) {
-            controls.PIP.enabled = true;
-            rayCaster.setFromCamera(this._mouse, controls.orbit.camera);
+        if (!clicked && mouse.z === 2) {
+            rayCaster.setFromCamera(mouse, this.orbit.camera);
             intersections.length = 0;
-            rayCaster.intersectObject(terrain, false, intersections);
+            rayCaster.intersectObject(this.terrain.terrain, false, intersections);
             if (intersections.length) {
-                controls.PIP.camera.position.set(intersections[0].point.x, controls.PIP.camera.position.y, intersections[0].point.z);
-                controls.PIP.camera.lookAt(intersections[0].point.x, 0, intersections[0].point.z)
+                this.pipLookAt(intersections[0].point.x, intersections[0].point.z);
+
             }
         } else {
-            controls.PIP.enabled = false;
+            this.pipHide();
         }
     },
-    onUpdateAudioMixerLocation(delta, elapsed, audioMixer, camera, target) {
-        audioMixer.update(camera.position.x, camera.position.y, camera.position.z, delta);
+    onUpdateAudioMixerLocation(delta, elapsed, target, position) {
+        return target;
     }
 }

@@ -1,56 +1,68 @@
 
 const { THREE, bwDat } = arguments[0];
-
 const MAX_ACCELERATION = 2;
 const ACCELERATION = 1.01;
 const BATTLE_FAR = 128;
 
 const deltaYP = new THREE.Vector3();
 
+
 return  {
-
-    init() {
-        this._accel = 1;
-    },
-
     minimap: true,
-    pip: false,
     pointerLock: true,
     soundMode: "spatial",
-    boundByMap: true,
+    boundByMap: {
+        scaleBoundsByCamera: false,
+    },
+    cameraShake: true,
+    rotateSprites: true,
 
-    async onEnterCameraMode(controls, minimapMouse, camera, mapWidth, mapHeight) {
-        minimapMouse.enabled = false;
+    async onEnterCameraMode(prevData, camera) {
+        console.log("@battle-cam enter", this);
+        if (prevData?.target?.isVector3) {
+            await this.orbit.setTarget(prevData.target.x, 0, prevData.target.z, false);
+        } else {
+            await this.orbit.setTarget(0, 0, 0, false);
+        }
 
         camera.far = BATTLE_FAR;
         camera.fov = 85;
         camera.updateProjectionMatrix();
-        controls.orbit.boundaryFriction = 0;
-        controls.orbit.dollyToCursor = false;
+
+        this._accel = 1;
+
+        this.orbit.boundaryFriction = 0;
+        this.orbit.dollyToCursor = false;
       
+        this.orbit.maxDistance = Math.max(this.terrain.mapWidth, this.terrain.mapHeight) * 2;
+        this.orbit.minDistance = 3;
+        this.orbit.dollySpeed = 1;
+        this.orbit.maxZoom = 20;
+        this.orbit.minZoom = 0.3;
+        this.orbit.dampingFactor = 0.01;
       
-        controls.orbit.maxDistance = Math.max(mapWidth, mapHeight) * 2;
-        controls.orbit.minDistance = 3;
-        controls.orbit.dollySpeed = 1;
-        controls.orbit.maxZoom = 20;
-        controls.orbit.minZoom = 0.3;
-        controls.orbit.dampingFactor = 0.01;
+        this.orbit.maxPolarAngle = Infinity;
+        this.orbit.minPolarAngle = -Infinity
+        this.orbit.maxAzimuthAngle = Infinity;
+        this.orbit.minAzimuthAngle = -Infinity;
       
-        controls.orbit.maxPolarAngle = Infinity;
-        controls.orbit.minPolarAngle = -Infinity
-        controls.orbit.maxAzimuthAngle = Infinity;
-        controls.orbit.minAzimuthAngle = -Infinity;
-      
-        await controls.orbit.dollyTo(13, false);
-        await controls.orbit.zoomTo(1, false);
-        await controls.orbit.setTarget(controls.oldTarget.x, 0, controls.oldTarget.z, false);
+        await this.orbit.dollyTo(13, false);
+        await this.orbit.zoomTo(1, false);
+
+
     },
 
-    onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, clicked) {
+    onExitCameraMode(target, position) {
+        return {
+            target,
+            position
+        }
+    },
 
+    onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clicked) {
         // zoom in or out depending on left click or right click
         if (clicked) {
-            this.orbit.zoomTo(controls.orbit.camera.zoom * (clicked.z === 0 ? 2 : 1 / 2), false);
+            this.orbit.zoomTo(this.orbit.camera.zoom * (clicked.z === 0 ? 2 : 1 / 2), false);
         }
 
         // rotate according to mouse direction (pointer lock)
@@ -64,7 +76,6 @@ return  {
             this.orbit.getPosition(deltaYP);
 
             if (scrollY < 0) {
-                elevateAmount
                 this.orbit.setPosition(deltaYP.x, deltaYP.y - this.config.elevateAmount.value, deltaYP.z, true);
             } else {
                 this.orbit.setPosition(deltaYP.x, deltaYP.y + this.config.elevateAmount.value, deltaYP.z, true);
@@ -73,7 +84,7 @@ return  {
     },
 
     onShouldHideUnit(unit) {
-        return bwDat.units[unit.typeId].isAddon;
+        return unit.extras.dat.isAddon;
     },
 
     onCameraKeyboardUpdate(delta, elapsed, truck) {
@@ -92,7 +103,7 @@ return  {
         }
     },
 
-    onUpdateAudioMixerLocation(delta, elapsed, audioMixer, camera, target) {
-        audioMixer.updateFromCamera(camera);
+    onUpdateAudioMixerLocation(delta, elapsed, target, position) {
+        return position;
     }
 }
