@@ -16,6 +16,8 @@ return  {
     },
     cameraShake: true,
     rotateSprites: true,
+    background: "space",
+    fogOfWar: 0.25,
 
     async onEnterCameraMode(prevData, camera) {
         console.log("@battle-cam enter", this);
@@ -59,7 +61,7 @@ return  {
         }
     },
 
-    onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clicked) {
+    onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked) {
         // zoom in or out depending on left click or right click
         if (clicked) {
             this.orbit.zoomTo(this.orbit.camera.zoom * (clicked.z === 0 ? 2 : 1 / 2), false);

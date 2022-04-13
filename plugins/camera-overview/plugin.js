@@ -7,6 +7,7 @@ const OVERVIEW_FAR = 1000;
 
 return  {
     unitScale: 2.5,
+    fogOfWar: 0.7,
 
     async onEnterCameraMode(prevData, camera) {
 
@@ -28,19 +29,14 @@ return  {
         return unit.extras.dat.isAddon;
     },
 
-    onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clicked) {
+    onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked) {
         if (clicked && clicked.z === 0) {
             rayCaster.setFromCamera(clicked, this.orbit.camera);
             intersections.length = 0;
             rayCaster.intersectObject(this.terrain.terrain, false, intersections);
             if (intersections.length) {
                 this._exitCamera = {
-                    target: {
-                        isVector3: true,
-                        x: intersections[0].point.x, 
-                        y: 0, 
-                        z: intersections[0].point.z
-                    }
+                    target: new THREE.Vector3(intersections[0].point.x, 0, intersections[0].point.z)
                 };
                 this.exitCameraMode();
             }
@@ -52,12 +48,13 @@ return  {
             rayCaster.intersectObject(this.terrain.terrain, false, intersections);
             if (intersections.length) {
                 this.pipLookAt(intersections[0].point.x, intersections[0].point.z);
-
+                this.setPipDimensions(new THREE.Vector2(clientX, clientY), this.config.pipSize.value);
             }
         } else {
             this.pipHide();
         }
     },
+    
     onUpdateAudioMixerLocation(delta, elapsed, target, position) {
         return target;
     }

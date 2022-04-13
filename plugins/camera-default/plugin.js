@@ -1,34 +1,54 @@
 
-
-const MAX_ACCELERATION = 2;
-const ACCELERATION = 1.01;
 const DEFAULT_FAR = 256;
 const POLAR_MAX = (10 * Math.PI) / 64;
 const POLAR_MIN = (2 * Math.PI) / 64;
 
-console.log("@camera-default arguments", arguments);
+
+    // } else {
+    // if (units.followingUnit && units.selected.length) {
+    //   const x =
+    //     units.selected.reduce(
+    //       (sum, unit) => sum + unit.getWorldPosition().x,
+    //       0
+    //     ) / units.selected.length;
+    //   const z =
+    //     units.selected.reduce(
+    //       (sum, unit) => sum + unit.getWorldPosition().z,
+    //       0
+    //     ) / units.selected.length;
+
+    //   cameras.setTarget(x, getTerrainY(x, z), z, true);
+    // }
 
 return  {
     boundByMap: {
         scaleBoundsByCamera: true,
     },
     minimap: true,
+    background: "tiles",
+    fogOfWar: 1,
+
+    // a few shared setings we can update on init and config change
+    _updateSettings() {
+        this._edgeSpeed = this.getConfig("screenDragSpeed");
+        this._keyboardSpeed = this.getConfig("keyboardSpeed");
+        this.orbit.dampingFactor = this.getConfig("damping");
+        this.orbit.boundaryFriction = this.getConfig("edgeFriction");
+    },
 
     async onEnterCameraMode( prevData, camera ) {
+
         if (prevData?.target?.isVector3) {
             await this.orbit.setTarget(prevData.target.x, 0, prevData.target.z, false);
         } else {
             await this.orbit.setTarget(0, 0, 0, false);
         }
 
-        this._accel = 1;
-
         camera.far = DEFAULT_FAR;
         camera.zoom = 1;
         camera.fov = 15;
         camera.updateProjectionMatrix();
 
-        this.orbit.boundaryFriction = 1;
         this.orbit.dollyToCursor = true;
         this.orbit.verticalDragToForward = true;
 
@@ -40,14 +60,22 @@ return  {
         this.orbit.minPolarAngle = POLAR_MIN;
         this.orbit.maxAzimuthAngle = 0;
         this.orbit.minAzimuthAngle = 0;
-        this.orbit.dampingFactor = 0.05;
+        this._updateSettings();
 
         await this.orbit.rotatePolarTo(POLAR_MIN, false);
         await this.orbit.rotateAzimuthTo(0, false);
         await this.orbit.zoomTo(1, false);
-        await this.orbit.dollyTo(80, false);
+        await this.orbit.dollyTo(this.getConfig("defaultDistance"), false);
 
+    },
 
+    onConfigChanged(newConfig, oldConfig) {
+        this._updateSettings();
+
+        // only update default distance if it's changed otherwise we'll get a jump
+        if (newConfig.defaultDistance.value !== oldConfig.defaultDistance.value) {
+            this.orbit.dollyTo(this.getConfig("defaultDistance"), false);
+        }
     },
 
     onExitCameraMode(target, position) {
@@ -57,46 +85,46 @@ return  {
         }
     },
 
-    onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clicked) {
+    onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked) {
         if (scrollY) {
             if (scrollY < 0) {
-                this.orbit.dolly(this.config.dollyAmount.value, true);
-                this.orbit.rotate(0, (Math.PI * 1) / 96, true)
+                this.orbit.dolly(this.getConfig("dollyAmount"), true);
+                this.orbit.rotate(0, (Math.PI * this.getConfig("rotateAmount")) / 96, true)
             } else {
-                this.orbit.dolly(-this.config.dollyAmount.value, true);
-                this.orbit.rotate(0, -(Math.PI * 1) / 96, true);
+                this.orbit.dolly(-this.getConfig("dollyAmount"), true);
+                this.orbit.rotate(0, -(Math.PI * this.getConfig("rotateAmount")) / 96, true);
             }
         }
 
         if (screenDrag.x !== 0) {
             this.orbit.truck(screenDrag.
-                x * delta * this._accel, 0, true);
+                x * delta * this._edgeSpeed, 0, true);
         }
 
         if (screenDrag.y !== 0) {
-            this.orbit.forward(screenDrag.y * delta * this._accel, true);
+            this.orbit.forward(screenDrag.y * delta * this._edgeSpeed, true);
         }
 
         if (screenDrag.y === 0 && screenDrag.x === 0) {
-            this._accel = 1;
+            this._edgeSpeed = this.getConfig("screenDragSpeed");
         } else {
-            this._accel = Math.min(MAX_ACCELERATION, this._accel * ACCELERATION);
+            this._edgeSpeed = Math.min(this.getConfig("screenDragAccelMax"), this._edgeSpeed * (1 + this.getConfig("screenDragAccel")));
         }
     },
 
     onCameraKeyboardUpdate(delta, elapsed, move) {
         if (move.x !== 0) {
-            this.orbit.truck(move.x * delta * this._accel, 0, true);
+            this.orbit.truck(move.x * delta * this._keyboardSpeed, 0, true);
         }
 
         if (move.y !== 0) {
-            this.orbit.forward(move.y * delta * this._accel, true);
+            this.orbit.forward(move.y * delta * this._keyboardSpeed, true);
         }
 
         if (move.y === 0 && move.x === 0) {
-            this._accel = 1;
+            this._keyboardSpeed = this.getConfig("keyboardSpeed");
         } else {
-            this._accel = Math.min(MAX_ACCELERATION, this._accel * ACCELERATION);
+            this._keyboardSpeed = Math.min(this.getConfig("keyboardAccelMax"), this._keyboardSpeed * (1 + this.getConfig("keyboardAccel")));
         }
     },
 
