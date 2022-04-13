@@ -10,6 +10,11 @@
         "titan-reactor": "0.5.0"
     },
     "config": {
+        "system": {
+            "permissions": {
+                "settings.write": true
+            }
+        },
         "defaultCameraMode": {
             "label": "Default Camera Mode",
             "value": "@titan-reactor-plugins/camera-default"

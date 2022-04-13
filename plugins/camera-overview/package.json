@@ -11,7 +11,7 @@
     },
     "config": {
         "cameraModeKey": {
-            "label": "Toggle Overview Cam",
+            "label": "Toggle Camera",
             "type": "keyboard-shortcut",
             "value": "F7"
         },
@@ -19,7 +19,8 @@
             "label": "PIP Size",
             "value": 300,
             "min": 100,
-            "max": 500
+            "max": 400,
+            "step": 25
         }
     }
 }

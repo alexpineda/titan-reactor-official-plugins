@@ -11,7 +11,7 @@
     },
     "config": {
         "cameraModeKey": {
-            "label": "Toggle Default Cam",
+            "label": "Toggle Camera",
             "type": "keyboard-shortcut",
             "value": "Escape"
         },
@@ -34,7 +34,7 @@
             "label": "Edge Friction",
             "value": 1,
             "min": 0,
-            "max": 3,
+            "max": 5,
             "step": 0.1
         },
         "dollyAmount": {
@@ -83,7 +83,8 @@
             "folder": "Keyboard Movement",
             "value": 1,
             "min": 0,
-            "max": 4
+            "max": 4,
+            "step": 0.5
         },
         "keyboardAccel": {
             "label": "Acceleration",
@@ -101,6 +102,13 @@
             "min": 0,
             "max": 4,
             "step": 0.1
+        },
+        "pipSize": {
+            "label": "PIP Size",
+            "value": 300,
+            "min": 100,
+            "max": 400,
+            "step": 25
         }
     }
 }

@@ -11,45 +11,72 @@
     },
     "config": {
         "cameraModeKey": {
-            "label": "Toggle Battle Cam",
+            "label": "Toggle Camera",
             "type": "keyboard-shortcut",
             "value": "F2"
         },
         "elevateAmount": {
-            "folder": "Mouse Wheel",
-            "value": 2,
+            "folder": "Middle Mouse Scroll",
+            "label": "Elevation Change",
+            "value": 2.5,
             "min": 1,
-            "max": 10
-        },
-        "fogOfWarOpacity": {
-            "folder": "Visual Effects",
-            "label": "Fog of War Opacity",
-            "value": 0.5,
-            "min": 0,
-            "max": 1
-        },
-        "scanlineOpacity": {
-            "folder": "Visual Effects",
-            "label": "Scanline Opacity",
-            "value": 0.5,
-            "min": 0,
-            "max": 1
-        },
-        "shakeMultiplier": {
-            "folder": "Visual Effects",
-            "label": "Shake Multiplier",
-            "value": 0.5,
-            "min": 0,
-            "max": 1
-        },
-        "isDepthOfFieldEnabled": {
-            "folder": "Visual Effects",
-            "label": "Depth Of Field",
-            "value": true
+            "max": 5,
+            "step": 0.5
         },
         "rotateSpeed": {
+            "folder": "Mouse Look",
             "label": "Rotate Speed",
-            "value": 1
+            "value": 1,
+            "min": 0.1,
+            "max": 5,
+            "step": 0.1
+        },
+        "defaultDistance": {
+            "label": "Default Distance",
+            "value": 13,
+            "min": 10,
+            "max": 30,
+            "step": 1
+        },
+        "damping": {
+            "label": "Movement Damping",
+            "factor": 0.005,
+            "value": 2,
+            "min": 1,
+            "max": 25,
+            "step": 1
+        },
+        "edgeFriction": {
+            "label": "Edge Friction",
+            "value": 1,
+            "min": 0,
+            "max": 5,
+            "step": 0.1
+        },
+        "keyboardSpeed": {
+            "label": "Speed",
+            "folder": "Keyboard Movement",
+            "value": 1.5,
+            "min": 0,
+            "max": 4,
+            "step": 0.5
+        },
+        "keyboardAccel": {
+            "label": "Acceleration",
+            "folder": "Keyboard Movement",
+            "factor": 0.01,
+            "value": 1,
+            "min": 0,
+            "max": 10,
+            "step": 1
+        },
+        "keyboardAccelMax": {
+            "label": "Max Acceleration",
+            "folder": "Keyboard Movement",
+            "value": 2,
+            "min": 0,
+            "max": 4,
+            "step": 0.1
         }
     }
 }

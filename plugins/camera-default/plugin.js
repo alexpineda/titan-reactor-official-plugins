@@ -54,7 +54,6 @@ return  {
 
         this.orbit.maxDistance = DEFAULT_FAR;
         this.orbit.minDistance = 20;
-        this.orbit.dollySpeed = 0.2
 
         this.orbit.maxPolarAngle = POLAR_MAX;
         this.orbit.minPolarAngle = POLAR_MIN;
@@ -74,7 +73,11 @@ return  {
 
         // only update default distance if it's changed otherwise we'll get a jump
         if (newConfig.defaultDistance.value !== oldConfig.defaultDistance.value) {
-            this.orbit.dollyTo(this.getConfig("defaultDistance"), false);
+            this.orbit.dollyTo(this.getConfig("defaultDistance"), true);
+        }
+
+        if (this.config.pipSize.value !== oldConfig.pipSize.value) {
+            this.setPipDimensions(null, this.config.pipSize.value);
         }
     },
 

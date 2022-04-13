@@ -17,6 +17,7 @@ return  {
         camera.fov = 15;
         camera.updateProjectionMatrix();
 
+        //TODO: improve algorithm to actually encompass the terrain
         this.orbit.setLookAt(0, Math.max(this.terrain.mapWidth, this.terrain.mapHeight) * 4, 0, 0, 0, 0, false);
         await this.orbit.zoomTo(1, false);   
     },
@@ -54,7 +55,7 @@ return  {
             this.pipHide();
         }
     },
-    
+
     onUpdateAudioMixerLocation(delta, elapsed, target, position) {
         return target;
     }

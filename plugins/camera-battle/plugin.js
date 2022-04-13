@@ -19,8 +19,15 @@ return  {
     background: "space",
     fogOfWar: 0.25,
 
+    // a few shared setings we can update on init and config change
+    _updateSettings() {
+        this._keyboardSpeed = this.getConfig("keyboardSpeed");
+        this.orbit.dampingFactor = this.getConfig("damping");
+        this.orbit.boundaryFriction = this.getConfig("edgeFriction");
+    },
+    
+
     async onEnterCameraMode(prevData, camera) {
-        console.log("@battle-cam enter", this);
         if (prevData?.target?.isVector3) {
             await this.orbit.setTarget(prevData.target.x, 0, prevData.target.z, false);
         } else {
@@ -31,14 +38,10 @@ return  {
         camera.fov = 85;
         camera.updateProjectionMatrix();
 
-        this._accel = 1;
-
-        this.orbit.boundaryFriction = 0;
         this.orbit.dollyToCursor = false;
       
         this.orbit.maxDistance = Math.max(this.terrain.mapWidth, this.terrain.mapHeight) * 2;
         this.orbit.minDistance = 3;
-        this.orbit.dollySpeed = 1;
         this.orbit.maxZoom = 20;
         this.orbit.minZoom = 0.3;
         this.orbit.dampingFactor = 0.01;
@@ -48,10 +51,24 @@ return  {
         this.orbit.maxAzimuthAngle = Infinity;
         this.orbit.minAzimuthAngle = -Infinity;
       
-        await this.orbit.dollyTo(13, false);
+        this._updateSettings();
+        await this.orbit.dollyTo(this.getConfig("defaultDistance"), false);
         await this.orbit.zoomTo(1, false);
 
 
+    },
+
+    onConfigChanged(newConfig, oldConfig) {
+        this._updateSettings();
+
+        // only update default distance if it's changed otherwise we'll get a jump
+        if (newConfig.defaultDistance.value !== oldConfig.defaultDistance.value) {
+            this.orbit.dollyTo(this.getConfig("defaultDistance"), true);
+        }
+
+        if (this.config.pipSize.value !== oldConfig.pipSize.value) {
+            this.setPipDimensions(null, this.config.pipSize.value);
+        }
     },
 
     onExitCameraMode(target, position) {
@@ -69,7 +86,7 @@ return  {
 
         // rotate according to mouse direction (pointer lock)
         if (lookAt.x || lookAt.y) {
-            this.orbit.rotate((-lookAt.x / 1000) * this.config.rotateSpeed.value, (-lookAt.y / 1000)  * this.config.rotateSpeed.value, true);
+            this.orbit.rotate((-lookAt.x / 1000) * this.getConfig("rotateSpeed"), (-lookAt.y / 1000)  * this.getConfig("rotateSpeed"), true);
             
         }
 
@@ -78,9 +95,9 @@ return  {
             this.orbit.getPosition(deltaYP);
 
             if (scrollY < 0) {
-                this.orbit.setPosition(deltaYP.x, deltaYP.y - this.config.elevateAmount.value, deltaYP.z, true);
+                this.orbit.setPosition(deltaYP.x, deltaYP.y - this.getConfig("elevateAmount"), deltaYP.z, true);
             } else {
-                this.orbit.setPosition(deltaYP.x, deltaYP.y + this.config.elevateAmount.value, deltaYP.z, true);
+                this.orbit.setPosition(deltaYP.x, deltaYP.y + this.getConfig("elevateAmount"), deltaYP.z, true);
             }
         }
     },
@@ -89,19 +106,19 @@ return  {
         return unit.extras.dat.isAddon;
     },
 
-    onCameraKeyboardUpdate(delta, elapsed, truck) {
-        if (truck.x !== 0) {
-            this.orbit.truck(truck.x * delta * this._accel, 0, true);
+    onCameraKeyboardUpdate(delta, elapsed, move) {
+        if (move.x !== 0) {
+            this.orbit.truck(move.x * delta * this._keyboardSpeed, 0, true);
         }
 
-        if (truck.y !== 0) {
-            this.orbit.forward(truck.y * delta * this._accel, true);
+        if (move.y !== 0) {
+            this.orbit.forward(move.y * delta * this._keyboardSpeed, true);
         }
 
-        if (truck.y === 0 && truck.x === 0) {
-            this._accel = 1;
+        if (move.y === 0 && move.x === 0) {
+            this._keyboardSpeed = this.getConfig("keyboardSpeed");
         } else {
-            this._accel = Math.min(MAX_ACCELERATION, this._accel * ACCELERATION);
+            this._keyboardSpeed = Math.min(this.getConfig("keyboardAccelMax"), this._keyboardSpeed * (1 + this.getConfig("keyboardAccel")));
         }
     },
 

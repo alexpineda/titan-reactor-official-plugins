@@ -7,18 +7,14 @@ return {
       oldConfig.sound.value !== newConfig.sound.value
     ) {
 
-      this.saveAudioSettings({
+      this.saveSettings({
+        audio: {
           global: newConfig.global.value,
           music: newConfig.music.value,
           sound: newConfig.sound.value,
+        }
       });
       
-    } else if (oldConfig.gamma.value !== newConfig.gamma.value) {
-
-      this.saveGraphicsSettings({
-        gamma: newConfig.gamma.value
-      });
-
     }
   }
 };
