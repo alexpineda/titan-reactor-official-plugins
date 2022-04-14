@@ -8,7 +8,7 @@ const LoadingScreen = ({ config, type }) => {
   return (
     <h1
       style={{
-        display: config[type].value ? "block" : "none",
+        display: config[type] ? "block" : "none",
         color: "white",
       }}
     >
@@ -40,7 +40,7 @@ registerComponent({ pluginId: "_plugin_id_", screen: "@home/ready" }, ({config})
   return (
     <div
       style={{
-        display: config.splash.value ? "block" : "none",
+        display: config.splash ? "block" : "none",
         position: "absolute",
         zIndex: "-999",
         left: "50%",

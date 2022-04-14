@@ -14,15 +14,15 @@ registerComponent(
     const styles = {
       timeLabel: "white",
       bevelGray800Reverse:
-        `linear-gradient(135deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 50%, ${config.bgDark.value} 50%, #2d3748 100%)`,
+        `linear-gradient(135deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 50%, ${config.bgDark} 50%, #2d3748 100%)`,
       bevelGray800:
-        `linear-gradient(45deg, ${config.bgDark.value} 0%, ${config.bgDark.value} 50%, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0) 100%)`,
-      bgGray700: config.bgLight.value,
+        `linear-gradient(45deg, ${config.bgDark} 0%, ${config.bgDark} 50%, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0) 100%)`,
+      bgGray700: config.bgLight,
       bevelGray700:
-        `linear-gradient(45deg, ${config.bgLight.value} 0%, ${config.bgLight.value} 50%, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0) 100%)`,
+        `linear-gradient(45deg, ${config.bgLight} 0%, ${config.bgLight} 50%, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0) 100%)`,
     };
 
-    return config.style.value === "modern" ? (
+    return config.style === "modern" ? (
       <ModernClock config={config} time={frame.time} pct={pct} styles={styles} />
     ) : (
       <ClassicClock config={config} time={frame.time} pct={pct} styles={styles} />

@@ -5,9 +5,9 @@ export default ({ time, pct, styles, config }) => {
   return (
     <div
       style={{
-        color: config.textColor.value,
+        color: config.textColor,
         fontWeight: "bold",
-        fontSize: config.fontSize.value,
+        fontSize: config.fontSize,
         textAlign: "center",
         position: "relative",
         width: "var(--minimap-width)",

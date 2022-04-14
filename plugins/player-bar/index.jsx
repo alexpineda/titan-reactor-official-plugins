@@ -76,7 +76,7 @@ registerComponent(
     }
 
     const _tableStyle = {
-      background: config.backgroundColor.value,
+      background: config.transparentBackground ? "transparent" : config.backgroundColor,
       borderRadius: "var(--radius-2)",
       padding: "var(--size-2)",
     };
@@ -91,7 +91,7 @@ registerComponent(
             )}`;
 
             return (
-              <tr key={player.id} style={{ color: config.textColor.value }}
+              <tr key={player.id} style={{ color: config.textColor }}
                 onClick={() => sendMessage({ action: "player-bar-click", playerId: player.id })}
                 >
                 <td style={{ color: player.color }}>{player.name}</td>
@@ -119,7 +119,7 @@ registerComponent(
                     {playerInfo.supply}/{playerInfo.supplyMax}
                   </div>
                 </td>
-                {config.showWorkers.value && (
+                {config.showWorkers && (
                   <div style={_divStyle}>
                     <img
                       style={_imgStyle}
@@ -128,7 +128,7 @@ registerComponent(
                     {playerInfo.workerSupply}
                   </div>
                 )}
-                {config.showApm.value && (
+                {config.showApm && (
                   <td>
                     <div style={_divStyle}>
                       <img style={_imgStyle} src={assets.workerIcons.apm} />

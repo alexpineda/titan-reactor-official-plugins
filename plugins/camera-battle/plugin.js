@@ -66,9 +66,7 @@ return  {
             this.orbit.dollyTo(this.getConfig("defaultDistance"), true);
         }
 
-        if (this.config.pipSize.value !== oldConfig.pipSize.value) {
-            this.setPipDimensions(null, this.config.pipSize.value);
-        }
+
     },
 
     onExitCameraMode(target, position) {

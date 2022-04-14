@@ -9,10 +9,10 @@ export default ({ config, time, pct, styles }) => {
     <div style={{ width: "var(--minimap-width)" }} onClick={() => setShowPct(!showPct)}>
       <div
         style={{
-          color: config.textColor.value,
+          color: config.textColor,
           background: styles.bevelGray800,
           fontWeight: "bold",
-          fontSize: config.fontSize.value,
+          fontSize: config.fontSize,
           paddingLeft: "0.2rem",
           paddingBottom: "0.2rem",
           width: "100%",
@@ -24,7 +24,7 @@ export default ({ config, time, pct, styles }) => {
       <span style={{ display: "flex" }}>
         <span
           style={{
-            color: config.textColor2.value,
+            color: config.textColor2,
             background: styles.bgGray700,
             paddingLeft: "0.2rem",
             paddingRight: "0.2rem",
