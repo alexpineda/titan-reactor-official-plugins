@@ -6,7 +6,7 @@ const color = {};
 
 return {
     _updateVisibility() {
-        const visible = this.getConfig("toggleVisible");
+        const visible = this.config.toggleVisible;
 
         //as of three 137 css renderer only respects CSS2DObject visible 
         for (const unit of this._units) {
@@ -20,8 +20,8 @@ return {
         
         this._group = new THREE.Group();
         this.cssScene.add(this._group);
-        this.registerHotkey(this.getConfig("toggleVisibleHotKey"), () => {
-            this.setConfig("toggleVisible", !this.getConfig("toggleVisible"));
+        this.registerHotkey(this.config.toggleVisibleHotKey, () => {
+            this.setConfig("toggleVisible", !this.config.toggleVisible);
         });
     },
 
@@ -38,7 +38,7 @@ return {
         const image = new Image();
         image.src = this.assets.cmdIcons[unit.typeId];
 
-        if (this.getConfig("usePlayerColors")) {
+        if (this.config.usePlayerColors) {
             unit.extras.player.color.getHSL(color);
             image.style.filter = `hue-rotate(${color.h * 320}deg) brightness(4) saturate(1.25) contrast(0.75)`;
         }
@@ -47,8 +47,8 @@ return {
         obj.position.x = this.pxToGameUnit.x(unit.x);
         obj.position.y = 0;
         obj.position.z = this.pxToGameUnit.y(unit.y);
-        obj.visible = this.getConfig("toggleVisible");
-        obj.onAfterRender = () => image.style.transform += ` scale(${this.getConfig("iconScale")})`;
+        obj.visible = this.config.toggleVisible;
+        obj.onAfterRender = () => image.style.transform += ` scale(${this.config.iconScale})`;
 
         this._group.add(obj)
 
@@ -64,7 +64,7 @@ return {
         if (this._units.length && (frame - this._lastFrameCheck) * SECONDS_PER_FRAME > MIN_SECONDS) {
             this._lastFrameCheck = frame;
             this._units = this._units.filter(unit => {
-                if ((frame - unit.deathFrame) * SECONDS_PER_FRAME > this.getConfig("timeFrame")) {
+                if ((frame - unit.deathFrame) * SECONDS_PER_FRAME > this.config.timeFrame) {
                     unit.obj.removeFromParent();
                     return false;
                 }

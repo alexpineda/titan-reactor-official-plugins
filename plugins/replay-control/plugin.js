@@ -2,23 +2,23 @@
 return {
     _registerHotkeys() {
         this.clearHotkeys();
-        this.registerHotkey(this.config.pause.value, () => {
+        this.registerHotkey(this.config.pause, () => {
             this.togglePause();
         });
 
-        this.registerHotkey(this.config.speedUp.value, () => {
+        this.registerHotkey(this.config.speedUp, () => {
             this.speedUp();
         });
 
-        this.registerHotkey(this.config.speedDown.value, () => {
+        this.registerHotkey(this.config.speedDown, () => {
            this.speedDown();
         });
 
-        this.registerHotkey(this.config.skipForwards.value, () => {
+        this.registerHotkey(this.config.skipForwards, () => {
            this.skipForward();
         });
 
-        this.registerHotkey(this.config.skipBackwards.value, () => {
+        this.registerHotkey(this.config.skipBackwards, () => {
             this.skipBackward();
         });
     },

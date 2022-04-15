@@ -1,32 +1,29 @@
-const { THREE, stores } = arguments[0];
-let originalColors = null;
+const { THREE } = arguments[0];
 
-const updateColors = (config, isEnabled) => {
-  const replay = stores.useWorldStore.getState().replay;
-
-  if (!originalColors) {
-    originalColors = replay.header.players.map(player => player.color);
-  }
-
-  if (replay) {
-      replay.header.players.forEach((player, i) => {
-        player.color = (config.enabled.value && isEnabled) ? config[`player_${i+1}`].value : originalColors[i];
-      });
-      stores.useWorldStore.setState({replay: {...replay} })
-  }
-  
-}
+const colors = [];
 
 return {
+    _updateColors() {
+      for (let i = 0; i < 8; i++) {
+        colors[i] = this.config[`player_${i}`];
+      }
+
+      if (this.config.enabled && this.isEnabled) {
+        this.setPlayerColors(colors);
+      } else {
+        this.setPlayerColors(this.getOriginalColors());
+      }
+    },
+
     onGameReady() {
-      updateColors(this.config, this.isEnabled);
+      this._updateColors();
     },
 
     onConfigChanged() {
-      updateColors(this.config, this.isEnabled);
+      this._updateColors();
     },
 
     onDisabled() {
-      updateColors(this.config, this.isEnabled);
+      this._updateColors();
     }
 }

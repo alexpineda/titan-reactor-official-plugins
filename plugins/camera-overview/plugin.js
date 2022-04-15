@@ -56,7 +56,7 @@ return  {
             if (intersections.length) {
                 this.pipLookAt(intersections[0].point.x, intersections[0].point.z);
                 this._pipLocation.set(clientX, clientY);
-                this.setPipDimensions(this._pipLocation, this.config.pipSize.value);
+                this.setPipDimensions(this._pipLocation, this.config.pipSize);
                 this._exitCamera.target.set(intersections[0].point.x, 0, intersections[0].point.z);
             }
         } else {

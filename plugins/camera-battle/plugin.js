@@ -21,12 +21,12 @@ return  {
 
     // a few shared setings we can update on init and config change
     _updateSettings() {
-        this._keyboardSpeed = this.getConfig("keyboardSpeed");
-        this.orbit.dampingFactor = this.getConfig("damping");
-        this.orbit.boundaryFriction = this.getConfig("edgeFriction");
-        this._scanlineEffect.blendMode.opacity.value = this.getConfig("scanlineOpacity");
-        this._depthOfFieldEffect.getCircleOfConfusionMaterial().uniforms.focalLength.value = this.getConfig("focalLength");
-        this._depthOfFieldEffect.bokehScale = this.getConfig("bokehScale");
+        this._keyboardSpeed = this.config.keyboardSpeed;
+        this.orbit.dampingFactor = this.config.damping;
+        this.orbit.boundaryFriction = this.config.edgeFriction;
+        this._scanlineEffect.blendMode.opacity.value = this.config.scanlineOpacity;
+        this._depthOfFieldEffect.getCircleOfConfusionMaterial().uniforms.focalLength.value = this.config.focalLength;
+        this._depthOfFieldEffect.bokehScale = this.config.bokehScale;
     },
 
     async onEnterCameraMode(prevData) {
@@ -63,7 +63,7 @@ return  {
 
         this._updateSettings();
 
-        await this.orbit.dollyTo(this.getConfig("defaultDistance"), false);
+        await this.orbit.dollyTo(this.config.defaultDistance, false);
         await this.orbit.zoomTo(1, false);
 
     },
@@ -72,17 +72,14 @@ return  {
 
         const effects = [];
                     
-        if (this.getConfig("depthOfFieldEnabled")) {
+        if (this.config.depthOfFieldEnabled) {
             effects.push(this._depthOfFieldEffect);
         }
 
         effects.push(fogOfWarEffect);
 
-        if (this.getConfig("scanlinesEnabled")) {
-            effects.push(this._scanlineEffect);
-        }
 
-        if (this.getConfig("toneMappingEnabled")) {
+        if (this.config.toneMappingEnabled) {
             effects.push(new ToneMappingEffect({ mode: ToneMappingMode.OPTIMIZED_CINEON }));
         }
 
@@ -111,8 +108,8 @@ return  {
             this._updateSettings();
 
             // only update default distance if it's changed otherwise we'll get a jump
-            if (newConfig.defaultDistance.value !== oldConfig.defaultDistance.value) {
-                this.orbit.dollyTo(this.getConfig("defaultDistance"), true);
+            if (newConfig.defaultDistance !== oldConfig.defaultDistance) {
+                this.orbit.dollyTo(this.config.defaultDistance, true);
             }
         }
     },
@@ -132,7 +129,7 @@ return  {
 
         // rotate according to mouse direction (pointer lock)
         if (lookAt.x || lookAt.y) {
-            this.orbit.rotate((-lookAt.x / 1000) * this.getConfig("rotateSpeed"), (-lookAt.y / 1000)  * this.getConfig("rotateSpeed"), true);
+            this.orbit.rotate((-lookAt.x / 1000) * this.config.rotateSpeed, (-lookAt.y / 1000)  * this.config.rotateSpeed, true);
             
         }
 
@@ -141,9 +138,9 @@ return  {
             this.orbit.getPosition(deltaYP);
 
             if (scrollY < 0) {
-                this.orbit.setPosition(deltaYP.x, deltaYP.y - this.getConfig("elevateAmount"), deltaYP.z, true);
+                this.orbit.setPosition(deltaYP.x, deltaYP.y - this.config.elevateAmount, deltaYP.z, true);
             } else {
-                this.orbit.setPosition(deltaYP.x, deltaYP.y + this.getConfig("elevateAmount"), deltaYP.z, true);
+                this.orbit.setPosition(deltaYP.x, deltaYP.y + this.config.elevateAmount, deltaYP.z, true);
             }
         }
     },
@@ -162,9 +159,9 @@ return  {
         }
 
         if (move.y === 0 && move.x === 0) {
-            this._keyboardSpeed = this.getConfig("keyboardSpeed");
+            this._keyboardSpeed = this.config.keyboardSpeed;
         } else {
-            this._keyboardSpeed = Math.min(this.getConfig("keyboardAccelMax"), this._keyboardSpeed * (1 + this.getConfig("keyboardAccel")));
+            this._keyboardSpeed = Math.min(this.config.keyboardAccelMax, this._keyboardSpeed * (1 + this.config.keyboardAccel));
         }
     },
 

@@ -30,10 +30,10 @@ return  {
 
     // a few shared setings we can update on init and config change
     _updateSettings() {
-        this._edgeSpeed = this.getConfig("screenDragSpeed");
-        this._keyboardSpeed = this.getConfig("keyboardSpeed");
-        this.orbit.dampingFactor = this.getConfig("damping");
-        this.orbit.boundaryFriction = this.getConfig("edgeFriction");
+        this._edgeSpeed = this.config.screenDragSpeed;
+        this._keyboardSpeed = this.config.keyboardSpeed;
+        this.orbit.dampingFactor = this.config.damping;
+        this.orbit.boundaryFriction = this.config.edgeFriction;
     },
 
     async onEnterCameraMode( prevData, camera ) {
@@ -63,7 +63,7 @@ return  {
         await this.orbit.rotatePolarTo(POLAR_MIN, false);
         await this.orbit.rotateAzimuthTo(0, false);
         await this.orbit.zoomTo(1, false);
-        await this.orbit.dollyTo(this.getConfig("defaultDistance"), false);
+        await this.orbit.dollyTo(this.config.defaultDistance, false);
 
     },
 
@@ -73,12 +73,12 @@ return  {
             this._updateSettings();
 
             // only update default distance if it's changed otherwise we'll get a jump
-            if (newConfig.defaultDistance.value !== oldConfig.defaultDistance.value) {
-                this.orbit.dollyTo(this.getConfig("defaultDistance"), true);
+            if (newConfig.defaultDistance !== oldConfig.defaultDistance) {
+                this.orbit.dollyTo(this.config.defaultDistance, true);
             }
 
-            if (this.config.pipSize.value !== oldConfig.pipSize.value) {
-                this.setPipDimensions(null, this.config.pipSize.value);
+            if (newConfig.pipSize !== oldConfig.pipSize) {
+                this.setPipDimensions(null, this.config.pipSize);
             }
         }
     },
@@ -93,11 +93,11 @@ return  {
     onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked) {
         if (scrollY) {
             if (scrollY < 0) {
-                this.orbit.dolly(this.getConfig("dollyAmount"), true);
-                this.orbit.rotate(0, (Math.PI * this.getConfig("rotateAmount")) / 96, true)
+                this.orbit.dolly(this.config.dollyAmount, true);
+                this.orbit.rotate(0, (Math.PI * this.config.rotateAmount) / 96, true)
             } else {
-                this.orbit.dolly(-this.getConfig("dollyAmount"), true);
-                this.orbit.rotate(0, -(Math.PI * this.getConfig("rotateAmount")) / 96, true);
+                this.orbit.dolly(-this.config.dollyAmount, true);
+                this.orbit.rotate(0, -(Math.PI * this.config.rotateAmount) / 96, true);
             }
         }
 
@@ -111,9 +111,9 @@ return  {
         }
 
         if (screenDrag.y === 0 && screenDrag.x === 0) {
-            this._edgeSpeed = this.getConfig("screenDragSpeed");
+            this._edgeSpeed = this.config.screenDragSpeed;
         } else {
-            this._edgeSpeed = Math.min(this.getConfig("screenDragAccelMax"), this._edgeSpeed * (1 + this.getConfig("screenDragAccel")));
+            this._edgeSpeed = Math.min(this.config.screenDragAccelMax, this._edgeSpeed * (1 + this.config.screenDragAccel));
         }
     },
 
@@ -127,9 +127,9 @@ return  {
         }
 
         if (move.y === 0 && move.x === 0) {
-            this._keyboardSpeed = this.getConfig("keyboardSpeed");
+            this._keyboardSpeed = this.config.keyboardSpeed;
         } else {
-            this._keyboardSpeed = Math.min(this.getConfig("keyboardAccelMax"), this._keyboardSpeed * (1 + this.getConfig("keyboardAccel")));
+            this._keyboardSpeed = Math.min(this.config.keyboardAccelMax, this._keyboardSpeed * (1 + this.config.keyboardAccel));
         }
     },
 

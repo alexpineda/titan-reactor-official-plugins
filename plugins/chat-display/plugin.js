@@ -1,12 +1,17 @@
 const CHAT_COMMAND = 0x5c;
 
+const messages = [];
+
 return {
     onFrame(frame, commands) {
+
+      messages.length = 0;
       for (const command of commands) {
         if (command.id === CHAT_COMMAND) {
-          this.sendUIMessage(command);
+          messages.push(command);
         }
       }
+      this.sendUIMessage(messages);
     },
 
     onFrameReset() {

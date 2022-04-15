@@ -17,7 +17,7 @@
         },
         "toggleVisible": {
             "label": "Show Recently Dead Units",
-            "value": false
+            "value": true
         },
         "timeFrame": {
             "label": "Time Frame in Game Seconds",

@@ -11,15 +11,15 @@ registerComponent(
         const [chat, setChat] = useState([]);
         const [lastChatAdd, setLastChatAdd] = useState(Date.now());
 
-        useMessage((msg) => {
+        useMessage((messages) => {
             
             setLastChatAdd(Date.now());
 
-            if (msg === "reset") {
+            if (messages === "reset") {
                 setChat([]);
             } else {
                 setChat(chat => {
-                    let newChat = [...chat, { ...msg, key: _chatIndex++ }];
+                    let newChat = [...chat, ...messages.map(message => ({ ...message, key: _chatIndex++ }))];
                     if (newChat.length > 10) {
                         newChat = newChat.slice(1);
                     }
