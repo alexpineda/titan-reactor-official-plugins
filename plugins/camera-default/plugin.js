@@ -44,10 +44,9 @@ return  {
             await this.orbit.setTarget(0, 0, 0, false);
         }
 
-        camera.far = DEFAULT_FAR;
-        camera.zoom = 1;
-        camera.fov = 15;
-        camera.updateProjectionMatrix();
+        this.orbit.camera.far = DEFAULT_FAR;
+        this.orbit.camera.fov = 15;
+        this.orbit.camera.updateProjectionMatrix();
 
         this.orbit.dollyToCursor = true;
         this.orbit.verticalDragToForward = true;
@@ -69,15 +68,18 @@ return  {
     },
 
     onConfigChanged(newConfig, oldConfig) {
-        this._updateSettings();
+        if (this.isActiveCameraMode) {
 
-        // only update default distance if it's changed otherwise we'll get a jump
-        if (newConfig.defaultDistance.value !== oldConfig.defaultDistance.value) {
-            this.orbit.dollyTo(this.getConfig("defaultDistance"), true);
-        }
+            this._updateSettings();
 
-        if (this.config.pipSize.value !== oldConfig.pipSize.value) {
-            this.setPipDimensions(null, this.config.pipSize.value);
+            // only update default distance if it's changed otherwise we'll get a jump
+            if (newConfig.defaultDistance.value !== oldConfig.defaultDistance.value) {
+                this.orbit.dollyTo(this.getConfig("defaultDistance"), true);
+            }
+
+            if (this.config.pipSize.value !== oldConfig.pipSize.value) {
+                this.setPipDimensions(null, this.config.pipSize.value);
+            }
         }
     },
 

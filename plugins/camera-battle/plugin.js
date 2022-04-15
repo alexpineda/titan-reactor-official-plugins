@@ -1,11 +1,11 @@
 
-const { THREE, bwDat } = arguments[0];
+const { THREE, bwDat, postprocessing } = arguments[0];
 const MAX_ACCELERATION = 2;
 const ACCELERATION = 1.01;
 const BATTLE_FAR = 128;
 
 const deltaYP = new THREE.Vector3();
-
+const { DepthOfFieldEffect, ScanlineEffect, EffectPass, ToneMappingEffect, ToneMappingMode } = postprocessing;
 
 return  {
     minimap: true,
@@ -24,19 +24,21 @@ return  {
         this._keyboardSpeed = this.getConfig("keyboardSpeed");
         this.orbit.dampingFactor = this.getConfig("damping");
         this.orbit.boundaryFriction = this.getConfig("edgeFriction");
+        this._scanlineEffect.blendMode.opacity.value = this.getConfig("scanlineOpacity");
+        this._depthOfFieldEffect.getCircleOfConfusionMaterial().uniforms.focalLength.value = this.getConfig("focalLength");
+        this._depthOfFieldEffect.bokehScale = this.getConfig("bokehScale");
     },
-    
 
-    async onEnterCameraMode(prevData, camera) {
+    async onEnterCameraMode(prevData) {
         if (prevData?.target?.isVector3) {
             await this.orbit.setTarget(prevData.target.x, 0, prevData.target.z, false);
         } else {
             await this.orbit.setTarget(0, 0, 0, false);
         }
 
-        camera.far = BATTLE_FAR;
-        camera.fov = 85;
-        camera.updateProjectionMatrix();
+        this.orbit.camera.far = BATTLE_FAR;
+        this.orbit.camera.fov = 85;
+        this.orbit.camera.updateProjectionMatrix();
 
         this.orbit.dollyToCursor = false;
       
@@ -51,22 +53,68 @@ return  {
         this.orbit.maxAzimuthAngle = Infinity;
         this.orbit.minAzimuthAngle = -Infinity;
       
+        this._depthOfFieldEffect = new DepthOfFieldEffect(this.orbit.camera, {
+            focusDistance: 0.01,
+            focalLength: 0.1,
+            bokehScale: 1.0,
+            height: 480,
+          });
+        this._scanlineEffect = new ScanlineEffect({ density: 0.75 });
+
         this._updateSettings();
+
         await this.orbit.dollyTo(this.getConfig("defaultDistance"), false);
         await this.orbit.zoomTo(1, false);
 
+    },
 
+    onSetComposerPasses(clearPass, renderPass, fogOfWarEffect) {
+
+        const effects = [];
+                    
+        if (this.getConfig("depthOfFieldEnabled")) {
+            effects.push(this._depthOfFieldEffect);
+        }
+
+        effects.push(fogOfWarEffect);
+
+        if (this.getConfig("scanlinesEnabled")) {
+            effects.push(this._scanlineEffect);
+        }
+
+        if (this.getConfig("toneMappingEnabled")) {
+            effects.push(new ToneMappingEffect({ mode: ToneMappingMode.OPTIMIZED_CINEON }));
+        }
+
+        return {
+            effects,
+            passes: [
+                clearPass, 
+                renderPass,
+                new EffectPass(
+                    this.orbit.camera,
+                    ...effects
+                )
+            ]
+        };
+    },
+
+    onBeforeRender(delta, elapsed, target, position) {
+        if (this.isActiveCameraMode) {
+            this._depthOfFieldEffect.setTarget(target);
+            this._depthOfFieldEffect.getCircleOfConfusionMaterial().adoptCameraSettings(this.orbit.camera);
+        }
     },
 
     onConfigChanged(newConfig, oldConfig) {
-        this._updateSettings();
+        if (this.isActiveCameraMode) {
+            this._updateSettings();
 
-        // only update default distance if it's changed otherwise we'll get a jump
-        if (newConfig.defaultDistance.value !== oldConfig.defaultDistance.value) {
-            this.orbit.dollyTo(this.getConfig("defaultDistance"), true);
+            // only update default distance if it's changed otherwise we'll get a jump
+            if (newConfig.defaultDistance.value !== oldConfig.defaultDistance.value) {
+                this.orbit.dollyTo(this.getConfig("defaultDistance"), true);
+            }
         }
-
-
     },
 
     onExitCameraMode(target, position) {

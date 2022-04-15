@@ -41,10 +41,10 @@
         "damping": {
             "label": "Movement Damping",
             "factor": 0.005,
-            "value": 2,
+            "value": 1.5,
             "min": 1,
             "max": 25,
-            "step": 1
+            "step": 0.5
         },
         "edgeFriction": {
             "label": "Edge Friction",
@@ -56,7 +56,7 @@
         "keyboardSpeed": {
             "label": "Speed",
             "folder": "Keyboard Movement",
-            "value": 1.5,
+            "value": 2,
             "min": 0,
             "max": 4,
             "step": 0.5
@@ -77,6 +77,47 @@
             "min": 0,
             "max": 4,
             "step": 0.1
+        },
+        "scanlineOpacity": {
+            "label": "Scanline Opacity",
+            "folder": "Visual Effects",
+            "factor": 0.01,
+            "value": 20,
+            "min": 1,
+            "max": 50,
+            "step": 1
+        },
+        "focalLength": {
+            "label": "Focal Length",
+            "folder": "Visual Effects",
+            "factor": 0.01,
+            "value": 10,
+            "min": 3,
+            "max": 20,
+            "step": 1
+        },
+        "bokehScale": {
+            "label": "Bokeh Scale",
+            "folder": "Visual Effects",
+            "value": 3,
+            "min": 0.1,
+            "max": 5,
+            "step": 0.1
+        },
+        "scanlinesEnabled": {
+            "label": "Scanlines",
+            "folder": "Enable Visual Effects",
+            "value": true
+        },
+        "depthOfFieldEnabled": {
+            "label": "Depth Of Field",
+            "folder": "Enable Visual Effects",
+            "value": true
+        },
+        "toneMappingEnabled": {
+            "label": "Tone Mapping",
+            "folder": "Enable Visual Effects",
+            "value": true
         }
     }
 }
