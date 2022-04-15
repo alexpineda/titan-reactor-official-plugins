@@ -5,7 +5,7 @@ import ClassicClock from "./classic-clock.jsx";
 
 
 registerComponent(
-  { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "left" },
+  { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "left", order: -100 },
   ({ config }) => {
     const frame = useFrame();
 

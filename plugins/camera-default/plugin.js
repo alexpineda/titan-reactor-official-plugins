@@ -51,7 +51,7 @@ return  {
         this.orbit.dollyToCursor = true;
         this.orbit.verticalDragToForward = true;
 
-        this.orbit.maxDistance = DEFAULT_FAR;
+        this.orbit.maxDistance = 128;
         this.orbit.minDistance = 20;
 
         this.orbit.maxPolarAngle = POLAR_MAX;

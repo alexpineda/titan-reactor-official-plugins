@@ -11,6 +11,7 @@
     },
     "config": {
         "enabled": {
+            "label": "Use Custom Colors",
             "value": true
         },
         "player_1": {

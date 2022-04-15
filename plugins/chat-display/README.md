@@ -1,0 +1,1 @@
+View in game chat.

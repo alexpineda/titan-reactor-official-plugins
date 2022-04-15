@@ -82,9 +82,9 @@
             "label": "Scanline Opacity",
             "folder": "Visual Effects",
             "factor": 0.01,
-            "value": 30,
-            "min": 1,
-            "max": 50,
+            "value": 25,
+            "min": 10,
+            "max": 40,
             "step": 1
         },
         "focalLength": {

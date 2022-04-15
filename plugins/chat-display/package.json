@@ -1,0 +1,27 @@
+{
+    "name": "@titan-reactor-plugins/chat-display",
+    "version": "1.0.0",
+    "description": "Chat Display",
+    "author": "Dark Matter",
+    "keywords": [
+        "titan-reactor-plugin"
+    ],
+    "peerDependencies": {
+        "titan-reactor": "0.5.0"
+    },
+    "config": {
+        "system": {
+            "permissions": [
+                "replay.commands"
+            ]
+        },
+        "hideTime": {
+            "label": "Hide Time (seconds)",
+            "factor": 1000,
+            "value": 5,
+            "min": 2,
+            "max": 20,
+            "step": 1
+        }
+    }
+}
