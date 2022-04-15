@@ -11,7 +11,15 @@ return  {
 
     async onEnterCameraMode(prevData, camera) {
 
-        this._exitCamera = prevData;
+        this._exitCamera = {
+            target: new THREE.Vector3()
+        };
+
+        if (prevData?.target?.isVector3) {
+            this._exitCamera.target.copy(prevData.target);
+        }
+
+        this._pipLocation = new THREE.Vector2();
 
         this.orbit.camera.far = OVERVIEW_FAR;
         this.orbit.camera.fov = 15;
@@ -36,9 +44,7 @@ return  {
             intersections.length = 0;
             rayCaster.intersectObject(this.terrain.terrain, false, intersections);
             if (intersections.length) {
-                this._exitCamera = {
-                    target: new THREE.Vector3(intersections[0].point.x, 0, intersections[0].point.z)
-                };
+                this._exitCamera.target.set(intersections[0].point.x, 0, intersections[0].point.z);
                 this.exitCameraMode();
             }
         }
@@ -49,7 +55,9 @@ return  {
             rayCaster.intersectObject(this.terrain.terrain, false, intersections);
             if (intersections.length) {
                 this.pipLookAt(intersections[0].point.x, intersections[0].point.z);
-                this.setPipDimensions(new THREE.Vector2(clientX, clientY), this.config.pipSize.value);
+                this._pipLocation.set(clientX, clientY);
+                this.setPipDimensions(this._pipLocation, this.config.pipSize.value);
+                this._exitCamera.target.set(intersections[0].point.x, 0, intersections[0].point.z);
             }
         } else {
             this.pipHide();

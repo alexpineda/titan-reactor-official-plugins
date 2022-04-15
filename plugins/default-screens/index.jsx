@@ -6,10 +6,18 @@ const LoadingScreen = ({ config, type }) => {
   const map = useMap();
 
   return (
+    <div  style={{
+      display: config[type] ? "block" : "none",
+      position: "absolute",
+      zIndex: "-999",
+      left: "50%",
+      top: "50%",
+      transform: `translate(-50%, -50%)`,
+    }}>
     <h1
       style={{
-        display: config[type] ? "block" : "none",
         color: "white",
+        animation: "var(--animation-scale-up) forwards"
       }}
     >
       <p>{map?.title}</p>
@@ -17,27 +25,23 @@ const LoadingScreen = ({ config, type }) => {
         <p key={player.id}>{player.name}</p>
       ))}
     </h1>
+    </div>
   );
 };
 
 registerComponent(
-  { pluginId: "_plugin_id_", screen: "@replay/loading", snap: "center" },
+  { pluginId: "_plugin_id_", screen: "@replay/loading" },
   ({ config }) => <LoadingScreen config={config} type="replay" />
 );
 
 registerComponent(
-  { pluginId: "_plugin_id_", screen: "@map/loading", snap: "center" },
+  { pluginId: "_plugin_id_", screen: "@map/loading" },
   ({ config }) => <LoadingScreen config={config} type="map" />
 );
 
 registerComponent(
   { pluginId: "_plugin_id_", screen: "@home/ready" },
   ({ config }) => {
-    const [[logoOpacity, logoScale], setLogoVals] = useState([0.1, 3]);
-
-    useEffect(() => {
-      setLogoVals([1, 1]);
-    }, []);
 
     return (
       <div
@@ -47,12 +51,11 @@ registerComponent(
           zIndex: "-999",
           left: "50%",
           top: "50%",
-          transform: `translate(-50%, -50%) scale(${logoScale})`,
-          opacity: `${logoOpacity}`,
-          transition: "all ease-in 10s",
+          transform: `translate(-50%, -50%)`,
         }}
       >
-        <h1 style={{ fontFamily: "Conthrax", color: "var(--orange-5)" }}>
+          
+        <h1 style={{ fontFamily: "Conthrax", color: "var(--orange-5)", animation: "var(--animation-slide-in-down) forwards, var(--animation-fade-in)", animationDuration: "5s"  }}>
           Titan Reactor
         </h1>
         <p

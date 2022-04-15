@@ -41,9 +41,9 @@
         "damping": {
             "label": "Movement Damping",
             "factor": 0.005,
-            "value": 1.5,
+            "value": 2,
             "min": 1,
-            "max": 25,
+            "max": 20,
             "step": 0.5
         },
         "edgeFriction": {
@@ -82,7 +82,7 @@
             "label": "Scanline Opacity",
             "folder": "Visual Effects",
             "factor": 0.01,
-            "value": 20,
+            "value": 30,
             "min": 1,
             "max": 50,
             "step": 1
@@ -91,9 +91,9 @@
             "label": "Focal Length",
             "folder": "Visual Effects",
             "factor": 0.01,
-            "value": 10,
-            "min": 3,
-            "max": 20,
+            "value": 15,
+            "min": 5,
+            "max": 30,
             "step": 1
         },
         "bokehScale": {

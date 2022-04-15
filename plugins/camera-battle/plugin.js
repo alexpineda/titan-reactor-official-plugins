@@ -17,7 +17,7 @@ return  {
     cameraShake: true,
     rotateSprites: true,
     background: "space",
-    fogOfWar: 0.25,
+    fogOfWar: 0.3,
 
     // a few shared setings we can update on init and config change
     _updateSettings() {
