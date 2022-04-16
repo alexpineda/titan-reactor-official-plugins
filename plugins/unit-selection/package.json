@@ -1,0 +1,44 @@
+{
+    "name": "@titan-reactor-plugins/unit-selection-display",
+    "version": "1.0.0",
+    "description": "Unit Selection Display",
+    "author": "Dark Matter",
+    "keywords": [
+        "titan-reactor-plugin"
+    ],
+    "peerDependencies": {
+        "titan-reactor": "0.5.0"
+    },
+    "config": {
+        "largeCompace": {
+            "folder": "Large Unit Display",
+            "label": "Compact Display",
+            "value": false
+        },
+        "largeShowUnitName": {
+            "folder": "Large Unit Display",
+            "label": "Show Unit Name",
+            "value": false
+        },
+        "largeImageScale": {
+            "folder": "Large Unit Display",
+            "label": "Image Scale",
+            "value": 1
+        },
+        "largeBgColor": {
+            "folder": "Large Unit Display",
+            "label": "Background Color",
+            "value": "#000000"
+        },
+        "largeTransparentBg": {
+            "folder": "Large Unit Display",
+            "label": "Transparent Background",
+            "value": true
+        },
+        "largeFontSize": {
+            "folder": "Large Unit Display",
+            "label": "Font Size",
+            "value": "16px"
+        }
+    }
+}

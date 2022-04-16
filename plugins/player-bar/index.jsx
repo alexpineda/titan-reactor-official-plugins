@@ -4,7 +4,7 @@ import {
   usePlayers,
   usePlayerFrame,
   assets,
-  RollingResource,
+  RollingNumber,
 } from "titan-reactor";
 // export const createAltColors = (color: string): AltColors => {
 //   let darken = new Color(0.1, 0.1, 0.1);
@@ -33,7 +33,7 @@ import {
 // };
 
 // const injectColorsCss = (colors) => {
-//   setStyleSheet(
+//   assets.(
 //     "player-colors-glow",
 //     colors.reduce((css: string, color) => {
 //       return `
@@ -98,7 +98,7 @@ registerComponent(
                 <td>
                   <div style={_divStyle}>
                     <img style={_imgStyle} src={assets.gameIcons.minerals} />
-                    <RollingResource value={playerInfo.minerals} />
+                    <RollingNumber value={playerInfo.minerals} />
                   </div>
                 </td>
                 <td>
@@ -107,7 +107,7 @@ registerComponent(
                       style={_imgStyle}
                       src={assets.gameIcons[vespeneIcon]}
                     />
-                    <RollingResource value={playerInfo.vespeneGas} />
+                    <RollingNumber value={playerInfo.vespeneGas} />
                   </div>
                 </td>
                 <td>
@@ -132,7 +132,7 @@ registerComponent(
                   <td>
                     <div style={_divStyle}>
                       <img style={_imgStyle} src={assets.workerIcons.apm} />
-                      <RollingResource value={playerInfo.apm} />
+                      <RollingNumber value={playerInfo.apm} />
                     </div>
                   </td>
                 )}

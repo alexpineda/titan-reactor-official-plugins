@@ -17,11 +17,11 @@ const LoadingScreen = ({ config, type }) => {
     <h1
       style={{
         color: "white",
-        animation: "var(--animation-scale-up) forwards"
+        animation: "var(--animation-scale-up) forwards var(--ease-squish-2)"
       }}
     >
       <p>{map?.title}</p>
-      {replay?.header?.players.map((player) => (
+      {replay?.players.map((player) => (
         <p key={player.id}>{player.name}</p>
       ))}
     </h1>
