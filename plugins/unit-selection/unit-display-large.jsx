@@ -13,10 +13,8 @@ import Name from "./name.jsx";
 // import Loaded from "./loaded";
 // import Upgrades from "./upgrades";
 
-// const selector = (state: Pick<UnitSelectionStore, "selectedUnits">) =>
-//   Boolean(state.selectedUnits[0] && state.selectedUnits[0].loaded);
-
 const UnitDisplayLarge = ({ config, unit }) => {
+
   const showHp = !(unit.extras.dat.isResourceContainer && unit.owner > 7);
   const showShields = unit.extras.dat.shieldsEnabled;
   const showEnergy = unit.extras.dat.isSpellcaster;

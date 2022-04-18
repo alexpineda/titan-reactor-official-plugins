@@ -137,7 +137,7 @@ const Wireframe = ({ unit, size = "lg" }) => {
     for (let i = 0; i < 4; i++) {
       const filter = getFilter(unit, step, i);
 
-      if (!isFirstRun) {
+      if (!isFirstRun.current) {
         layerRefs[i].ref.current.style.transition = trans;
       }
 
@@ -160,8 +160,7 @@ const Wireframe = ({ unit, size = "lg" }) => {
   const style =
     size === "lg"
       ? { width: "128px", height: "128px", position: "relative",  }
-      : { width: "64px", height: "64px", position: "relative", marginLeft: "var(--size-3)",
-      marginTop: "var(--size-4)" };
+      : { width: "64px", height: "64px", position: "relative" };
 
   const layerStyle = {
     width: "128px",

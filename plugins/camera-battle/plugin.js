@@ -21,10 +21,13 @@ return  {
 
     // a few shared setings we can update on init and config change
     _updateSettings() {
+
+        this._scanlineEffect.blendMode.opacity.value = this.config.scanlinesEnabled ? this.config.scanlineOpacity : 0;
+        this._scanlineEffect.density = this.config.scanlineDensity;
+
         this._keyboardSpeed = this.config.keyboardSpeed;
         this.orbit.dampingFactor = this.config.damping;
         this.orbit.boundaryFriction = this.config.edgeFriction;
-        this._scanlineEffect.blendMode.opacity.value = this.config.scanlineOpacity;
         this._depthOfFieldEffect.getCircleOfConfusionMaterial().uniforms.focalLength.value = this.config.focalLength;
         this._depthOfFieldEffect.bokehScale = this.config.bokehScale;
     },
@@ -53,14 +56,13 @@ return  {
         this.orbit.maxAzimuthAngle = Infinity;
         this.orbit.minAzimuthAngle = -Infinity;
       
+        this._scanlineEffect = new ScanlineEffect({ density: this.config.scanlineDensity });
         this._depthOfFieldEffect = new DepthOfFieldEffect(this.orbit.camera, {
             focusDistance: 0.01,
             focalLength: 0.1,
             bokehScale: 1.0,
-            height: 480,
+            height: this.config.blurQuality,
           });
-        this._scanlineEffect = new ScanlineEffect({ density: 0.75 });
-
         this._updateSettings();
 
         await this.orbit.dollyTo(this.config.defaultDistance, false);
@@ -78,6 +80,9 @@ return  {
 
         effects.push(fogOfWarEffect);
 
+        if (this.config.scanlinesEnabled) {
+            effects.push(this._scanlineEffect);
+        }
 
         if (this.config.toneMappingEnabled) {
             effects.push(new ToneMappingEffect({ mode: ToneMappingMode.OPTIMIZED_CINEON }));
@@ -167,5 +172,12 @@ return  {
 
     onUpdateAudioMixerLocation(delta, elapsed, target, position) {
         return position;
+    },
+
+    onFrame(_, followedUnits) {
+        if (this.isActiveCameraMode && followedUnits.length) {
+            const target = this.calculateFollowedUnitsTarget();
+            this.orbit.moveTo(target.x, target.y, target.z, true);
+        }
     }
 }

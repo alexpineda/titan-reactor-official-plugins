@@ -87,6 +87,14 @@
             "max": 40,
             "step": 1
         },
+        "scanlineDensity": {
+            "label": "Scanline Density",
+            "folder": "Visual Effects",
+            "factor": 0.05,
+            "value": 15,
+            "min": 1,
+            "max": 19
+        },
         "focalLength": {
             "label": "Focal Length",
             "folder": "Visual Effects",
@@ -103,6 +111,16 @@
             "min": 0.1,
             "max": 5,
             "step": 0.1
+        },
+        "blurQuality": {
+            "label": "Blur Quality",
+            "folder": "Visual Effects",
+            "value": 240,
+            "options": [
+                120,
+                240,
+                480
+            ]
         },
         "scanlinesEnabled": {
             "label": "Scanlines",

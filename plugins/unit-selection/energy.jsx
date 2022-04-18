@@ -1,5 +1,5 @@
 import React from "react";
-import { assets } from "titan-reactor";
+import { assets, RollingNumber } from "titan-reactor";
 
 const Energy = ({ unit }) => {
   const gameIcons = assets.gameIcons;
@@ -17,9 +17,7 @@ const Energy = ({ unit }) => {
         style={{
           color: "var(--gray-3)",
         }}
-      >
-        {unit.energy}
-      </p>
+      ><RollingNumber value={energy} /></p>
     </span>
   );
 };

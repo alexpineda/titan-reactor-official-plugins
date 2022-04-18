@@ -4,7 +4,7 @@ import UnitDisplayLarge from "./unit-display-large.jsx";
 
 
 registerComponent(
-  { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "left"},
+  { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "right"},
   ({config}) => {
     const units = useSelectedUnits();
 

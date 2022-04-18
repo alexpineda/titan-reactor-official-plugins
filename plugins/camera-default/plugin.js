@@ -27,6 +27,7 @@ return  {
     minimap: true,
     background: "tiles",
     fogOfWar: 1,
+    unitSelection: true,
 
     // a few shared setings we can update on init and config change
     _updateSettings() {
@@ -147,6 +148,13 @@ return  {
         ctx.lineTo(...view.bl);
         ctx.lineTo(...view.tl);
         ctx.stroke();
+    },
+
+    onFrame(_, followedUnits) {
+        if (this.isActiveCameraMode && followedUnits.length) {
+            const target = this.calculateFollowedUnitsTarget();
+            this.orbit.moveTo(target.x, target.y, target.z, true);
+        }
     }
 
 }

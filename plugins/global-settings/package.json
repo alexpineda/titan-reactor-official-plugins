@@ -35,6 +35,11 @@
             "value": 0.62,
             "min": 0,
             "max": 1
+        },
+        "stopFollowingOnClick": {
+            "folder": "Game",
+            "label": "Click anywhere to stop following units",
+            "value": true
         }
     }
 }
