@@ -73,14 +73,22 @@ return {
         }
     },
 
-    /**
-     * When a user seeks to a different location in the replay
-     */
-    onFrameReset() {
+    _reset() {
         this._lastFrameCheck = 0;
         for (const unit of this._units) {
             unit.obj.removeFromParent();
         }
         this._units.length = 0;
+    },
+
+    /**
+     * When a user seeks to a different location in the replay
+     */
+    onFrameReset() {
+        this._reset();
+    },
+
+    onGameDisposed() {
+        this._reset();
     }
 }

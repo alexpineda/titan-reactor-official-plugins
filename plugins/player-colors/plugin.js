@@ -3,12 +3,12 @@ const { THREE } = arguments[0];
 const colors = [];
 
 return {
-    _updateColors() {
+    _updateColors(forceDisable) {
       for (let i = 0; i < 8; i++) {
         colors[i] = this.config[`player_${i}`];
       }
 
-      if (this.config.enabled && this.isEnabled) {
+      if (this.config.enabled && !forceDisable) {
         this.setPlayerColors(colors);
       } else {
         this.setPlayerColors(this.getOriginalColors());
@@ -23,7 +23,7 @@ return {
       this._updateColors();
     },
 
-    onDisabled() {
-      this._updateColors();
+    onPluginDispose() {
+      this._updateColors(true);
     }
 }

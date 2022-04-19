@@ -1,23 +1,23 @@
 return {
-  onConfigChanged(newConfig, oldConfig) {
+  onConfigChanged(oldConfig) {
     if (
-      oldConfig.global !== newConfig.global ||
-      oldConfig.music !== newConfig.music ||
-      oldConfig.sound !== newConfig.sound
+      oldConfig.global !== this.config.global ||
+      oldConfig.music !== this.config.music ||
+      oldConfig.sound !== this.config.sound
     ) {
 
       this.saveSettings({
         audio: {
-          global: newConfig.global,
-          music: newConfig.music,
-          sound: newConfig.sound,
+          global: this.config.global,
+          music: this.config.music,
+          sound: this.config.sound,
         }
       });
       
-    } else  if (newConfig.stopFollowingOnClick !== oldConfig.stopFollowingOnClick) {
+    } else  if (this.config.stopFollowingOnClick !== oldConfig.stopFollowingOnClick) {
       this.saveSettings({
         game: {
-          stopFollowingOnClick: newConfig.stopFollowingOnClick
+          stopFollowingOnClick: this.config.stopFollowingOnClick
         }
       });
     }

@@ -68,17 +68,17 @@ return  {
 
     },
 
-    onConfigChanged(newConfig, oldConfig) {
+    onConfigChanged(oldConfig) {
         if (this.isActiveCameraMode) {
 
             this._updateSettings();
 
             // only update default distance if it's changed otherwise we'll get a jump
-            if (newConfig.defaultDistance !== oldConfig.defaultDistance) {
+            if (this.config.defaultDistance !== oldConfig.defaultDistance) {
                 this.orbit.dollyTo(this.config.defaultDistance, true);
             }
 
-            if (newConfig.pipSize !== oldConfig.pipSize) {
+            if (this.config.pipSize !== oldConfig.pipSize) {
                 this.setPipDimensions(null, this.config.pipSize);
             }
         }
