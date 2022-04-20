@@ -10,10 +10,6 @@
         "titan-reactor": "0.5.0"
     },
     "config": {
-        "splash": {
-            "label": "Splash Screen",
-            "value": true
-        },
         "map": {
             "label": "Map Loading Screen",
             "value": true
