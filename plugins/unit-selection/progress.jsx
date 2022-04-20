@@ -1,16 +1,19 @@
 import React, { useRef, useEffect, forwardRef } from "react";
 import { assets } from "titan-reactor";
 
+const unitIsComplete = (unit) => {
+  return unit.statusFlags & 0x01 === 1;
+}
+
 const getDisplayText = (unit) => {
   if (unit.owner > 7 || !unit.extras.dat.isBuilding) {
     return "";
   }
-  if (unit.isComplete || unit.remainingTrainTime) {
+  if (unitIsComplete(unit) || unit.remainingTrainTime) {
     if (
-      unit.isComplete &&
       unit.remainingTrainTime &&
       unit.extras.dat.isTerran &&
-      !unit.queue &&
+      !unit.buildQueue?.length &&
       !unit.extras.dat.isAddon
     ) {
       return "Adding On";
@@ -57,8 +60,8 @@ const Progress = forwardRef(({ unit }, ref) => {
   const displayTextRef = useRef(null);
 
   const queuedZergType =
-    unit.extras.dat.isZerg && unit.queue && unit.queue.units.length
-      ? bwDat.units[unit.queue.units[0]]
+    unit.extras.dat.isZerg && unit.buildQueue?.length
+      ? bwDat.units[unit.buildQueue[0]]
       : null;
 
   const progressSelector = (unit) => {
@@ -68,7 +71,7 @@ const Progress = forwardRef(({ unit }, ref) => {
         (queuedZergType ? queuedZergType.buildTime : unit.extras.dat.buildTime)
       );
     } else if (unit.remainingTrainTime > 0) {
-      return unit.remainingTrainTime / 255;
+      return unit.remainingTrainTime;
     } else {
       return 0;
     }

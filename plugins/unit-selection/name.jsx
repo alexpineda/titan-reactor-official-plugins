@@ -5,8 +5,8 @@ const removeRacePrefix = (name) => name.replace(/^(Terran|Zerg|Protoss)/, "").tr
 
 const getZergBuildingTypeName = (unit, units) => {
     const queuedZergType =
-      unit.extras.dat.isZerg && unit.queue?.units?.length
-        ? units[unit.queue.units[0]]
+      unit.extras.dat.isZerg && unit.buildQueue?.length
+        ? units[unit.buildQueue[0]]
         : null;
     return queuedZergType && unit.extras.dat.isBuilding ? queuedZergType.name : null;
   };

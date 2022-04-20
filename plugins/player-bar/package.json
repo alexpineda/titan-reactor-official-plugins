@@ -12,11 +12,11 @@
     "config": {
         "showWorkers": {
             "label": "Show Workers",
-            "value": true
+            "value": false
         },
         "showApm": {
             "label": "Show APM",
-            "value": true
+            "value": false
         },
         "textColor": {
             "folder": "Color",
@@ -26,7 +26,7 @@
         "backgroundColor": {
             "folder": "Color",
             "label": "Background",
-            "value": "#000000"
+            "value": "#00000078"
         },
         "transparentBackground": {
             "folder": "Color",

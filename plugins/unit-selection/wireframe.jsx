@@ -108,9 +108,8 @@ const calcStep = (unit) =>
 const calcTypeId = (unit) =>
   unit.extras.dat.isZerg &&
   unit.extras.dat.isBuilding &&
-  unit.queue &&
-  unit.queue.units.length
-    ? unit.queue.units[0]
+  unit.buildQueue?.length
+    ? unit.buildQueue[0]
     : unit.typeId;
 
 
