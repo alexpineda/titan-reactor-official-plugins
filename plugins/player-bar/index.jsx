@@ -92,7 +92,8 @@ registerComponent(
 
             return (
               <tr key={player.id} style={{ color: config.textColor }}
-                onClick={(e) => sendMessage({ action: "player-bar-click", playerId: player.id, button: e.button })}
+                onClick={(e) => sendMessage({ type: "player-bar-click", payload: {
+                  playerId: player.id }, button: e.button })}
                 >
                 <td style={{ color: player.color }}>{player.name}</td>
                 <td>

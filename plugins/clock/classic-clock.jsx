@@ -11,7 +11,6 @@ export default ({ time, pct, styles, config }) => {
         textAlign: "center",
         position: "relative",
         width: "var(--minimap-width)",
-        pointerEvents: "auto",
         lineHeight: "1.2rem",
       }}
       onClick={() => setShowPct(!showPct)}

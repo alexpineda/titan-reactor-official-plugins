@@ -13,7 +13,7 @@ import Queue from "./queue.jsx";
 import Loaded from "./loaded.jsx";
 // import Upgrades from "./upgrades";
 
-const UnitDisplayLarge = ({ config, unit }) => {
+const UnitDisplayLarge = ({ config, unit, sendMessage }) => {
 
   const showHp = !(unit.extras.dat.isResourceContainer && unit.owner > 7);
   const showShields = unit.extras.dat.shieldsEnabled;
@@ -63,7 +63,7 @@ const UnitDisplayLarge = ({ config, unit }) => {
           </div>
         </div>
         <div>
-          {/* {unit.loaded?.length && <Loaded unit={unit}/>} */}
+          {unit.loaded?.length && <Loaded unit={unit} sendMessage={sendMessage}/>}
           <Queue unit={unit} />
           {/* <Progress unit={unit} ref={progressRef} /> */}
         </div>

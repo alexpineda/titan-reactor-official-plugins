@@ -5,9 +5,9 @@ return {
     },
 
     onUIMessage(message) {
-        if (message.action === "player-bar-click") {
+        if (message.type === "player-bar-click") {
             if (!this.callCustomHook("onCustomPlayerBarClicked", message)) {
-                this.toggleFogOfWarByPlayerId(message.playerId);
+                this.toggleFogOfWarByPlayerId(message.payload.playerId);
             }
         }
     }

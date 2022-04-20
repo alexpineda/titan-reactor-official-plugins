@@ -5,7 +5,7 @@ import SmallUnitItem from "./small-unit-item.jsx";
 
 const sumKills = (tkills, { kills }) => tkills + kills;
 
-const UnitsDisplaySmall = ({ units }) => {
+const UnitsDisplaySmall = ({ config, units, sendMessage }) => {
   const showKillsExtraUnits = [
     enums.unitTypes.carrier,
     enums.unitTypes.reaver,
@@ -31,27 +31,13 @@ const UnitsDisplaySmall = ({ units }) => {
     <div
       style={{
         display: "flex",
-        paddingLeft: "var(--size-1)",
+        flexDirection: "column",
         paddingTop: "var(--size-1)",
-        flex: "1",
-        minHeight: "2.75rem",
       }}
     >
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(6, 2.5rem)",
-          gridTemplateRows: "repeat(2, 2.5rem)",
-          gridGap: ".25rem",
-        }}
-      >
-        {range(0, 12).map((i) => (
-          <SmallUnitItem key={i} index={i} unit={units[i]} units={units} showLoaded={false} />
-        ))}
-      </div>
-
-      <div
-        style={{
+          display: config.smallShowKills ? "block" : "none",
           textAlign: "center",
           width: "100%",
           alignSelf: "center",
@@ -60,6 +46,31 @@ const UnitsDisplaySmall = ({ units }) => {
         }}
       >
         {getKills()}
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 2.5rem)",
+          gridTemplateRows: "repeat(6, 2.5rem)",
+          gridGap: ".25rem",
+        }}
+      >
+        {range(0, 12).map((i) => (
+          <SmallUnitItem
+            key={i}
+            unit={units[i]}
+            owner={units[i]?.owner}
+            showLoaded={false}
+            onClick={() => {
+              units[i] && sendMessage({
+                type: "unit-selection-click",
+                payload: {
+                  unitId: unit[i].id,
+                },
+              });
+            }}
+          />
+        ))}
       </div>
     </div>
   );
