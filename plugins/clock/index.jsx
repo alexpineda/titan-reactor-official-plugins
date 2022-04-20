@@ -1,12 +1,13 @@
 import React from "react";
-import { registerComponent, useFrame } from "titan-reactor";
+import { registerComponent, useFrame, usePluginConfig } from "titan-reactor";
 import ModernClock from "./modern-clock.jsx";
 import ClassicClock from "./classic-clock.jsx";
 
 
 registerComponent(
   { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "left", order: -100 },
-  ({ config }) => {
+  () => {
+    const config = usePluginConfig();
     const frame = useFrame();
 
     const pct = `${Math.round((frame.frame / frame.maxFrame) * 100)}%`;
@@ -23,9 +24,9 @@ registerComponent(
     };
 
     return config.style === "modern" ? (
-      <ModernClock config={config} time={frame.time} pct={pct} styles={styles} />
+      <ModernClock time={frame.time} pct={pct} styles={styles} />
     ) : (
-      <ClassicClock config={config} time={frame.time} pct={pct} styles={styles} />
+      <ClassicClock time={frame.time} pct={pct} styles={styles} />
     );
   }
 );

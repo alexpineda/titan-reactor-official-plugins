@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { enums } from "titan-reactor";
+import { enums, usePluginConfig } from "titan-reactor";
 
 import Health from "./health.jsx";
 import Shields from "./shields.jsx";
@@ -13,7 +13,9 @@ import Queue from "./queue.jsx";
 import Loaded from "./loaded.jsx";
 // import Upgrades from "./upgrades";
 
-const UnitDisplayLarge = ({ config, unit, sendMessage }) => {
+const UnitDisplayLarge = ({ unit }) => {
+
+  const config = usePluginConfig();
 
   const showHp = !(unit.extras.dat.isResourceContainer && unit.owner > 7);
   const showShields = unit.extras.dat.shieldsEnabled;
@@ -51,10 +53,14 @@ const UnitDisplayLarge = ({ config, unit, sendMessage }) => {
         {/* <Upgrades unit={unit} /> */}
       </div>
       <div>
-        <div>
+        <div style={{
+          display: "flex",
+          justifyContent: "space-around",
+          padding: "var(--size-1)",
+        }}>
           <Wireframe unit={unit} size="md" />
 
-          <div>
+          <div style={{marginLeft: "var(--size-1)"}}>
             {showHp && <Health unit={unit} />}
             {showShields && <Shields unit={unit} />}
             {showResourceAmount && <Resource unit={unit} />}
@@ -63,7 +69,7 @@ const UnitDisplayLarge = ({ config, unit, sendMessage }) => {
           </div>
         </div>
         <div>
-          {unit.loaded?.length && <Loaded unit={unit} sendMessage={sendMessage}/>}
+          {unit.loaded?.length && <Loaded unit={unit}/>}
           <Queue unit={unit} />
           {/* <Progress unit={unit} ref={progressRef} /> */}
         </div>

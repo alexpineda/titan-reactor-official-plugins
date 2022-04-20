@@ -1,6 +1,8 @@
 import React from "react";
 import {
   registerComponent,
+  usePluginConfig,
+  useSendMessage,
   usePlayers,
   usePlayerFrame,
   assets,
@@ -67,7 +69,9 @@ const _imgStyle = {
 
 registerComponent(
   { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "top-right" },
-  ({ config, sendMessage }) => {
+  () => {
+    const config = usePluginConfig();
+    const sendMessage = useSendMessage();
     const players = usePlayers();
     const getPlayerFrameInfo = usePlayerFrame();
 

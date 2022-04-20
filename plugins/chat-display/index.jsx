@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { registerComponent, usePlayer } from "titan-reactor"
+import { registerComponent, usePlayer, usePluginConfig, useMessage } from "titan-reactor"
 
 let _chatIndex = 0;
 
 registerComponent(
     { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "left" },
-    ({ config, useMessage }) => {
-
+    () => {
+        const config = usePluginConfig();
         const getPlayer = usePlayer();
         const [chat, setChat] = useState([]);
         const [lastChatAdd, setLastChatAdd] = useState(Date.now());

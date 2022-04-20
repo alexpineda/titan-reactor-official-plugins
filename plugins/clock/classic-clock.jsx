@@ -1,6 +1,9 @@
 import React, { useState } from "react";
-export default ({ time, pct, styles, config }) => {
+import { usePluginConfig } from "titan-reactor";
+
+export default ({ time, pct, styles }) => {
   const [showPct, setShowPct] = useState(false);
+  const config = usePluginConfig();
 
   return (
     <div

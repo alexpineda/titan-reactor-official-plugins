@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { useMap } from "titan-reactor";
+import { useMap, usePluginConfig } from "titan-reactor";
 
-export default ({ config, time, pct, styles }) => {
+export default ({ time, pct, styles }) => {
+  const config = usePluginConfig();
   const map = useMap();
   const [showPct, setShowPct] = useState(false);
 

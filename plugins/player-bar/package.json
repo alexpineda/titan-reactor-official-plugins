@@ -12,7 +12,7 @@
     "config": {
         "showWorkers": {
             "label": "Show Workers",
-            "value": false
+            "value": true
         },
         "showApm": {
             "label": "Show APM",

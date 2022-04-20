@@ -1,7 +1,8 @@
-import { registerComponent, useReplay, useMap } from "titan-reactor";
-import React, { useState, useEffect } from "react";
+import { registerComponent, usePluginConfig, useReplay, useMap } from "titan-reactor";
+import React from "react";
 
-const LoadingScreen = ({ config, type }) => {
+const LoadingScreen = ({ type }) => {
+  const config = usePluginConfig();
   const replay = useReplay();
   const map = useMap();
 

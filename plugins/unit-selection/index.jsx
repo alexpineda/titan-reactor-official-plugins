@@ -5,7 +5,7 @@ import UnitsDisplaySmall from "./units-display-small.jsx";
 
 registerComponent(
   { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "right" },
-  ({ config, sendMessage }) => {
+  () => {
     const units = useSelectedUnits();
 
     if (units.length === 0) {
@@ -22,16 +22,12 @@ registerComponent(
       >
         {units.length === 1 ? (
           <UnitDisplayLarge
-            config={config}
             unit={units[0]}
             key={units[0].id}
-            sendMessage={sendMessage}
           />
         ) : (
           <UnitsDisplaySmall
-            config={config}
             units={units}
-            sendMessage={sendMessage}
           />
         )}
       </div>

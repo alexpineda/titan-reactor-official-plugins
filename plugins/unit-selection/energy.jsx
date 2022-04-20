@@ -11,13 +11,13 @@ const Energy = ({ unit }) => {
           width: "var(--size-4)",
           marginRight: "var(--size-1)",
         }}
-        src={gameIcons?.energy}
+        src={gameIcons.energy}
       />
       <p
         style={{
           color: "var(--gray-3)",
         }}
-      ><RollingNumber value={energy} /></p>
+      ><RollingNumber value={unit.energy} /></p>
     </span>
   );
 };

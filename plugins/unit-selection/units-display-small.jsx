@@ -1,11 +1,15 @@
 import React from "react";
 import range from "https://cdn.skypack.dev/lodash.range";
-import { enums } from "titan-reactor";
+import { enums, usePluginConfig, useSendMessage } from "titan-reactor";
 import SmallUnitItem from "./small-unit-item.jsx";
 
 const sumKills = (tkills, { kills }) => tkills + kills;
 
-const UnitsDisplaySmall = ({ config, units, sendMessage }) => {
+const UnitsDisplaySmall = ({  units }) => {
+
+  const config = usePluginConfig();
+  const sendMessage = useSendMessage();
+
   const showKillsExtraUnits = [
     enums.unitTypes.carrier,
     enums.unitTypes.reaver,
@@ -57,7 +61,7 @@ const UnitsDisplaySmall = ({ config, units, sendMessage }) => {
       >
         {range(0, 12).map((i) => (
           <SmallUnitItem
-            key={i}
+            key={units[i]?.id}
             unit={units[i]}
             owner={units[i]?.owner}
             showLoaded={false}

@@ -21,7 +21,7 @@ const Loaded = ({ unit, sendMessage }) => {
       >
         {range(0, 8).map((i) => (
           <SmallUnitItem
-            key={i}
+            key={unit?.loaded?.[i]?.id ?? `empty${i}`}
             unit={unit?.loaded?.[i]}
             owner={unit?.owner}
             showLoaded={true}

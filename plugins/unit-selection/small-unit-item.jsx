@@ -48,8 +48,8 @@ const SmallUnitItem = ({ unit, owner, showLoaded, onClick }) => {
       if (showLoaded && unitType.spaceRequired > 1) {
         // imgRef.current.classList.add("h-16");
         if (unitType.spaceRequired === 2) {
-          borderRef.current.style.gridRowStart = "auto";
-          borderRef.current.style.gridColumnStart = "span 2";
+          borderRef.current.style.gridRowStart = "span 2";
+          borderRef.current.style.gridColumnStart = "auto";
         } else if (unitType.spaceRequired === 4) {
           borderRef.current.style.gridRowStart = "span 2";
           borderRef.current.style.gridColumnStart = "span 2";
@@ -59,7 +59,7 @@ const SmallUnitItem = ({ unit, owner, showLoaded, onClick }) => {
         borderRef.current.style.gridColumnStart = "auto";
         // imgRef.current.classList.remove("h-16");
       }
-    } else if (unit && !showLoaded) {
+    } else if (!unit && !showLoaded) {
       borderRef.current.style.borderColor = "";
     } else {
       imgRef.current.style.display = "none";

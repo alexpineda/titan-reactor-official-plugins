@@ -1,9 +1,9 @@
 import React, { useRef } from "react";
-import { registerComponent } from "titan-reactor";
+import { registerComponent, useMessage } from "titan-reactor";
 
 registerComponent(
   { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "top" },
-  ({ useMessage }) => {
+  () => {
     const ref = useRef();
 
     useMessage(fps => {

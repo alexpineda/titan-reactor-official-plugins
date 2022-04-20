@@ -17,6 +17,8 @@ const Health = ({ unit }) => {
     color = healthColorYellow;
   }
 
+  const msPerHP = (unit.extras.dat.buildTime * 42) / unit.extras.dat.hp;
+  
   return (
     <div
       style={{
@@ -24,7 +26,7 @@ const Health = ({ unit }) => {
         transition: "color 4s linear",
       }}
     >
-      <RollingNumber value={hp} upSpeed={160} />/{unit.extras.dat.hp}
+      <RollingNumber value={hp} upSpeed={msPerHP} />/{unit.extras.dat.hp}
     </div>
   );
 };

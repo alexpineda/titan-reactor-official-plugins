@@ -59,6 +59,7 @@ const Queue = ({ unit }) => {
   return (
     icon === null ? null : <div style={{
         display:"flex",
+        justifyContent: "center"
     }}>
       <img
         src={cmdIcons[icon]}
