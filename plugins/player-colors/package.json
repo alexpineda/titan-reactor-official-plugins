@@ -11,38 +11,47 @@
     },
     "config": {
         "enabled": {
+            "folder": "Custom Colors",
             "label": "Use Custom Colors",
             "value": false
         },
         "player_0": {
+            "folder": "Custom Colors",
             "label": "Player 1",
             "value": "#ff0000"
         },
         "player_1": {
+            "folder": "Custom Colors",
             "label": "Player 2",
             "value": "#25ff00"
         },
         "player_2": {
+            "folder": "Custom Colors",
             "label": "Player 3",
             "value": "#2cb494"
         },
         "player_3": {
+            "folder": "Custom Colors",
             "label": "Player 4",
             "value": "#88409c"
         },
         "player_4": {
+            "folder": "Custom Colors",
             "label": "Player 5",
             "value": "#f88c14"
         },
         "player_5": {
+            "folder": "Custom Colors",
             "label": "Player 6",
             "value": "#703014"
         },
         "player_6": {
+            "folder": "Custom Colors",
             "label": "Player 7",
             "value": "#cce0d0"
         },
         "player_7": {
+            "folder": "Custom Colors",
             "label": "Player 8",
             "value": "#fcfc38"
         }

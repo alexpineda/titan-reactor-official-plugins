@@ -1,4 +1,5 @@
 import React from "react";
+// import { Color } from "three";
 import {
   registerComponent,
   usePluginConfig,
@@ -8,7 +9,8 @@ import {
   assets,
   RollingNumber,
 } from "titan-reactor";
-// export const createAltColors = (color: string): AltColors => {
+
+// const createAltColors = (color) => {
 //   let darken = new Color(0.1, 0.1, 0.1);
 //   const test = { h: 0, s: 0, l: 0 };
 //   new Color().setStyle(color).getHSL(test);
@@ -34,24 +36,6 @@ import {
 //   };
 // };
 
-// const injectColorsCss = (colors) => {
-//   assets.(
-//     "player-colors-glow",
-//     colors.reduce((css: string, color) => {
-//       return `
-//     ${css}
-//     @keyframes glow-${color.playerId} {
-//       from {
-//         box-shadow: 0 0 10px -10px ${color.hex}55;
-//       }
-//       to {
-//         box-shadow: 0 0 10px 10px ${color.hex}55;
-//       }
-//     }
-//     `;
-//     }, "")
-//   );
-// };
 
 const _divStyle = {
   display: "flex",
@@ -80,7 +64,7 @@ registerComponent(
     }
 
     const _tableStyle = {
-      background: config.transparentBackground ? "transparent" : config.backgroundColor,
+      background: config.backgroundColor,
       borderRadius: "var(--radius-2)",
       padding: "var(--size-2)",
     };

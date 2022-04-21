@@ -1,0 +1,73 @@
+{
+    "name": "@titan-reactor-plugins/production-bar",
+    "version": "1.0.0",
+    "description": "Production Bar",
+    "author": "Dark Matter",
+    "keywords": [
+        "titan-reactor-plugin"
+    ],
+    "peerDependencies": {
+        "titan-reactor": "0.5.0"
+    },
+    "config": {
+        "toggleVisibleKey": {
+            "label": "Toggle Visible Hotkey",
+            "type": "keyboard-shortcut",
+            "value": ""
+        },
+        "toggleVisible": {
+            "label": "Toggle Visible",
+            "value": true
+        },
+        "backgroundColor": {
+            "folder": "Style",
+            "label": "Background",
+            "value": "#00000099"
+        },
+        "iconSize": {
+            "folder": "Style",
+            "label": "Icon Size",
+            "factor": 8,
+            "value": 5,
+            "min": 1,
+            "max": 8,
+            "step": 1
+        },
+        "maxTotalItems": {
+            "folder": "Style",
+            "label": "Max Total Items",
+            "value": 20,
+            "min": 3,
+            "max": 20,
+            "step": 1
+        },
+        "maxUnits": {
+            "folder": "Units",
+            "label": "Max Display Units",
+            "value": 10,
+            "min": 0,
+            "max": 20,
+            "step": 1
+        },
+        "showUpgrades": {
+            "folder": "Upgrades",
+            "label": "Display Upgrades",
+            "value": true
+        },
+        "showCompletedUpgrades": {
+            "folder": "Upgrades",
+            "label": "Display Completed Upgrades",
+            "value": true
+        },
+        "showResearch": {
+            "folder": "Research",
+            "label": "Display Research",
+            "value": true
+        },
+        "showCompletedResearch": {
+            "folder": "Research",
+            "label": "Display Completed Research",
+            "value": true
+        }
+    }
+}

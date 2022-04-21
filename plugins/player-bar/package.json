@@ -27,11 +27,6 @@
             "folder": "Color",
             "label": "Background",
             "value": "#00000078"
-        },
-        "transparentBackground": {
-            "folder": "Color",
-            "label": "Transparent Background",
-            "value": false
         }
     },
     "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5"
