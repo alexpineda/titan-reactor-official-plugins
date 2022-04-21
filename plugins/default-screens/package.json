@@ -17,6 +17,10 @@
         "replay": {
             "label": "Replay Loading Screen",
             "value": true
+        },
+        "homePage": {
+            "label": "Home Screen",
+            "value": true
         }
     },
     "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5"
