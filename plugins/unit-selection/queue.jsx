@@ -1,63 +1,18 @@
 import React from "react";
-import { enums, assets } from "titan-reactor";
-
-const getResearchIcon = (unit) => {
-  return null;
-//   if (!unit.owner) return null;
-
-//   const t = tech[unit.owner.id].find(
-//     (t) => t && t.unitId === unit.id && !t.timeCompleted
-//   );
-//   if (t) {
-//     return t.icon;
-//   }
-//   const u = upgrades[unit.owner.id].find(
-//     (t) => t && t.unitId === unit.id && !t.timeCompleted
-//   );
-//   if (u) {
-//     return u.icon;
-//   }
-//   return null;
-};
-
-const unitIsComplete = (unit) => {
-    return unit.statusFlags & 0x01 === 1;
-}
-
-const getUnitIcon = (unit) => {
-  if (
-    (unit.extras.dat.isBuilding &&
-      !unit.extras.dat.isZerg &&
-      unitIsComplete(unit) &&
-      unit.buildQueue?.length) ||
-    (unit.extras.dat.isZerg &&
-      !unit.extras.dat.isBuilding &&
-      unit.buildQueue?.length)
-  ) {
-    return unit.buildQueue[0];
-  }
-
-  if (unitIsComplete(unit) && unit.remainingTrainTime) {
-    if (unit.typeId === enums.unitTypes.reaver) {
-      return enums.unitTypes.scarab;
-    } else if (unit.typeId === enums.unitTypes.carrier) {
-      return enums.unitTypes.interceptor;
-    } else if (unit.typeId === enums.unitTypes.nuclearSilo) {
-      return enums.unitTypes.nuclearMissile;
-    }
-  }
-
-  return null;
-};
+import { assets, getUnitIcon } from "titan-reactor";
 
 const Queue = ({ unit }) => {
   const cmdIcons = assets.cmdIcons;
 
-  const icon = getUnitIcon(unit) ?? getResearchIcon(unit)
+  const icon = getUnitIcon(unit);
 ;
 
+  if (icon === null) {
+    return null;
+  }
+
   return (
-    icon === null ? null : <div style={{
+    <div style={{
         display:"flex",
         justifyContent: "center"
     }}>

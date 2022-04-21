@@ -76,9 +76,6 @@ const ProductionBar = () => {
               display: "flex",
               flexDirection:
                 config.orientation === "horizontal" ? "row" : "column",
-              padding: "var(--size-2)",
-              borderRadius: "var(--radius-2)",
-              backgroundColor: config.backgroundColor,
             }}
           >
             {items.slice(0, config.maxTotalItems).map((item, i) => (

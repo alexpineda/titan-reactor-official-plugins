@@ -40,6 +40,11 @@
             "folder": "Game",
             "label": "Click anywhere to stop following units",
             "value": true
+        },
+        "sanityCheckReplayCommands": {
+            "folder": "Utility",
+            "label": "Sanity Check Replay Commands",
+            "value": false
         }
     }
 }
