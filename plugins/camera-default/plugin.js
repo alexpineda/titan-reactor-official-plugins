@@ -150,8 +150,8 @@ return  {
         ctx.stroke();
     },
 
-    onFrame(_, followedUnits) {
-        if (this.isActiveCameraMode && followedUnits.length) {
+    onFrame() {
+        if (this.isActiveCameraMode && this.getFollowedUnits().length) {
             const target = this.calculateFollowedUnitsTarget();
             this.orbit.moveTo(target.x, target.y, target.z, true);
         }
