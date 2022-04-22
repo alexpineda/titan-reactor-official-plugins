@@ -219,7 +219,8 @@ return {
     if (this.isActiveCameraMode && button === 2) {
       if (this._pipPovPlayerId === playerId) {
         this._pipPovPlayerId = null;
-      } else {
+        this.pipHide();
+        } else {
         this._pipPovPlayerId = playerId;
       }
       return true;

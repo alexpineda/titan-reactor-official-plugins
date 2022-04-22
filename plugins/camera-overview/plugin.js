@@ -8,6 +8,9 @@ const OVERVIEW_FAR = 1000;
 return  {
     unitScale: 2.5,
     fogOfWar: 0.7,
+    soundMode: "spatial",
+    maxSoundDistance: 100,
+
 
     async onEnterCameraMode(prevData, camera) {
 
@@ -25,8 +28,11 @@ return  {
         this.orbit.camera.fov = 15;
         this.orbit.camera.updateProjectionMatrix();
 
+        const distance = Math.max(this.terrain.mapWidth, this.terrain.mapHeight) * 4;
+        this.maxSoundDistance = distance;
+
         //TODO: improve algorithm to actually encompass the terrain
-        this.orbit.setLookAt(0, Math.max(this.terrain.mapWidth, this.terrain.mapHeight) * 4, 0, 0, 0, 0, false);
+        this.orbit.setLookAt(0, distance, 0, 0, 0, 0, false);
         await this.orbit.zoomTo(1, false);   
     },
 
@@ -65,6 +71,9 @@ return  {
     },
 
     onUpdateAudioMixerLocation(delta, elapsed, target, position) {
-        return target;
+        if (this.pipIsActive()) {
+            return this._exitCamera.target;
+        }
+        return position;
     }
 }

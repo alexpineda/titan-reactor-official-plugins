@@ -11,7 +11,9 @@
     },
     "config": {
         "system": {
-            "permissions": ["replay.commands"]
+            "permissions": [
+                "replay.commands"
+            ]
         },
         "cameraModeKey": {
             "label": "Toggle Camera",

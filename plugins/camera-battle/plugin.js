@@ -40,7 +40,7 @@ return  {
         }
 
         this.orbit.camera.far = BATTLE_FAR;
-        this.orbit.camera.fov = 95;
+        this.orbit.camera.fov = this.config.fov;
         this.orbit.camera.updateProjectionMatrix();
 
         this.orbit.dollyToCursor = false;
