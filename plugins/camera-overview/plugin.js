@@ -48,7 +48,7 @@ return  {
         if (clicked && clicked.z === 0) {
             rayCaster.setFromCamera(clicked, this.orbit.camera);
             intersections.length = 0;
-            rayCaster.intersectObject(this.terrain.terrain, false, intersections);
+            rayCaster.intersectObject(this.terrain.terrain, true, intersections);
             if (intersections.length) {
                 this._exitCamera.target.set(intersections[0].point.x, 0, intersections[0].point.z);
                 this.exitCameraMode();
@@ -58,7 +58,7 @@ return  {
         if (!clicked && mouse.z === 2) {
             rayCaster.setFromCamera(mouse, this.orbit.camera);
             intersections.length = 0;
-            rayCaster.intersectObject(this.terrain.terrain, false, intersections);
+            rayCaster.intersectObject(this.terrain.terrain, true, intersections);
             if (intersections.length) {
                 this.pipLookAt(intersections[0].point.x, intersections[0].point.z);
                 this._pipLocation.set(clientX, clientY);
