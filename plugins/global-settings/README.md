@@ -1,0 +1,1 @@
+Use this to modify your general game settings.
