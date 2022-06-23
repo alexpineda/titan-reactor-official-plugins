@@ -7,7 +7,7 @@
         "titan-reactor-plugin"
     ],
     "peerDependencies": {
-        "titan-reactor": "0.5.0"
+        "titan-reactor-api": "1.0.0"
     },
     "config": {
         "cameraModeKey": {
@@ -89,7 +89,7 @@
             "label": "Scanline Opacity",
             "folder": "Visual Effects",
             "factor": 0.01,
-            "value": 20,
+            "value": 15,
             "min": 10,
             "max": 40,
             "step": 1
@@ -137,7 +137,7 @@
         "depthOfFieldEnabled": {
             "label": "Depth Of Field",
             "folder": "Enable Visual Effects",
-            "value": true
+            "value": false
         },
         "toneMappingEnabled": {
             "label": "Tone Mapping",

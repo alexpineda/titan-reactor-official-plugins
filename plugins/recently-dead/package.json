@@ -7,7 +7,7 @@
         "titan-reactor-plugin"
     ],
     "peerDependencies": {
-        "titan-reactor": "0.5.0"
+        "titan-reactor-api": "1.0.0"
     },
     "config": {
         "toggleVisibleHotKey": {
