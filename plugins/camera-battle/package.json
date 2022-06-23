@@ -26,22 +26,22 @@
         "rotateSpeed": {
             "folder": "Mouse Look",
             "label": "Rotate Speed",
-            "value": 1,
+            "value": 0.5,
             "min": 0.1,
             "max": 5,
             "step": 0.1
         },
         "defaultDistance": {
             "label": "Default Distance",
-            "value": 13,
+            "value": 30,
             "min": 10,
-            "max": 30,
+            "max": 50,
             "step": 1
         },
         "fov": {
             "label": "Field Of View",
-            "value": 100,
-            "min": 75,
+            "value": 35,
+            "min": 35,
             "max": 125,
             "step": 1
         },
@@ -89,7 +89,7 @@
             "label": "Scanline Opacity",
             "folder": "Visual Effects",
             "factor": 0.01,
-            "value": 15,
+            "value": 10,
             "min": 10,
             "max": 40,
             "step": 1
@@ -106,9 +106,9 @@
             "label": "Focal Length",
             "folder": "Visual Effects",
             "factor": 0.01,
-            "value": 25,
+            "value": 50,
             "min": 5,
-            "max": 30,
+            "max": 100,
             "step": 1
         },
         "bokehScale": {
@@ -137,7 +137,7 @@
         "depthOfFieldEnabled": {
             "label": "Depth Of Field",
             "folder": "Enable Visual Effects",
-            "value": false
+            "value": true
         },
         "toneMappingEnabled": {
             "label": "Tone Mapping",

@@ -42,7 +42,7 @@
             "folder": "Style",
             "label": "Icon Size",
             "factor": 8,
-            "value": 4,
+            "value": 5,
             "min": 2,
             "max": 8,
             "step": 1
