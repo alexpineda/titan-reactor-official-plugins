@@ -22,21 +22,24 @@ return {
       });
     } else if (
       this.config.sanityCheckReplayCommands !==
-      oldConfig.sanityCheckReplayCommands
+      oldConfig.sanityCheckReplayCommands || this.config.debugMode !== oldConfig.debugMode
     ) {
       this.saveSettings({
         util: {
           sanityCheckReplayCommands: this.config.sanityCheckReplayCommands,
+          debugMode: this.config.debugMode,
         },
       });
     } else if (
       this.config.terrainChunky !== oldConfig.terrainChunky ||
-      this.config.terrainShadows !== oldConfig.terrainShadows
+      this.config.terrainShadows !== oldConfig.terrainShadows || 
+      this.config.pixelRatio !== oldConfig.pixelRatio
     ) {
       this.saveSettings({
         graphics: {
           terrainChunky: this.config.terrainChunky,
           terrainShadows: this.config.terrainShadows,
+          pixelRatio: this.config.pixelRatio,
         },
       });
     }
