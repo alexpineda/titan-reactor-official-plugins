@@ -9,11 +9,9 @@ const color = {};
 
 return {
     _updateVisibility(updateColors) {
-        const visible = this.config.toggleVisible;
-
         //as of three 137 css renderer only respects CSS2DObject visible 
         for (const unit of this._deadUnits) {
-            unit.obj.visible = visible;
+            unit.obj.visible = this._visible;
             if (updateColors) {
                 this._setStyleFilter(unit.style, unit.color);
             }
@@ -38,6 +36,8 @@ return {
         // the last time we checked if our dead units timed out
         // and need to be flushed from the list
         this._lastFrameCheck = 0;
+
+        this._visible = false;
         
         // A Group to keep all the dead unit icons in so we the CSSRenderer can display them for us
         this._group = new THREE.Group();
@@ -45,7 +45,8 @@ return {
 
         // Let Titan Reactor know we are using this hotkey
         this.registerHotkey(this.config.toggleVisibleHotKey, () => {
-            this.setConfig("toggleVisible", !this.config.toggleVisible);
+            this._visible = !this._visible;
+            this._updateVisibility(false);
         });
     },
 
@@ -69,7 +70,7 @@ return {
         obj.position.x = this.pxToGameUnit.x(unit.x);
         obj.position.y = 0;
         obj.position.z = this.pxToGameUnit.y(unit.y);
-        obj.visible = this.config.toggleVisible;
+        obj.visible = this._visible;
 
         // work-around for scale being overwritten css renderer
         obj.onAfterRender = () => image.style.transform += ` scale(${this.config.iconScale})`;
@@ -125,5 +126,6 @@ return {
      */
     onGameDisposed() {
         this._reset();
+        this._visible = false;
     }
 }

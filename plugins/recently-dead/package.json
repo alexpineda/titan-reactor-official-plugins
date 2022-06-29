@@ -15,10 +15,6 @@
             "value": "KeyB",
             "type": "keyboard-shortcut"
         },
-        "toggleVisible": {
-            "label": "Show Recently Dead Units",
-            "value": false
-        },
         "timeFrame": {
             "label": "Time Frame in Game Seconds",
             "value": 6,
