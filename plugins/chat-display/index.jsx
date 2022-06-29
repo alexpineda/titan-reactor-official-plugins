@@ -7,10 +7,12 @@ registerComponent(
     { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "left" },
     () => {
         const config = usePluginConfig();
+        // we'll need player information for coloring the text and assigning the correct messages
         const getPlayer = usePlayer();
         const [chat, setChat] = useState([]);
         const [lastChatAdd, setLastChatAdd] = useState(Date.now());
 
+        // receive messages from our plugin.js, which has access to the game state that we don't
         useMessage((messages) => {
             
             setLastChatAdd(Date.now());
@@ -37,6 +39,7 @@ registerComponent(
         }
         
         useEffect(() => {
+            // remove messages from the chat log on a regular interval
             const _interval = window.setInterval(() => {
                 removeFromChat()
             }, config.hideTime);
