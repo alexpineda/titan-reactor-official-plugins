@@ -17,7 +17,7 @@ const Energy = ({ unit }) => {
         style={{
           color: "var(--gray-3)",
         }}
-      ><RollingNumber value={unit.energy} /></p>
+      ><RollingNumber value={Math.floor(unit.energy)} /></p>
     </span>
   );
 };

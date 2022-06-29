@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/unit-selection-display",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "Unit Selection Display",
     "author": "Dark Matter",
     "keywords": [
@@ -13,7 +13,7 @@
         "largeShowUnitName": {
             "folder": "Large Unit Display",
             "label": "Show Unit Name",
-            "value": false
+            "value": true
         },
         "smallShowKills": {
             "folder": "Small Unit Display",

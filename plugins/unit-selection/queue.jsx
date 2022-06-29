@@ -14,7 +14,6 @@ const Queue = ({ unit }) => {
   return (
     <div style={{
         display:"flex",
-        justifyContent: "center"
     }}>
       <img
         src={cmdIcons[icon]}

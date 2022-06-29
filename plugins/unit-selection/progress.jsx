@@ -53,6 +53,54 @@ const researchSelector = (unit) => {
   return 0;
 };
 
+const styles =  {
+  label: {
+    color: "var(--gray-5)"
+  },
+  wrapper: {
+    position: "relative",
+    marginTop: "var(--size-3)",
+    width: "128px",
+    height: "0.875rem",
+    visibility: "hidden",
+  },
+  pattern: {
+    position: "absolute",
+    top: "0",
+    left: "0",
+    bottom: "0",
+    right: "0",
+    borderRadius: "var(--radius-2)",
+    border: "var(--border-size-2) solid",
+    borderColor: "#00ee00",
+    backgroundImage:
+      "linear-gradient(to right, #000000, #000000 2px, #00ee00 2px, #00ee00 )",
+    backgroundSize: "7px 100%",
+    backgroundRepeatX: "repeat"
+  },
+  innerBorder: {
+    borderRadius: "var(--radius-3)",
+    border: "var(--border-size-2) solid black",
+    position: "absolute",
+    zIndex: "10",
+    left: "2px",
+    top: "2px",
+    right: "2px",
+    bottom: "2px",
+  },
+  progress: {
+    backgroundColor: "black",
+    borderRadius: "var(--radius-3)",
+    position: "absolute",
+    zIndex: "20",
+    left: "2px",
+    top: "2px",
+    right: "2px",
+    bottom: "2px",
+    transition: "transform 1s",
+  }
+}
+
 const Progress = forwardRef(({ unit }, ref) => {
   const bwDat = assets.bwDat;
   const progressRef = useRef(null);
@@ -81,73 +129,41 @@ const Progress = forwardRef(({ unit }, ref) => {
     if (!progressRef.current || !wrapperRef.current || !displayTextRef.current)
       return;
 
-    const progress = progressSelector(unit) || researchSelector(unit);
+    const progress = progressSelector(unit);// || researchSelector(unit);
     const text = displayTextSelector(unit);
 
     if (progress > 0 && progress <= 1) {
       progressRef.current.style.transformOrigin = "top right";
-
       progressRef.current.style.transform = `scaleX(${progress})`;
+      progressRef.current.style.transition = "transform 1s";
+
       wrapperRef.current.style.visibility = "visible";
       displayTextRef.current.textContent = text;
     } else {
       displayTextRef.current.textContent = "";
       wrapperRef.current.style.visibility = "hidden";
     }
+    return () => {
+      progressRef.current.style.transition = "transform 0s";
+    }
   }, [unit]);
 
   return (
     <div ref={ref}>
-      <p ref={displayTextRef} className="text-gray-300"></p>
+      <p ref={displayTextRef} style={styles.label}></p>
       <div
         ref={wrapperRef}
-        style={{
-          position: "relative",
-          marginTop: "var(--size-3)",
-          width: "128px",
-          height: "0.875rem",
-          visibility: "hidden",
-        }}
+        style={styles.wrapper}
       >
         <div
-          style={{
-            position: "absolute",
-            top: "0",
-            left: "0",
-            bottom: "0",
-            right: "0",
-            borderRadius: "var(--radius-2)",
-            border: "var(--border-size-2) solid",
-            borderColor: "#00ee00",
-            backgroundImage:
-              "linear-gradient(to right, #000000, #000000 2px, #00ee00 2px, #00ee00 )",
-            backgroundSize: "7px 100%",
-          }}
+          style={styles.pattern}
         ></div>
         <div
-          style={{
-            borderRadius: "var(--radius-3)",
-            border: "var(--border-size-2) solid black",
-            position: "absolute",
-            zIndex: "10",
-            left: "2px",
-            top: "2px",
-            right: "2px",
-            bottom: "2px",
-          }}
+          style={styles.innerBorder}
         ></div>
         <div
           ref={progressRef}
-          style={{
-            backgroundColor: "black",
-            borderRadius: "var(--radius-3)",
-            position: "absolute",
-            zIndex: "20",
-            left: "2px",
-            top: "2px",
-            right: "2px",
-            bottom: "2px",
-          }}
+          style={styles.progress}
         ></div>
       </div>
     </div>

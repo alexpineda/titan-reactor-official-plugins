@@ -15,9 +15,10 @@ registerComponent(
     return (
       <div
         style={{
-          padding: "var(--size-2)",
+          padding: "var(--size-3)",
           background: "#00000099",
           borderRadius: "var(--radius-2)",
+          minWidth: units.length === 1 ? "var(--size-13)" : "0",
         }}
       >
         {units.length === 1 ? (

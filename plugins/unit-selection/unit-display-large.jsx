@@ -7,7 +7,7 @@ import Resource from "./resource.jsx";
 import Energy from "./energy.jsx";
 import Kills from "./kills.jsx";
 import Wireframe from "./wireframe.jsx";
-// import Progress from "./progress.jsx";
+import Progress from "./progress.jsx";
 import Name from "./name.jsx";
 import Queue from "./queue.jsx";
 import Loaded from "./loaded.jsx";
@@ -42,7 +42,6 @@ const UnitDisplayLarge = ({ unit }) => {
   useEffect(() => {
     if (!loadedRef.current || !progressRef.current) return;
 
-    //TOOD: add unit.loaded to unit.extras.dat
     progressRef.current.style.display = unit.loaded ? "none" : "block";
   }, [unit]);
 
@@ -55,7 +54,7 @@ const UnitDisplayLarge = ({ unit }) => {
       <div>
         <div style={{
           display: "flex",
-          justifyContent: "space-around",
+          justifyContent: "space-between",
           padding: "var(--size-1)",
         }}>
           <Wireframe unit={unit} size="md" />
@@ -71,7 +70,7 @@ const UnitDisplayLarge = ({ unit }) => {
         <div>
           {unit.loaded?.length && <Loaded unit={unit}/>}
           <Queue unit={unit} />
-          {/* <Progress unit={unit} ref={progressRef} /> */}
+          <Progress unit={unit} ref={progressRef} />
         </div>
       </div>
     </div>

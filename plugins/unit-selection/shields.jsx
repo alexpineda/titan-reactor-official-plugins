@@ -4,6 +4,7 @@ import { RollingNumber } from "titan-reactor";
 const Shields = ({ unit }) => {
   const shields = Math.floor(unit.shields);
 
+  const msPerShield = (unit.extras.dat.buildTime * 42) / unit.extras.dat.shields;
 
   return (
     <p
@@ -11,7 +12,7 @@ const Shields = ({ unit }) => {
         color: "var(--gray-4)",
       }}
     >
-      <RollingNumber value={shields} upSpeed={160}/>/{unit.extras.dat.shields}
+      <RollingNumber value={shields} upSpeed={msPerShield}/>/{unit.extras.dat.shields}
     </p>
   );
 };
