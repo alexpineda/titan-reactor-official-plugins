@@ -7,27 +7,32 @@ const MIN_SECONDS = 5;
 // we'll use this to write colors and read colors using THREE.Color.getHSL()
 const color = {};
 
+function easeInSine(x) {
+    return 1 - Math.cos((x * Math.PI) / 2);
+}
+
 return {
     _updateVisibility(updateColors) {
         //as of three 137 css renderer only respects CSS2DObject visible 
-        for (const unit of this._deadUnits) {
-            unit.obj.visible = this._visible;
+        for (const deadUnit of this._deadUnits) {
+            deadUnit.obj.visible = this._visible;
             if (updateColors) {
-                this._setStyleFilter(unit.style, unit.color);
+                this._setStyleFilter(deadUnit);
             }
         }
 
     },
 
-    _setStyleFilter(style, playerColor) {
+    _setStyleFilter(deadUnit) {
         if (this.config.usePlayerColors) {
-            playerColor.getHSL(color);
+            deadUnit.color.getHSL(color);
             // rotate the color based on the player hue, should approximately get us there
-            style.filter = `hue-rotate(${color.h * 320}deg) brightness(4) saturate(1.25) contrast(0.75)`;
+            deadUnit.style.filter = `hue-rotate(${color.h * 320}deg) brightness(4) saturate(1.25) contrast(0.75)`;
         } else {
             // default red with brightness 2
-            style.filter = `brightness(2)`;
+            deadUnit.style.filter = `brightness(2)`;
         }
+
     },
 
     onGameReady() {
@@ -83,9 +88,10 @@ return {
             deathFrame: this.getFrame(),
             obj,
             color: unit.extras.player.color,
-            style: image.style
+            style: image.style,
+            image
         };
-        this._setStyleFilter(deadUnit.style, deadUnit.color);
+        this._setStyleFilter(deadUnit);
         this._deadUnits.push(deadUnit);
     },
 
@@ -96,13 +102,17 @@ return {
         // avoid unnecessary work, especially in onFrame and onRender callbacks
         if (this._deadUnits.length && (frame - this._lastFrameCheck) * SECONDS_PER_FRAME > MIN_SECONDS) {
             this._lastFrameCheck = frame;
-            this._deadUnits = this._deadUnits.filter(unit => {
-                if ((frame - unit.deathFrame) * SECONDS_PER_FRAME > this.config.timeFrame) {
-                    unit.obj.removeFromParent();
+            this._deadUnits = this._deadUnits.filter(deadUnit => {
+                if ((frame - deadUnit.deathFrame) * SECONDS_PER_FRAME > this.config.timeFrame) {
+                    deadUnit.obj.removeFromParent();
                     return false;
                 }
                 return true;
             });
+        }
+
+        for (const deadUnit of this._deadUnits) {
+            deadUnit.style.opacity =  easeInSine((frame - deadUnit.deathFrame) * SECONDS_PER_FRAME / this.config.timeFrame);
         }
     },
 
