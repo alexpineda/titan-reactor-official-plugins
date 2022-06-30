@@ -5,6 +5,8 @@ const ACCELERATION = 1.01;
 const BATTLE_FAR = 128;
 
 const deltaYP = new THREE.Vector3();
+const audioListenerPosition = new THREE.Vector3();
+
 const { DepthOfFieldEffect, ScanlineEffect, EffectPass, ToneMappingEffect, ToneMappingMode } = postprocessing;
 
 return  {
@@ -171,7 +173,7 @@ return  {
     },
 
     onUpdateAudioMixerLocation(delta, elapsed, target, position) {
-        return position;
+        return audioListenerPosition.lerpVectors(target, position, this.config.audioSourceDistance);
     },
 
     onFrame() {
