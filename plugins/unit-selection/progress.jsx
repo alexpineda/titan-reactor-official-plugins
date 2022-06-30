@@ -34,24 +34,7 @@ const displayTextSelector = (unit) => {
   return getDisplayText(unit);
 };
 
-const researchSelector = (unit) => {
-  if (unit.owner > 7) return 0;
 
-  const { tech, upgrades } = useProductionStore.getState();
-  const t = tech[unit.owner].find(
-    (t) => t && t.unitId === unit.id && !t.timeCompleted
-  );
-  if (t) {
-    return t.remainingBuildTime / t.buildTime;
-  }
-  const u = upgrades[unit.owner].find(
-    (t) => t && t.unitId === unit.id && !t.timeCompleted
-  );
-  if (u) {
-    return u.remainingBuildTime / u.buildTime;
-  }
-  return 0;
-};
 
 const styles =  {
   label: {
@@ -60,7 +43,6 @@ const styles =  {
   wrapper: {
     position: "relative",
     marginTop: "var(--size-3)",
-    width: "128px",
     height: "0.875rem",
     visibility: "hidden",
   },
@@ -107,6 +89,26 @@ const Progress = ({ unit }) => {
   const wrapperRef = useRef(null);
   const displayTextRef = useRef(null);
 
+  const researchSelector = (unit) => {
+    if (unit.owner > 7) return 0;
+  
+    if (unit.upgrade) {
+      return unit.upgrade.time / (bwDat.upgrades[unit.upgrade.id].researchTimeBase + bwDat.upgrades[unit.upgrade.id].researchTimeFactor * unit.upgrade.level);
+    } else if (unit.research) {
+      return unit.research.time / bwDat.tech[unit.research.id].researchCost;
+    }
+    return 0;
+  };
+
+  const researchIconSelector = (unit) => {
+    if (unit.upgrade) {
+      return bwDat.upgrades[unit.upgrade.id].icon;
+    } else if (unit.research) {
+      return bwDat.tech[unit.research.id].icon;
+    }
+    return null;
+  }
+
   const queuedZergType =
     unit.extras.dat.isZerg && unit.buildQueue?.length
       ? bwDat.units[unit.buildQueue[0]]
@@ -134,7 +136,7 @@ const Progress = ({ unit }) => {
     if (!progressRef.current || !wrapperRef.current || !displayTextRef.current)
       return;
 
-    const progress = progressSelector(unit);// || researchSelector(unit);
+    const progress = progressSelector(unit) || researchSelector(unit);
     const text = displayTextSelector(unit);
 
     if (progress > 0 && progress <= 1) {
@@ -153,7 +155,24 @@ const Progress = ({ unit }) => {
     }
   }, [unit]);
 
+  const techIcon = researchIconSelector(unit);
+
   return (
+    <>
+      {techIcon === null ? null : <img
+        src={assets.cmdIcons[techIcon]}
+        style={{
+          marginTop: "-46px",
+          marginLeft: "46px",
+          border: "var(--border-size-2)",
+          borderRadius: "var(--radius-2)",
+          width: "var(--size-8)",
+          height: "var(--size-8)",
+          filter: "hue-rotate(69deg) brightness(9)",
+          background: "black",
+          border: "1px solid #aaaaaa22",
+        }}
+      />}
     <div>
       <p ref={displayTextRef} style={styles.label}></p>
       <div
@@ -172,6 +191,7 @@ const Progress = ({ unit }) => {
         ></div>
       </div>
     </div>
+    </>
   );
 };
 export default Progress;

@@ -1,32 +1,19 @@
 import React from "react";
-import { assets, getUnitIcon } from "titan-reactor";
+import { assets } from "titan-reactor";
 
-const Queue = ({ unit }) => {
+const Queue = ({ units }) => {
   const cmdIcons = assets.cmdIcons;
 
-  const icon = getUnitIcon(unit);
-;
-
-  if (icon === null) {
-    return null;
-  }
-
-  return (
-    <div style={{
-        display:"flex",
-    }}>
-      <img
-        src={cmdIcons[icon]}
+  return <div style={{
+    display: "flex",
+  }}>{units.map(unit => 
+    <img
+        src={cmdIcons[unit]}
         style={{
-          border: "var(--border-size-2)",
-          borderRadius: "var(--radius-2)",
-          width: "48px",
-          height: "48px",
-          filter: "hue-rotate(69deg) brightness(5)",
-          borderColor: "#111",
+          width: "var(--size-5)",
+          height: "var(--size-5)",
+          filter: "hue-rotate(69deg) brightness(20)",
         }}
-      />
-    </div>
-  );
+      />)}</div>;
 };
 export default Queue;

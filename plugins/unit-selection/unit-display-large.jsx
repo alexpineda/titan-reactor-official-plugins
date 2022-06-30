@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { enums, usePluginConfig } from "titan-reactor";
+import { enums, usePluginConfig, assets, getUnitIcon } from "titan-reactor";
 
 import Health from "./health.jsx";
 import Shields from "./shields.jsx";
@@ -16,6 +16,9 @@ import Loaded from "./loaded.jsx";
 const UnitDisplayLarge = ({ unit }) => {
 
   const config = usePluginConfig();
+  const cmdIcons = assets.cmdIcons;
+
+  const icon = getUnitIcon(unit);
 
   const showHp = !(unit.extras.dat.isResourceContainer && unit.owner > 7);
   const showShields = unit.extras.dat.shieldsEnabled;
@@ -35,6 +38,7 @@ const UnitDisplayLarge = ({ unit }) => {
     ) || showKillsExtraUnits.includes(unit.typeId);
 
   const showResourceAmount = unit.resourceAmount > 0;
+  const showBuildQueue = !unit.extras.dat.isZerg && unit.buildQueue?.length > 1;
 
   return (
     <div>
@@ -46,6 +50,7 @@ const UnitDisplayLarge = ({ unit }) => {
         <div style={{
           display: "flex",
           justifyContent: "space-between",
+          alignItems: "center",
           padding: "var(--size-1)",
         }}>
           <Wireframe unit={unit} size="md" />
@@ -56,13 +61,25 @@ const UnitDisplayLarge = ({ unit }) => {
             {showResourceAmount && <Resource unit={unit} />}
             {showEnergy && <Energy unit={unit} />}
             {showKills && <Kills unit={unit} />}
+            {showBuildQueue && <Queue units={unit.buildQueue} />}
           </div>
         </div>
-        <div>
-          {unit.loaded?.length && <Loaded unit={unit}/>}
-          <Queue unit={unit} />
-          {!unit.loaded && <Progress unit={unit} />}
-        </div>
+        {unit.loaded?.length && <Loaded unit={unit}/>}
+        {icon === null ? null : <img
+          src={cmdIcons[icon]}
+          style={{
+            marginTop: "-46px",
+            marginLeft: "46px",
+            border: "var(--border-size-2)",
+            borderRadius: "var(--radius-2)",
+            width: "var(--size-8)",
+            height: "var(--size-8)",
+            filter: "hue-rotate(69deg) brightness(9)",
+            background: "black",
+            border: "1px solid #aaaaaa22",
+          }}
+        />}
+        {!unit.loaded && <Progress unit={unit} />}
       </div>
     </div>
   );
