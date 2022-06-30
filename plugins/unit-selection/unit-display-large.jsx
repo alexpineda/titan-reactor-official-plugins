@@ -36,15 +36,6 @@ const UnitDisplayLarge = ({ unit }) => {
 
   const showResourceAmount = unit.resourceAmount > 0;
 
-  const loadedRef = useRef(null);
-  const progressRef = useRef(null);
-
-  useEffect(() => {
-    if (!loadedRef.current || !progressRef.current) return;
-
-    progressRef.current.style.display = unit.loaded ? "none" : "block";
-  }, [unit]);
-
   return (
     <div>
       <div>
@@ -70,7 +61,7 @@ const UnitDisplayLarge = ({ unit }) => {
         <div>
           {unit.loaded?.length && <Loaded unit={unit}/>}
           <Queue unit={unit} />
-          <Progress unit={unit} ref={progressRef} />
+          {!unit.loaded && <Progress unit={unit} />}
         </div>
       </div>
     </div>

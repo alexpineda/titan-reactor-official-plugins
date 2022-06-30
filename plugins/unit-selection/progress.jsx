@@ -1,8 +1,8 @@
-import React, { useRef, useEffect, forwardRef } from "react";
-import { assets } from "titan-reactor";
+import React, { useRef, useEffect } from "react";
+import { assets, enums } from "titan-reactor";
 
 const unitIsComplete = (unit) => {
-  return unit.statusFlags & 0x01 === 1;
+  return unit.statusFlags & enums.UnitFlags.Completed === 1;
 }
 
 const getDisplayText = (unit) => {
@@ -101,7 +101,7 @@ const styles =  {
   }
 }
 
-const Progress = forwardRef(({ unit }, ref) => {
+const Progress = ({ unit }) => {
   const bwDat = assets.bwDat;
   const progressRef = useRef(null);
   const wrapperRef = useRef(null);
@@ -111,9 +111,14 @@ const Progress = forwardRef(({ unit }, ref) => {
     unit.extras.dat.isZerg && unit.buildQueue?.length
       ? bwDat.units[unit.buildQueue[0]]
       : null;
-
+      
   const progressSelector = (unit) => {
-    if (unit.remainingBuildTime > 0 && unit.owner < 8) {
+    //tank uses build time for siege transition?
+    const isCompletedTank = (unit.typeId === enums.unitTypes.siegeTankSiegeMode ||
+        unit.typeId === enums.unitTypes.siegeTankTankMode) &&
+      unitIsComplete(unit);
+
+    if (!isCompletedTank && unit.remainingBuildTime > 0 && unit.owner < 8) {
       return (
         unit.remainingBuildTime /
         (queuedZergType ? queuedZergType.buildTime : unit.extras.dat.buildTime)
@@ -149,7 +154,7 @@ const Progress = forwardRef(({ unit }, ref) => {
   }, [unit]);
 
   return (
-    <div ref={ref}>
+    <div>
       <p ref={displayTextRef} style={styles.label}></p>
       <div
         ref={wrapperRef}
@@ -168,5 +173,5 @@ const Progress = forwardRef(({ unit }, ref) => {
       </div>
     </div>
   );
-});
+};
 export default Progress;
