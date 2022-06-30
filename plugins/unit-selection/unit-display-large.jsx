@@ -61,7 +61,7 @@ const UnitDisplayLarge = ({ unit }) => {
             {showResourceAmount && <Resource unit={unit} />}
             {showEnergy && <Energy unit={unit} />}
             {showKills && <Kills unit={unit} />}
-            {showBuildQueue && <Queue units={unit.buildQueue} />}
+            {showBuildQueue && <Queue units={unit.buildQueue.slice(1)} />}
           </div>
         </div>
         {unit.loaded?.length && <Loaded unit={unit}/>}
