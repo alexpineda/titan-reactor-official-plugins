@@ -100,7 +100,7 @@ registerComponent(
                   </div>
                 </td>
                 <td>
-                  <div style={_divStyle}>
+                  <div style={{..._divStyle, color: playerInfo.supply > playerInfo.supplyMax ? config.supplyCappedTextColor : "inherit"}}>
                     <img
                       style={_imgStyle}
                       src={assets.gameIcons[player.race]}
