@@ -28,8 +28,8 @@ const ProductionItem = ({ item, color }) => {
       if (item) {
         wrapperRef.current.style.display = "block";
   
-        if (item.count > 1) {
-          countRef.current.textContent = item.count;
+        if (item.count > 1 || item.level > 1) {
+          countRef.current.textContent = item.count ?? item.level;
           countRef.current.style.display = "block";
         } else {
           countRef.current.style.display = "none";
