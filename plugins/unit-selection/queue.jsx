@@ -6,6 +6,7 @@ const Queue = ({ units }) => {
 
   return <div style={{
     display: "flex",
+    alignSelf: "center"
   }}>{units.map(unit => 
     <img
         src={cmdIcons[unit]}

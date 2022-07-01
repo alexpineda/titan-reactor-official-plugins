@@ -17,8 +17,12 @@ const Name = ({ unit, className = "" }) => {
 
   return <p 
   style={{
-    color: "var(--gray-3)",
+    color: "var(--gray-4)",
     textTransform: "uppercase",
+    textAlign: "center",
+    fontFamily: 'Inter',
+    width: "100%",
+    marginBottom: "var(--size-2)"
   }}
   className={className}>{removeRacePrefix(name)}</p>;
 };

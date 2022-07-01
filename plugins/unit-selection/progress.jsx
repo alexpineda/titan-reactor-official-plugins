@@ -5,37 +5,6 @@ const unitIsComplete = (unit) => {
   return unit.statusFlags & enums.UnitFlags.Completed === 1;
 }
 
-const getDisplayText = (unit) => {
-  if (unit.owner > 7 || !unit.extras.dat.isBuilding) {
-    return "";
-  }
-  if (unitIsComplete(unit) || unit.remainingTrainTime) {
-    if (
-      unit.remainingTrainTime &&
-      unit.extras.dat.isTerran &&
-      !unit.buildQueue?.length &&
-      !unit.extras.dat.isAddon
-    ) {
-      return "Adding On";
-    }
-    return "";
-  }
-  if (unit.extras.dat.isTerran) {
-    return "Constructing";
-  } else if (unit.extras.dat.isZerg) {
-    return "Mutating";
-  } else {
-    return "Warping";
-  }
-};
-
-const displayTextSelector = (unit) => {
-  if (!unit) return "";
-  return getDisplayText(unit);
-};
-
-
-
 const styles =  {
   label: {
     color: "var(--gray-5)"
@@ -87,7 +56,6 @@ const Progress = ({ unit }) => {
   const bwDat = assets.bwDat;
   const progressRef = useRef(null);
   const wrapperRef = useRef(null);
-  const displayTextRef = useRef(null);
 
   const researchSelector = (unit) => {
     if (unit.owner > 7) return 0;
@@ -95,17 +63,29 @@ const Progress = ({ unit }) => {
     if (unit.upgrade) {
       return unit.upgrade.time / (bwDat.upgrades[unit.upgrade.id].researchTimeBase + bwDat.upgrades[unit.upgrade.id].researchTimeFactor * unit.upgrade.level);
     } else if (unit.research) {
-      return unit.research.time / bwDat.tech[unit.research.id].researchCost;
-    }
+      return unit.research.time / bwDat.tech[unit.research.id].researchTime;
+    } 
+
     return 0;
   };
 
   const researchIconSelector = (unit) => {
+    if (unit.owner > 7) return null;
+
     if (unit.upgrade) {
       return bwDat.upgrades[unit.upgrade.id].icon;
     } else if (unit.research) {
       return bwDat.tech[unit.research.id].icon;
+    } else if (
+      unit.extras.dat.isBuilding &&
+      unit.remainingTrainTime &&
+      unit.extras.dat.isTerran &&
+      !unit.buildQueue?.length &&
+      !unit.extras.dat.isAddon
+    ) {
+      return null;
     }
+
     return null;
   }
 
@@ -133,11 +113,10 @@ const Progress = ({ unit }) => {
   };
 
   useEffect(() => {
-    if (!progressRef.current || !wrapperRef.current || !displayTextRef.current)
+    if (!progressRef.current || !wrapperRef.current)
       return;
 
     const progress = progressSelector(unit) || researchSelector(unit);
-    const text = displayTextSelector(unit);
 
     if (progress > 0 && progress <= 1) {
       progressRef.current.style.transformOrigin = "top right";
@@ -145,9 +124,7 @@ const Progress = ({ unit }) => {
       progressRef.current.style.transition = "transform 1s";
 
       wrapperRef.current.style.visibility = "visible";
-      displayTextRef.current.textContent = text;
     } else {
-      displayTextRef.current.textContent = "";
       wrapperRef.current.style.visibility = "hidden";
     }
     return () => {
@@ -174,7 +151,6 @@ const Progress = ({ unit }) => {
         }}
       />}
     <div>
-      <p ref={displayTextRef} style={styles.label}></p>
       <div
         ref={wrapperRef}
         style={styles.wrapper}
