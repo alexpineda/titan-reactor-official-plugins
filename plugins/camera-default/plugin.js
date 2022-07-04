@@ -5,7 +5,7 @@ const POLAR_MAX = (10 * Math.PI) / 64;
 const POLAR_MIN = (2 * Math.PI) / 64;
 
 const POV_COMMANDS = [0x0c, 0x14, 0x15, 0x60, 0x61];
-const PIP_PROXIMITY = 8;
+const PIP_PROXIMITY = 16;
 
 const _target = new THREE.Vector3();
 
@@ -161,19 +161,18 @@ return {
   onMinimapDragUpdate(pos, isDragStart, isDragging, mouseButton) {
       if (mouseButton === 0) {
         this.orbit.moveTo(pos.x, 0, pos.z, !isDragStart);
-      } else if (mouseButton === 2) {
-        if (
-            this.orbit
-            .getTarget(_target)
-            .setY(this.getPipCamera().position.y)
-            .distanceTo(this.getPipCamera().position) < PIP_PROXIMITY
-          ) {
-            this.pipHide();
-          }
-         else {
-            this.pipLookAt(pos.x, pos.z);
-        }
+      } else if (mouseButton === 2) { 
+        this.pipLookAt(pos.x, pos.z);
         this._pipPovPlayerId = null;
+      }
+
+      if (
+        this.orbit
+        .getTarget(_target)
+        .setY(this.getPipCamera().position.y)
+        .distanceTo(this.getPipCamera().position) < PIP_PROXIMITY
+      ) {
+        this.pipHide();
       }
   },
 
