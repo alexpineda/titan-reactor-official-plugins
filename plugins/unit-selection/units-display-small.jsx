@@ -69,7 +69,7 @@ const UnitsDisplaySmall = ({  units }) => {
               units[i] && sendMessage({
                 type: "unit-selection-click",
                 payload: {
-                  unitId: unit[i].id,
+                  unitId: units[i].id,
                 },
               });
             }}

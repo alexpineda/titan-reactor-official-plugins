@@ -1,5 +1,12 @@
 ## [Unreleased]
+Recently Dead Units v1.1.2
+- Fix fade out opacity
 
+Default Camera v1.1.1
+- Increase PIP proximity and fix overlap issue
+
+Replay Control v1.1.1
+- Add indicator option
 
 ## [Release-2] July 1st 2022
 Battle Camera v1.1.1

@@ -25,14 +25,6 @@ const Loaded = ({ unit, sendMessage }) => {
             unit={unit?.loaded?.[i]}
             owner={unit?.owner}
             showLoaded={true}
-            onClick={() => {
-                unit?.loaded?.[i] && sendMessage({
-                type: "unit-selection-click",
-                payload: {
-                  unitId: unit?.loaded?.[i],
-                },
-              });
-            }}
           />
         ))}
       </div>

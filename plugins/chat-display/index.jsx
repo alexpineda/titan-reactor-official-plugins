@@ -13,15 +13,15 @@ registerComponent(
         const [lastChatAdd, setLastChatAdd] = useState(Date.now());
 
         // receive messages from our plugin.js, which has access to the game state that we don't
-        useMessage((messages) => {
+        useMessage((message) => {
             
             setLastChatAdd(Date.now());
 
-            if (messages === "reset") {
+            if (message === "reset") {
                 setChat([]);
             } else {
                 setChat(chat => {
-                    let newChat = [...chat, ...messages.map(message => ({ ...message, key: _chatIndex++ }))];
+                    let newChat = [...chat, ...message.map(content => ({ ...content, key: _chatIndex++ }))];
                     if (newChat.length > 10) {
                         newChat = newChat.slice(1);
                     }

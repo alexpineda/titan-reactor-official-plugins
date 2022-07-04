@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/replay-control",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "Replay Control",
     "author": "Dark Matter",
     "keywords": [
@@ -39,6 +39,10 @@
             "folder": "Hotkeys",
             "type": "keyboard-shortcut",
             "value": "BracketRight"
+        },
+        "showIndicator": {
+            "label": "Show Indicator",
+            "value": true
         }
     }
 }
