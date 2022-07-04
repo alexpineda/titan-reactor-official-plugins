@@ -8,7 +8,7 @@ const MIN_SECONDS = 5;
 const color = {};
 
 function easeInSine(x) {
-    return 1 - Math.cos((x * Math.PI) / 2);
+    return Math.cos((x * Math.PI) / 2);
 }
 
 return {
@@ -112,7 +112,7 @@ return {
         }
 
         for (const deadUnit of this._deadUnits) {
-            deadUnit.style.opacity =  easeInSine((frame - deadUnit.deathFrame) * SECONDS_PER_FRAME / this.config.timeFrame);
+            deadUnit.style.opacity = easeInSine((frame - deadUnit.deathFrame) * SECONDS_PER_FRAME / this.config.timeFrame);
         }
     },
 
