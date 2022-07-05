@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/default-screens",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Default Screens",
     "author": "Dark Matter",
     "keywords": [
@@ -8,20 +8,6 @@
     ],
     "peerDependencies": {
         "titan-reactor-api": "1.0.0"
-    },
-    "config": {
-        "map": {
-            "label": "Map Loading Screen",
-            "value": true
-        },
-        "replay": {
-            "label": "Replay Loading Screen",
-            "value": true
-        },
-        "homePage": {
-            "label": "Home Screen",
-            "value": true
-        }
     },
     "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5"
 }

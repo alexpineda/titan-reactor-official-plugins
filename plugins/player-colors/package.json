@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/player-colors",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "description": "Player Colors",
     "author": "Dark Matter",
     "keywords": [
@@ -23,12 +23,12 @@
         "player_0": {
             "folder": "Custom Colors",
             "label": "Player 1",
-            "value": "#ff0000"
+            "value": "#f40404"
         },
         "player_1": {
             "folder": "Custom Colors",
             "label": "Player 2",
-            "value": "#25ff00"
+            "value": "#0c48cc"
         },
         "player_2": {
             "folder": "Custom Colors",

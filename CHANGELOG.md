@@ -1,4 +1,7 @@
 ## [Unreleased]
+Production Bar v1.1.2
+- Use custom progress color bar option
+
 Recently Dead Units v1.1.2
 - Fix fade out opacity
 
@@ -7,6 +10,13 @@ Default Camera v1.1.1
 
 Replay Control v1.1.1
 - Add indicator option
+
+Player Colors v1.1.2
+- Improved default colors
+
+Default Screens v1.2.0
+- Remove home screen as it is now built into Titan Reactor
+- Remove visibility options. Disable the plugin instead if you wish to hide the screens.
 
 ## [Release-2] July 1st 2022
 Battle Camera v1.1.1

@@ -70,18 +70,21 @@ const ProductionBar = () => {
         // const items = useToggleItems(config.rotateDisplay, units, upgrades, research);
         const items = config.unitsFirst ? [...units, ...tech] : [...tech, ...units];
 
+        const color = config.useCustomProgressColor ? config.customProgressColor : player.color;
+
         return (
           <div
             style={{
               display: "flex",
               flexDirection:
                 config.orientation === "horizontal" ? "row" : "column",
+                borderLeft: `3px solid ${player.color}`,
             }}
           >
             {items.slice(0, config.maxTotalItems).map((item, i) => (
               <ProductionItem
                 item={item}
-                color={player.color}
+                color={color}
                 isFirst={i === 0}
               />
             ))}

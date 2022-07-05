@@ -8,13 +8,13 @@ return {
         });
 
         this.registerHotkey(this.config.speedUp, () => {
-            this.speedUp();
-            this.sendUIMessage("🔼");
+            const speed = this.speedUp() ?? ""; // support old version
+            this.sendUIMessage(`🔼 ${speed}x`);
         });
 
         this.registerHotkey(this.config.speedDown, () => {
-           this.speedDown();
-           this.sendUIMessage("🔽");
+            const speed = this.speedDown() ?? ""; // support old version
+           this.sendUIMessage(`🔽 ${speed}x`);
         });
 
         this.registerHotkey(this.config.skipForwards, () => {
