@@ -7,7 +7,18 @@ import {
   usePluginConfig,
 } from "titan-reactor";
 import ProductionItem from "./production-item.jsx";
-import { useToggleItems } from "./toggle-items.js";
+
+// Scanner Sweep
+// Defensive Matrix
+// Infestation 
+// Dark Swarm
+// Parasite 
+// Archon Warp 
+// Dark Archon Meld 
+// Feedback 
+// Unknown 33
+// Healing 
+const initialResearch = [4, 6, 12, 14, 18, 23, 28, 29, 33, 34];
 
 const ProductionBar = () => {
   const config = usePluginConfig();
@@ -42,6 +53,7 @@ const ProductionBar = () => {
   const filterResearch = (research) => {
     return (
       config.showResearch &&
+      (!config.hideInitialResearch || (!initialResearch.includes(research.typeId))) &&
       (research.progress > 0 ||
         (config.showCompletedResearch && research.progress === 0))
     );

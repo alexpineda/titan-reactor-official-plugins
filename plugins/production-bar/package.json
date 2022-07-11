@@ -92,6 +92,11 @@
             "folder": "Research",
             "label": "Display Completed Research",
             "value": true
+        },
+        "hideInitialResearch": {
+            "folder": "Research",
+            "label": "Hide starting research in UMS games",
+            "value": true
         }
     }
 }

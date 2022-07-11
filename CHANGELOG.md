@@ -1,6 +1,7 @@
 ## [Unreleased]
 Production Bar v1.1.2
 - Use custom progress color bar option
+- UMS games won't show initial research with option selected
 
 Recently Dead Units v1.1.2
 - Fix fade out opacity
