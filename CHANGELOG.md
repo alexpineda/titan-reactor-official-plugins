@@ -11,6 +11,7 @@ Default Camera v1.1.1
 
 Replay Control v1.1.1
 - Add indicator option
+- Fix double hotkey bug
 
 Player Colors v1.1.2
 - Improved default colors

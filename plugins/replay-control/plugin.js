@@ -8,12 +8,12 @@ return {
         });
 
         this.registerHotkey(this.config.speedUp, () => {
-            const speed = this.speedUp() ?? ""; // support old version
+            const speed = this.speedUp() ?? this.getSpeed(); // support old version
             this.sendUIMessage(`🔼 ${speed}x`);
         });
 
         this.registerHotkey(this.config.speedDown, () => {
-            const speed = this.speedDown() ?? ""; // support old version
+            const speed = this.speedDown() ?? this.getSpeed(); // support old version
            this.sendUIMessage(`🔽 ${speed}x`);
         });
 
@@ -34,5 +34,9 @@ return {
 
     onGameReady() {
         this._registerHotkeys();
+    },
+
+    onGameDisposed() {
+        this.clearHotkeys();
     }
 }
