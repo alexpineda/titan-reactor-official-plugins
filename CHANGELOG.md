@@ -1,4 +1,5 @@
 ## [Unreleased]
+## [Release-3]
 Production Bar v1.1.2
 - Use custom progress color bar option
 - UMS games won't show initial research with option selected
@@ -41,6 +42,7 @@ Production Bar v1.1.1
 Player Bar v1.1.1
 - Add supply cap coloring to text with accompanying configuration option
 
-[Unreleased]: https://github.com/imbateam-gg/titan-reactor-official-plugins/compare/release-2...HEAD
+[Unreleased]: https://github.com/imbateam-gg/titan-reactor-official-plugins/compare/release-3...HEAD
+[Release-3]: https://github.com/imbateam-gg/titan-reactor-official-plugins/compare/release-2...release-3
 [Release-2]: https://github.com/imbateam-gg/titan-reactor-official-plugins/compare/release-1...release-2
 [Release-1]: https://github.com/imbateam-gg/titan-reactor-official-plugins/compare/522952d7...release-1
