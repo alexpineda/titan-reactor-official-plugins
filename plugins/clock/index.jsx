@@ -1,5 +1,5 @@
 import React from "react";
-import { registerComponent, useFrame, usePluginConfig } from "titan-reactor";
+import { registerComponent, useFrame, usePluginConfig, useReplay, getFriendlyTime } from "titan-reactor";
 import ModernClock from "./modern-clock.jsx";
 import ClassicClock from "./classic-clock.jsx";
 
@@ -12,7 +12,14 @@ registerComponent(
     // frame will be updated every game second with useful info like time and frame #.
     const frame = useFrame();
 
-    const pct = `${Math.round((frame.frame / frame.maxFrame) * 100)}%`;
+    const replay = useReplay();
+
+    if (!replay) {
+      return null;
+    }
+    
+    const pct = `${Math.round((frame.frame / replay.frameCount) * 100)}%`;
+    const time = getFriendlyTime(frame.frame);
     
     const styles = {
       timeLabel: "white",
@@ -26,9 +33,9 @@ registerComponent(
     };
 
     return config.style === "modern" ? (
-      <ModernClock time={frame.time} pct={pct} styles={styles} />
+      <ModernClock time={time} pct={pct} styles={styles} />
     ) : (
-      <ClassicClock time={frame.time} pct={pct} styles={styles} />
+      <ClassicClock time={time} pct={pct} styles={styles} />
     );
   }
 );

@@ -19,12 +19,12 @@
         },
         "fontSize": {
             "label": "Font Size",
-            "value": "16px"
+            "value": "12px"
         },
         "textColor": {
             "folder": "Color",
             "label": "Text 1",
-            "value": "rgb(255, 255, 255)"
+            "value": "rgb(124, 124, 124)"
         },
         "textColor2": {
             "folder": "Color",
@@ -34,12 +34,12 @@
         "bgDark": {
             "folder": "Color",
             "label": "Background 1",
-            "value": "#2d3748"
+            "value": "#2d374861"
         },
         "bgLight": {
             "folder": "Color",
             "label": "Background 2",
-            "value": "#4a5568"
+            "value": "#4a556870"
         }
     },
     "gitHead": "e47a73f384a275e14c56d8ada4a9bb4dc2cb53a0"
