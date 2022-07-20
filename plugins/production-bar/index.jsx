@@ -90,7 +90,8 @@ const ProductionBar = () => {
               display: "flex",
               flexDirection:
                 config.orientation === "horizontal" ? "row" : "column",
-                borderLeft: `3px solid ${player.color}`,
+                borderLeft: config.orientation === "horizontal" ? `3px solid ${player.color}` : "none",
+                borderTop: config.orientation === "vertical" ? `3px solid ${player.color}` : "none",
             }}
           >
             {items.slice(0, config.maxTotalItems).map((item, i) => (
