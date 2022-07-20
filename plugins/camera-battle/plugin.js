@@ -13,19 +13,13 @@ return  {
     minimap: true,
     pointerLock: true,
     soundMode: "spatial",
-    boundByMap: {
-        scaleBoundsByCamera: false,
-    },
     cameraShake: true,
     rotateSprites: true,
     background: "space",
-    fogOfWar: 0.3,
+    fogOfWar: 0.5,
 
     // a few shared setings we can update on init and config change
     _updateSettings() {
-
-        this._scanlineEffect.blendMode.opacity.value = this.config.scanlinesEnabled ? this.config.scanlineOpacity : 0;
-        this._scanlineEffect.density = this.config.scanlineDensity;
 
         this._keyboardSpeed = this.config.keyboardSpeed;
         this.orbit.dampingFactor = this.config.damping;
@@ -58,7 +52,6 @@ return  {
         this.orbit.maxAzimuthAngle = Infinity;
         this.orbit.minAzimuthAngle = -Infinity;
       
-        this._scanlineEffect = new ScanlineEffect({ density: this.config.scanlineDensity });
         this._depthOfFieldEffect = new DepthOfFieldEffect(this.orbit.camera, {
             focusDistance: 0.01,
             focalLength: 0.1,
@@ -72,7 +65,7 @@ return  {
 
     },
 
-    onSetComposerPasses(clearPass, renderPass, fogOfWarEffect) {
+    onSetComposerPasses(renderPass, fogOfWarEffect) {
 
         const effects = [];
                     
@@ -82,18 +75,9 @@ return  {
 
         effects.push(fogOfWarEffect);
 
-        if (this.config.scanlinesEnabled) {
-            effects.push(this._scanlineEffect);
-        }
-
-        if (this.config.toneMappingEnabled) {
-            effects.push(new ToneMappingEffect({ mode: ToneMappingMode.OPTIMIZED_CINEON }));
-        }
-
         return {
             effects,
             passes: [
-                clearPass, 
                 renderPass,
                 new EffectPass(
                     this.orbit.camera,

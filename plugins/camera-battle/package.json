@@ -85,28 +85,11 @@
             "max": 4,
             "step": 0.1
         },
-        "scanlineOpacity": {
-            "label": "Scanline Opacity",
-            "folder": "Visual Effects",
-            "factor": 0.01,
-            "value": 15,
-            "min": 10,
-            "max": 40,
-            "step": 1
-        },
-        "scanlineDensity": {
-            "label": "Scanline Density",
-            "folder": "Visual Effects",
-            "factor": 0.05,
-            "value": 15,
-            "min": 1,
-            "max": 19
-        },
         "focalLength": {
             "label": "Focal Length",
             "folder": "Visual Effects",
             "factor": 0.01,
-            "value": 30,
+            "value": 50,
             "min": 5,
             "max": 100,
             "step": 1
@@ -129,18 +112,8 @@
                 480
             ]
         },
-        "scanlinesEnabled": {
-            "label": "Scanlines",
-            "folder": "Enable Visual Effects",
-            "value": true
-        },
         "depthOfFieldEnabled": {
             "label": "Depth Of Field",
-            "folder": "Enable Visual Effects",
-            "value": true
-        },
-        "toneMappingEnabled": {
-            "label": "Tone Mapping",
             "folder": "Enable Visual Effects",
             "value": true
         },
