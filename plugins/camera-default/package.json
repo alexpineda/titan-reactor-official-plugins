@@ -15,11 +15,6 @@
                 "replay.commands"
             ]
         },
-        "cameraModeKey": {
-            "label": "Toggle Camera",
-            "type": "keyboard-shortcut",
-            "value": "Escape"
-        },
         "defaultDistance": {
             "label": "Default Distance",
             "value": 80,

@@ -1,5 +1,3 @@
-const { THREE, Layers } = arguments[0];
-
 const DEFAULT_FAR = 256;
 const POLAR_MAX = (10 * Math.PI) / 64;
 const POLAR_MIN = (2 * Math.PI) / 64;
@@ -10,15 +8,14 @@ const PIP_PROXIMITY = 16;
 const _target = new THREE.Vector3();
 
 return {
-  boundByMap: {
-    scaleBoundsByCamera: true,
-  },
+    name: "Classic Camera",
+    isCameraController: true,
   minimap: true,
-  background: "tiles",
   fogOfWar: 1,
   unitSelection: true,
   _pipPovPlayerId: null,
   _isPreviewing: false,
+  maxSoundDistance: 100,
 
   // a few shared setings we can update on init and config change
   _updateSettings() {
@@ -60,6 +57,7 @@ return {
     await this.orbit.rotateAzimuthTo(0, false);
     await this.orbit.zoomTo(1, false);
     await this.orbit.dollyTo(this.config.defaultDistance, false);
+
   },
 
   onConfigChanged(oldConfig) {

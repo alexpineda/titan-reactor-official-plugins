@@ -1,5 +1,4 @@
 
-const { THREE, bwDat, postprocessing } = arguments[0];
 const MAX_ACCELERATION = 2;
 const ACCELERATION = 1.01;
 const BATTLE_FAR = 128;
@@ -10,12 +9,13 @@ const audioListenerPosition = new THREE.Vector3();
 const { DepthOfFieldEffect, ScanlineEffect, EffectPass, ToneMappingEffect, ToneMappingMode } = postprocessing;
 
 return  {
+    name: "Battle Camera",
+    isCameraController: true,
     minimap: true,
     pointerLock: true,
     soundMode: "spatial",
     cameraShake: true,
     rotateSprites: true,
-    background: "space",
     fogOfWar: 0.5,
 
     // a few shared setings we can update on init and config change

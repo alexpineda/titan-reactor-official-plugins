@@ -1,4 +1,21 @@
 ## [Unreleased]
+
+Remove keyboard shortcut APIs
+
+Replay 
+
+Unit Sounds v1.0.0
+- Play unit sounds on selection
+
+FPS v1.0.1
+- No longer rely on deprecated getFPS()
+
+Overview Camera v1.1.1
+- Add polar angle and transition options
+- Add auto rotate option
+- Add zoom capability
+- Add edge screen drag
+  
 ## [Release-3]
 Production Bar v1.1.2
 - Use custom progress color bar option

@@ -1,5 +1,3 @@
-const { THREE, STDLIB } = arguments[0];
-
 // Seconds per bw game frame (tick)
 const SECONDS_PER_FRAME = 42 / 1000;
 const MIN_SECONDS = 5;
@@ -52,11 +50,6 @@ return {
         this._group = new THREE.Group();
         this.cssScene.add(this._group);
 
-        // Let Titan Reactor know we are using this hotkey
-        this.registerHotkey(this.config.toggleVisibleHotKey, () => {
-            this._visible = !this._visible;
-            this._updateVisibility(false);
-        });
     },
 
     onConfigChanged(oldConfig) {

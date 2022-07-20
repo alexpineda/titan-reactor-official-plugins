@@ -10,11 +10,6 @@
         "titan-reactor-api": "1.0.1"
     },
     "config": {
-        "toggleVisibleHotKey": {
-            "label": "Hotkey",
-            "value": "KeyB",
-            "type": "keyboard-shortcut"
-        },
         "timeFrame": {
             "label": "Time Frame in Game Seconds",
             "value": 10,

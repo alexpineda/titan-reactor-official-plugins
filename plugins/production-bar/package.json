@@ -10,11 +10,6 @@
         "titan-reactor-api": "1.0.0"
     },
     "config": {
-        "toggleVisibleKey": {
-            "label": "Toggle Visible Hotkey",
-            "type": "keyboard-shortcut",
-            "value": ""
-        },
         "toggleVisible": {
             "label": "Toggle Visible",
             "value": true

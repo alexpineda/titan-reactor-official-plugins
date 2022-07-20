@@ -10,11 +10,6 @@
         "titan-reactor-api": "1.0.0"
     },
     "config": {
-        "cameraModeKey": {
-            "label": "Toggle Camera",
-            "type": "keyboard-shortcut",
-            "value": "F2"
-        },
         "elevateAmount": {
             "folder": "Middle Mouse Scroll",
             "label": "Elevation Change",
