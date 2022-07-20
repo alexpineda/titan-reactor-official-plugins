@@ -34,6 +34,11 @@
             "folder": "Graphics",
             "label": "Use Player Colors",
             "value": true
+        },
+        "showBorder": {
+            "folder": "Graphics",
+            "label": "Show Border",
+            "value": false
         }
     }
 }

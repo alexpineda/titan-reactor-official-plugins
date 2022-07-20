@@ -27,11 +27,15 @@ return {
         if (this.config.usePlayerColors) {
             deadUnit.color.getHSL(color);
             // rotate the color based on the player hue, should approximately get us there
-            deadUnit.style.filter = `hue-rotate(${color.h * 320}deg) brightness(4) saturate(1.25) contrast(0.75)`;
+            deadUnit.style.filter = `hue-rotate(${color.h * 320}deg) brightness(5) saturate(1.25) contrast(0.75)`;
         } else {
             // default red with brightness 2
             deadUnit.style.filter = `brightness(2)`;
         }
+
+        deadUnit.style.border = this.config.showBorder ? "3px solid #ff000099" : "none";
+        deadUnit.style.borderRadius = "50%";
+
 
     },
 
@@ -61,7 +65,7 @@ return {
 
     onUnitKilled(unit) {
         // it's not a human player controlled unit so we don't care
-        if (unit.extras.player === undefined) {
+        if (unit.owner > 7) {
             return;
         }
         
@@ -87,7 +91,7 @@ return {
         const deadUnit = {
             deathFrame: this.getFrame(),
             obj,
-            color: unit.extras.player.color,
+            color: this.getPlayerColor(unit.owner),
             style: image.style,
             image
         };
@@ -137,5 +141,9 @@ return {
     onGameDisposed() {
         this._reset();
         this._visible = false;
+    },
+    
+    onPluginDispose() {
+        this._reset();
     }
 }
