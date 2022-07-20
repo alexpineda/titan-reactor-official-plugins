@@ -12,10 +12,14 @@
     "config": {
         "showWorkers": {
             "label": "Show Workers",
-            "value": true
+            "value": false
         },
         "showApm": {
             "label": "Show APM",
+            "value": false
+        },
+        "showSupply": {
+            "label": "Show Supply",
             "value": false
         },
         "textColor": {

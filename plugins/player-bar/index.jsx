@@ -59,10 +59,6 @@ registerComponent(
     const players = usePlayers();
     const getPlayerFrameInfo = usePlayerFrame();
 
-    if (!assets.ready) {
-      return null;
-    }
-
     const _tableStyle = {
       background: config.backgroundColor,
       borderRadius: "var(--radius-2)",
@@ -99,6 +95,7 @@ registerComponent(
                     <RollingNumber value={playerInfo.vespeneGas} />
                   </div>
                 </td>
+                {config.showSupply && (
                 <td>
                   <div style={{..._divStyle, color: playerInfo.supply > playerInfo.supplyMax ? config.supplyCappedTextColor : "inherit"}}>
                     <img
@@ -107,8 +104,9 @@ registerComponent(
                     />
                     {playerInfo.supply}/{playerInfo.supplyMax}
                   </div>
-                </td>
+                </td>)}
                 {config.showWorkers && (
+                  <td>
                   <div style={_divStyle}>
                     <img
                       style={_imgStyle}
@@ -116,6 +114,7 @@ registerComponent(
                     />
                     {playerInfo.workerSupply}
                   </div>
+                  </td>
                 )}
                 {config.showApm && (
                   <td>
