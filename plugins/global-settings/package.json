@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/global-settings",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Global Settings",
     "author": "Dark Matter",
     "keywords": [
@@ -11,65 +11,7 @@
     },
     "config": {
         "system": {
-            "permissions": [
-                "settings.write"
-            ]
-        },
-        "global": {
-            "folder": "Audio",
-            "label": "Global Volume",
-            "value": 0.5,
-            "min": 0,
-            "max": 1
-        },
-        "music": {
-            "folder": "Audio",
-            "label": "Music Volume",
-            "value": 0,
-            "min": 0,
-            "max": 1
-        },
-        "sound": {
-            "folder": "Audio",
-            "label": "Sound Volume",
-            "value": 0.5,
-            "min": 0,
-            "max": 1
-        },
-        "stopFollowingOnClick": {
-            "folder": "Game",
-            "label": "Click anywhere to stop following units",
-            "value": true
-        },
-        "pixelRatio": {
-            "folder": "Graphics",
-            "label": "Pixel Ratio (Requires Game Reload)",
-            "value": "med",
-            "options": [
-                "low",
-                "med",
-                "high"
-            ]
-        },
-        "terrainChunky": {
-            "folder": "Graphics",
-            "label": "Chunky Terrain (Requires Game Reload)",
-            "value": false
-        },
-        "terrainShadows": {
-            "folder": "Graphics",
-            "label": "Terrain Shadows (Requires Game Reload)",
-            "value": true
-        },
-        "sanityCheckReplayCommands": {
-            "folder": "Utility",
-            "label": "Sanity Check Replay Commands",
-            "value": false
-        },
-        "debugMode": {
-            "folder": "Utility",
-            "label": "Debug Mode (Requires App Reload)",
-            "value": true
+            "deprecated": true
         }
     }
 }

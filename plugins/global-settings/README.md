@@ -1,1 +1,1 @@
-Use this to modify your general game settings.
+This plugin is deprecated. Please use Global Settings.
