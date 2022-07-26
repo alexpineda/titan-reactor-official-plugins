@@ -7,7 +7,7 @@
         "titan-reactor-plugin"
     ],
     "peerDependencies": {
-        "titan-reactor-api": "1.0.0"
+        "titan-reactor-api": "2.0.0"
     },
     "config": {
         "toggleVisible": {
@@ -22,7 +22,7 @@
         "orientation": {
             "folder": "Style",
             "label": "Orientation",
-            "value": "horizontal",
+            "value": "vertical",
             "options": [
                 "horizontal",
                 "vertical"
@@ -71,7 +71,7 @@
         "showUpgrades": {
             "folder": "Upgrades",
             "label": "Display Upgrades",
-            "value": true
+            "value": false
         },
         "showCompletedUpgrades": {
             "folder": "Upgrades",
@@ -81,7 +81,7 @@
         "showResearch": {
             "folder": "Research",
             "label": "Display Research",
-            "value": true
+            "value": false
         },
         "showCompletedResearch": {
             "folder": "Research",

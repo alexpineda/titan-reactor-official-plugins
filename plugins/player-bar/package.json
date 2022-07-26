@@ -7,7 +7,7 @@
         "titan-reactor-plugin"
     ],
     "peerDependencies": {
-        "titan-reactor-api": "1.0.0"
+        "titan-reactor-api": "2.0.0"
     },
     "config": {
         "showWorkers": {

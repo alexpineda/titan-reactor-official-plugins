@@ -7,7 +7,7 @@
         "titan-reactor-plugin"
     ],
     "peerDependencies": {
-        "titan-reactor-api": "1.0.0"
+        "titan-reactor-api": "2.0.0"
     },
     "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5"
 }

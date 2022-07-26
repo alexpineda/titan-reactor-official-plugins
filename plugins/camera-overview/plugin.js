@@ -1,16 +1,15 @@
-const rayCaster = new THREE.Raycaster();
+const _rayCaster = new THREE.Raycaster();
 const intersections = [];
 const OVERVIEW_FAR = 1000;
 
 return  {
-    name: "Overview Camera",
-    isCameraController: true,
-    unitScale: 2.5,
-    fogOfWar: 0.7,
-    soundMode: "spatial",
-    maxSoundDistance: 100,
+    gameOptions: {
+        audio: "3d",
+    },
 
-    async onEnterCameraMode(prevData, camera) {
+    async onEnterScene(prevData) {
+
+        const orbit = this.primaryViewport.orbit;
 
         this._exitCamera = {
             target: new THREE.Vector3()
@@ -22,19 +21,22 @@ return  {
 
         this._pipLocation = new THREE.Vector2();
 
-        this.orbit.camera.far = OVERVIEW_FAR;
-        this.orbit.camera.fov = 15;
-        this.orbit.camera.updateProjectionMatrix();
+        orbit.camera.far = OVERVIEW_FAR;
+        orbit.camera.fov = 15;
+        orbit.camera.updateProjectionMatrix();
 
         const distance = Math.max(this.terrain.mapWidth, this.terrain.mapHeight) * 4;
-        this.maxSoundDistance = distance;
+        orbit.setLookAt(0, distance, 0, 0, 0, 0, false);
+        await orbit.zoomTo(1, false);   
 
-        //TODO: improve algorithm to actually encompass the terrain
-        this.orbit.setLookAt(0, distance, 0, 0, 0, 0, false);
-        await this.orbit.zoomTo(1, false);   
+        this.primaryViewport.renderOptions.unitScale = 2.5;
+        this.primaryViewport.renderOptions.fogOfWarOpacity = 0.7;
+
+        this.secondaryViewport.height = this.config.pipSize;
+        this.secondaryViewport.center = new THREE.Vector2;
     },
 
-    onExitCameraMode(target, position) {
+    onExitScene() {
         return this._exitCamera;
     },
 
@@ -44,32 +46,33 @@ return  {
 
     onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked) {
         if (clicked && clicked.z === 0) {
-            rayCaster.setFromCamera(clicked, this.orbit.camera);
+            _rayCaster.setFromCamera(clicked, this.primaryViewport.camera);
             intersections.length = 0;
-            rayCaster.intersectObject(this.terrain.mesh, true, intersections);
+            _rayCaster.intersectObject(this.terrain.mesh, true, intersections);
             if (intersections.length) {
                 this._exitCamera.target.set(intersections[0].point.x, 0, intersections[0].point.z);
-                this.exitCameraMode();
+                this.exitScene();
             }
         }
 
         if (!clicked && mouse.z === 2) {
-            rayCaster.setFromCamera(mouse, this.orbit.camera);
+            _rayCaster.setFromCamera(mouse, this.primaryViewport.camera);
             intersections.length = 0;
-            rayCaster.intersectObject(this.terrain.mesh, true, intersections);
+            _rayCaster.intersectObject(this.terrain.mesh, true, intersections);
             if (intersections.length) {
-                this.pipLookAt(intersections[0].point.x, intersections[0].point.z);
-                this._pipLocation.set(clientX, clientY);
-                this.setPipDimensions(this._pipLocation, this.config.pipSize);
+                this.secondaryViewport.enabled = true;
+                this.secondaryViewport.orbit.moveTo(intersections[0].point.x, 0, intersections[0].point.z);
+                this.secondaryViewport.center.set(clientX, clientY);
+                this.secondaryViewport.update();
                 this._exitCamera.target.set(intersections[0].point.x, 0, intersections[0].point.z);
             }
         } else {
-            this.pipHide();
+            this.secondaryViewport.enabled = false;
         }
     },
 
     onUpdateAudioMixerLocation(delta, elapsed, target, position) {
-        if (this.pipIsActive()) {
+        if (this.secondaryViewport.enabled) {
             return this._exitCamera.target;
         }
         return position;

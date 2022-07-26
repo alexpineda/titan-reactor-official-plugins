@@ -7,79 +7,76 @@ const PIP_PROXIMITY = 16;
 
 const _target = new THREE.Vector3();
 
+const pipColor = "#aaaaaa"
+
 return {
-    name: "Classic Camera",
-    isCameraController: true,
-  minimap: true,
-  fogOfWar: 1,
-  unitSelection: true,
+  gameOptions: {
+    showMinimap: true,
+    allowUnitSelection: true,
+    audio: "stereo",
+  },
+
   _pipPovPlayerId: null,
   _isPreviewing: false,
-  maxSoundDistance: 100,
 
   // a few shared setings we can update on init and config change
   _updateSettings() {
     this._edgeSpeed = this.config.screenDragSpeed;
     this._keyboardSpeed = this.config.keyboardSpeed;
-    this.orbit.dampingFactor = this.config.damping;
-    this.orbit.boundaryFriction = this.config.edgeFriction;
+    this.primaryViewport.orbit.dampingFactor = this.config.damping;
   },
 
-  async onEnterCameraMode(prevData, camera) {
+  async onEnterScene(prevData, camera) {
+    const orbit = this.primaryViewport.orbit;
+
     if (prevData?.target?.isVector3) {
-      await this.orbit.setTarget(
+      await orbit.setTarget(
         prevData.target.x,
         0,
         prevData.target.z,
         false
       );
     } else {
-      await this.orbit.setTarget(0, 0, 0, false);
+      await orbit.setTarget(0, 0, 0, false);
     }
 
-    this.orbit.camera.far = DEFAULT_FAR;
-    this.orbit.camera.fov = 15;
-    this.orbit.camera.updateProjectionMatrix();
+    orbit.camera.far = DEFAULT_FAR;
+    orbit.camera.fov = 15;
+    orbit.camera.updateProjectionMatrix();
 
-    this.orbit.dollyToCursor = true;
-    this.orbit.verticalDragToForward = true;
+    orbit.dollyToCursor = true;
+    orbit.verticalDragToForward = true;
 
-    this.orbit.maxDistance = 128;
-    this.orbit.minDistance = 20;
+    orbit.maxDistance = 128;
+    orbit.minDistance = 20;
 
-    this.orbit.maxPolarAngle = POLAR_MAX;
-    this.orbit.minPolarAngle = POLAR_MIN;
-    this.orbit.maxAzimuthAngle = 0;
-    this.orbit.minAzimuthAngle = 0;
+    orbit.maxPolarAngle = POLAR_MAX;
+    orbit.minPolarAngle = POLAR_MIN;
+    orbit.maxAzimuthAngle = 0;
+    orbit.minAzimuthAngle = 0;
     this._updateSettings();
 
-    await this.orbit.rotatePolarTo(POLAR_MIN, false);
-    await this.orbit.rotateAzimuthTo(0, false);
-    await this.orbit.zoomTo(1, false);
-    await this.orbit.dollyTo(this.config.defaultDistance, false);
+    await orbit.rotatePolarTo(POLAR_MIN, false);
+    await orbit.rotateAzimuthTo(0, false);
+    await orbit.zoomTo(1, false);
+    await orbit.dollyTo(this.config.defaultDistance, false);
 
+    this.secondaryViewport.height = this.config.pipSize;
+    this.secondaryViewport.right = .05;
+    this.secondaryViewport.bottom = .05;
   },
 
   onConfigChanged(oldConfig) {
-    if (this.isActiveCameraMode) {
       this._updateSettings();
 
       // only update default distance if it's changed otherwise we'll get a jump
       if (this.config.defaultDistance !== oldConfig.defaultDistance) {
-        this.orbit.dollyTo(this.config.defaultDistance, true);
+        this.primaryViewport.orbit.dollyTo(this.config.defaultDistance, true);
       }
 
       if (this.config.pipSize !== oldConfig.pipSize) {
-        this.setPipDimensions(null, this.config.pipSize);
+        this.secondaryViewport.height = this.config.pipSize;
       }
-    }
-  },
-
-  onExitCameraMode(target, position) {
-    return {
-      target,
-      position,
-    };
   },
 
   onCameraMouseUpdate(
@@ -95,20 +92,20 @@ return {
   ) {
     if (scrollY) {
       if (scrollY < 0) {
-        this.orbit.dolly(this.config.dollyAmount, true);
-        this.orbit.rotate(0, (Math.PI * this.config.rotateAmount) / 96, true);
+        this.primaryViewport.orbit.dolly(this.config.dollyAmount, true);
+        this.primaryViewport.orbit.rotate(0, (Math.PI * this.config.rotateAmount) / 96, true);
       } else {
-        this.orbit.dolly(-this.config.dollyAmount, true);
-        this.orbit.rotate(0, -(Math.PI * this.config.rotateAmount) / 96, true);
+        this.primaryViewport.orbit.dolly(-this.config.dollyAmount, true);
+        this.primaryViewport.orbit.rotate(0, -(Math.PI * this.config.rotateAmount) / 96, true);
       }
     }
 
     if (screenDrag.x !== 0) {
-      this.orbit.truck(screenDrag.x * delta * this._edgeSpeed, 0, true);
+      this.primaryViewport.orbit.truck(screenDrag.x * delta * this._edgeSpeed, 0, true);
     }
 
     if (screenDrag.y !== 0) {
-      this.orbit.forward(screenDrag.y * delta * this._edgeSpeed, true);
+      this.primaryViewport.orbit.forward(screenDrag.y * delta * this._edgeSpeed, true);
     }
 
     if (screenDrag.y === 0 && screenDrag.x === 0) {
@@ -123,11 +120,11 @@ return {
 
   onCameraKeyboardUpdate(delta, elapsed, move) {
     if (move.x !== 0) {
-      this.orbit.truck(move.x * delta * this._keyboardSpeed, 0, true);
+      this.primaryViewport.orbit.truck(move.x * delta * this._keyboardSpeed, 0, true);
     }
 
     if (move.y !== 0) {
-      this.orbit.forward(move.y * delta * this._keyboardSpeed, true);
+      this.primaryViewport.orbit.forward(move.y * delta * this._keyboardSpeed, true);
     }
 
     if (move.y === 0 && move.x === 0) {
@@ -144,7 +141,8 @@ return {
     return target;
   },
 
-  onDrawMinimap(ctx, view, target, position) {
+  onDrawMinimap(ctx) {
+    const view = this.primaryViewport.projectedView;
     ctx.strokeStyle = "white";
     ctx.lineWidth = 0.8;
     ctx.beginPath();
@@ -154,73 +152,75 @@ return {
     ctx.lineTo(...view.bl);
     ctx.lineTo(...view.tl);
     ctx.stroke();
+
+    if (this.secondaryViewport.enabled) {
+    const view = this.secondaryViewport.projectedView;
+    const camera = this.secondaryViewport.camera;
+        const h = 5;
+        const w = h * camera.aspect;
+        ctx.strokeStyle = pipColor;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+        ctx.moveTo(...view.tl);
+        ctx.lineTo(...view.tr);
+        ctx.lineTo(...view.br);
+        ctx.lineTo(...view.bl);
+        ctx.lineTo(...view.tl);
+        ctx.stroke();
+        // ctx.beginPath();
+        // ctx.moveTo(camera.position.x - w, camera.position.z - h);
+        // ctx.lineTo(camera.position.x + w, camera.position.z - h);
+        // ctx.lineTo(camera.position.x + w, camera.position.z + h);
+        // ctx.lineTo(camera.position.x - w, camera.position.z + h);
+        // ctx.lineTo(camera.position.x - w, camera.position.z - h);
+        // ctx.stroke();
+      }
   },
 
+
   onMinimapDragUpdate(pos, isDragStart, isDragging, mouseButton) {
+      if (
+        this.secondaryViewport.enabled && 
+        this.primaryViewport.orbit
+        .getTarget(_target)
+        .setY(this.secondaryViewport.camera.position.y)
+        .distanceTo(this.secondaryViewport.camera.position) < PIP_PROXIMITY
+      ) {
+        this.secondaryViewport.enabled = false;
+      }
+      
       if (mouseButton === 0) {
-        this.orbit.moveTo(pos.x, 0, pos.z, !isDragStart);
+        this.primaryViewport.orbit.moveTo(pos.x, 0, pos.z, !isDragStart);
       } else if (mouseButton === 2) { 
-        this.pipLookAt(pos.x, pos.z);
+        this.secondaryViewport.enabled = true;
+        this.secondaryViewport.orbit.moveTo(pos.x, 0, pos.z)
         this._pipPovPlayerId = null;
       }
 
-      if (
-        this.orbit
-        .getTarget(_target)
-        .setY(this.getPipCamera().position.y)
-        .distanceTo(this.getPipCamera().position) < PIP_PROXIMITY
-      ) {
-        this.pipHide();
-      }
+      
   },
 
-  onFrame(frame, commands) {
-    if (!this.isActiveCameraMode) {
-      return;
-    }
-
-    if (this.getFollowedUnits().length) {
-      const target = this.calculateFollowedUnitsTarget();
-      this.orbit.moveTo(target.x, target.y, target.z, true);
-    }
-
-    if (this._pipPovPlayerId !== null) {
-        let movedCamera = false;
-      for (const command of commands) {
-        if (
-          command.player === this._pipPovPlayerId &&
-          POV_COMMANDS.includes(command.id)
-        ) {
-          const px = this.pxToGameUnit.x(command.x);
-          const pz = this.pxToGameUnit.y(command.y);
-          const py = this.terrain.getTerrainY(px, pz);
-
-          if (!movedCamera) {
-            this.pipLookAt(px, pz);
-            movedCamera = true;
-          }
-
-          this.fadingPointers.addPointer(
-            px,
-            py,
-            pz,
-            this.getPlayerColor(command.player),
-            frame,
-          ).layers.set(Layers.PictureInPicture);
-        }
-      }
+  onFrame() {
+    if (this.followedUnitsPosition) {
+      const pos = this.followedUnitsPosition;
+      this.primaryViewport.orbit.moveTo(pos.x, pos.y, pos.z, true);
     }
   },
 
   onCustomPlayerBarClicked({ playerId, button }) {
-    if (this.isActiveCameraMode && button === 2) {
+    if (button === 2) {
       if (this._pipPovPlayerId === playerId) {
         this._pipPovPlayerId = null;
-        this.pipHide();
+        this.secondaryViewport.enabled = false;
         } else {
+        this.secondaryViewport.enabled = true;
         this._pipPovPlayerId = playerId;
       }
       return true;
     }
   },
+
+  onMacroPIPPlayer(playerId) {
+
+  }
 };

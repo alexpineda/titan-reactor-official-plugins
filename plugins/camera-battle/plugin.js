@@ -4,55 +4,60 @@ const ACCELERATION = 1.01;
 const BATTLE_FAR = 128;
 
 const deltaYP = new THREE.Vector3();
+const _target = new THREE.Vector3();
 const audioListenerPosition = new THREE.Vector3();
 
 const { DepthOfFieldEffect, ScanlineEffect, EffectPass, ToneMappingEffect, ToneMappingMode } = postprocessing;
 
 return  {
-    name: "Battle Camera",
-    isCameraController: true,
-    minimap: true,
-    pointerLock: true,
-    soundMode: "spatial",
-    cameraShake: true,
-    rotateSprites: true,
-    fogOfWar: 0.5,
+    gameOptions: {
+        showMinimap: true,
+        allowUnitSelection: false,
+        audio: "3d",
+        usePointerLock: true,
+    },
 
-    // a few shared setings we can update on init and config change
+    // a few shared settings we can update on init and config change
     _updateSettings() {
 
         this._keyboardSpeed = this.config.keyboardSpeed;
-        this.orbit.dampingFactor = this.config.damping;
-        this.orbit.boundaryFriction = this.config.edgeFriction;
+        this.primaryViewport.orbit.dampingFactor = this.config.damping;
         this._depthOfFieldEffect.getCircleOfConfusionMaterial().uniforms.focalLength.value = this.config.focalLength;
         this._depthOfFieldEffect.bokehScale = this.config.bokehScale;
     },
 
-    async onEnterCameraMode(prevData) {
+    async onEnterScene(prevData) {
+        const orbit = this.primaryViewport.orbit;
         if (prevData?.target?.isVector3) {
-            await this.orbit.setTarget(prevData.target.x, 0, prevData.target.z, false);
+            orbit.setTarget(prevData.target.x, 0, prevData.target.z, false);
         } else {
-            await this.orbit.setTarget(0, 0, 0, false);
+            orbit.setTarget(0, 0, 0, false);
         }
 
-        this.orbit.camera.far = BATTLE_FAR;
-        this.orbit.camera.fov = this.config.fov;
-        this.orbit.camera.updateProjectionMatrix();
+        this.primaryViewport.orbit.rotateAzimuthTo((this.config.rotateAzimuthStart-1) * (Math.PI/2), false); 
+        this.primaryViewport.orbit.rotatePolarTo((this.config.rotatePolarStart-1) * (Math.PI/2), false); 
 
-        this.orbit.dollyToCursor = false;
+        this.primaryViewport.orbit.rotateAzimuthTo((this.config.rotateAzimuthStart-1) * (Math.PI/4), true); 
+        this.primaryViewport.orbit.rotatePolarTo((this.config.rotatePolarStart-1) * (Math.PI/4), true); 
+
+        orbit.camera.far = BATTLE_FAR;
+        orbit.camera.fov = this.config.fov;
+        orbit.camera.updateProjectionMatrix();
+
+        orbit.dollyToCursor = false;
       
-        this.orbit.maxDistance = Math.max(this.terrain.mapWidth, this.terrain.mapHeight) * 2;
-        this.orbit.minDistance = 3;
-        this.orbit.maxZoom = 20;
-        this.orbit.minZoom = 0.3;
-        this.orbit.dampingFactor = 0.01;
+        orbit.maxDistance = Math.max(this.terrain.mapWidth, this.terrain.mapHeight) * 2;
+        orbit.minDistance = 3;
+        orbit.maxZoom = 20;
+        orbit.minZoom = 0.3;
+        orbit.dampingFactor = 0.01;
       
-        this.orbit.maxPolarAngle = Infinity;
-        this.orbit.minPolarAngle = -Infinity
-        this.orbit.maxAzimuthAngle = Infinity;
-        this.orbit.minAzimuthAngle = -Infinity;
+        orbit.maxPolarAngle = Infinity;
+        orbit.minPolarAngle = -Infinity
+        orbit.maxAzimuthAngle = Infinity;
+        orbit.minAzimuthAngle = -Infinity;
       
-        this._depthOfFieldEffect = new DepthOfFieldEffect(this.orbit.camera, {
+        this._depthOfFieldEffect = new DepthOfFieldEffect(orbit.camera, {
             focusDistance: 0.01,
             focalLength: 0.1,
             bokehScale: 1.0,
@@ -60,8 +65,12 @@ return  {
           });
         this._updateSettings();
 
-        await this.orbit.dollyTo(this.config.defaultDistance, false);
-        await this.orbit.zoomTo(1, false);
+        orbit.dollyTo(this.config.defaultDistance, false);
+        orbit.zoomTo(1, false);
+
+        this.primaryViewport.renderOptions.fogOfWarOpacity = 0.5;
+        this.primaryViewport.renderOptions.rotateSprites = true;
+        this.primaryViewport.cameraShake.enabled = false;
 
     },
 
@@ -87,25 +96,31 @@ return  {
         };
     },
 
-    onBeforeRender(delta, elapsed, target, position) {
-        if (this.isActiveCameraMode) {
-            this._depthOfFieldEffect.setTarget(target);
-            this._depthOfFieldEffect.getCircleOfConfusionMaterial().adoptCameraSettings(this.orbit.camera);
-        }
+    onBeforeRender(delta, elapsed) {
+        this.primaryViewport.orbit.getTarget(_target);
+        this._depthOfFieldEffect.setTarget(_target);
+        this._depthOfFieldEffect.getCircleOfConfusionMaterial().adoptCameraSettings(this.primaryViewport.camera);
     },
 
     onConfigChanged(oldConfig) {
-        if (this.isActiveCameraMode) {
-            this._updateSettings();
+        this._updateSettings();
 
-            // only update default distance if it's changed otherwise we'll get a jump
-            if (this.config.defaultDistance !== oldConfig.defaultDistance) {
-                this.orbit.dollyTo(this.config.defaultDistance, true);
-            }
+        // only update default distance if it's changed otherwise we'll get a jump
+        if (this.config.defaultDistance !== oldConfig.defaultDistance) {
+            this.primaryViewport.orbit.dollyTo(this.config.defaultDistance, true);
         }
+
+        if (this.config.rotateAzimuthStart !== oldConfig.rotateAzimuthStart) {
+            this.primaryViewport.orbit.rotateAzimuthTo((this.config.rotateAzimuthStart-1) * (Math.PI/4), true); 
+        }
+
+        if (this.config.rotatePolarStart !== oldConfig.rotatePolarStart) {
+            this.primaryViewport.orbit.rotatePolarTo((this.config.rotatePolarStart-1) * (Math.PI/4), true); 
+        }
+
     },
 
-    onExitCameraMode(target, position) {
+    onExitScene({target, position}) {
         return {
             target,
             position
@@ -115,23 +130,23 @@ return  {
     onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked) {
         // zoom in or out depending on left click or right click
         if (clicked) {
-            this.orbit.zoomTo(this.orbit.camera.zoom * (clicked.z === 0 ? 2 : 1 / 2), false);
+            this.primaryViewport.orbit.zoomTo(this.primaryViewport.camera.zoom * (clicked.z === 0 ? 2 : 1 / 2), false);
         }
 
         // rotate according to mouse direction (pointer lock)
         if (lookAt.x || lookAt.y) {
-            this.orbit.rotate((-lookAt.x / 1000) * this.config.rotateSpeed, (-lookAt.y / 1000)  * this.config.rotateSpeed, true);
+            this.primaryViewport.orbit.rotate((-lookAt.x / 1000) * this.config.rotateSpeed, (-lookAt.y / 1000)  * this.config.rotateSpeed, true);
             
         }
 
         // elevate the y position if mouse scroll is used
         if (scrollY) {
-            this.orbit.getPosition(deltaYP);
+            this.primaryViewport.orbit.getPosition(deltaYP);
 
             if (scrollY < 0) {
-                this.orbit.setPosition(deltaYP.x, deltaYP.y - this.config.elevateAmount, deltaYP.z, true);
+                this.primaryViewport.orbit.setPosition(deltaYP.x, deltaYP.y - this.config.elevateAmount, deltaYP.z, true);
             } else {
-                this.orbit.setPosition(deltaYP.x, deltaYP.y + this.config.elevateAmount, deltaYP.z, true);
+                this.primaryViewport.orbit.setPosition(deltaYP.x, deltaYP.y + this.config.elevateAmount, deltaYP.z, true);
             }
         }
     },
@@ -142,11 +157,11 @@ return  {
 
     onCameraKeyboardUpdate(delta, elapsed, move) {
         if (move.x !== 0) {
-            this.orbit.truck(move.x * delta * this._keyboardSpeed, 0, true);
+            this.primaryViewport.orbit.truck(move.x * delta * this._keyboardSpeed, 0, true);
         }
 
         if (move.y !== 0) {
-            this.orbit.forward(move.y * delta * this._keyboardSpeed, true);
+            this.primaryViewport.orbit.forward(move.y * delta * this._keyboardSpeed, true);
         }
 
         if (move.y === 0 && move.x === 0) {
@@ -161,9 +176,9 @@ return  {
     },
 
     onFrame() {
-        if (this.isActiveCameraMode && this.getFollowedUnits().length) {
-            const target = this.calculateFollowedUnitsTarget();
-            this.orbit.moveTo(target.x, target.y, target.z, true);
+        if (this.followedUnitsPosition) {
+            const target = this.followedUnitsPosition;
+            this.primaryViewport.orbit.moveTo(target.x, target.y, target.z, true);
         }
     }
 }

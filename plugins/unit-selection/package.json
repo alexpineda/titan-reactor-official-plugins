@@ -7,13 +7,13 @@
         "titan-reactor-plugin"
     ],
     "peerDependencies": {
-        "titan-reactor-api": "1.0.0"
+        "titan-reactor-api": "2.0.0"
     },
     "config": {
         "largeShowUnitName": {
             "folder": "Large Unit Display",
             "label": "Show Unit Name",
-            "value": true
+            "value": false
         },
         "smallShowKills": {
             "folder": "Small Unit Display",
