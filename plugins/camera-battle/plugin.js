@@ -21,24 +21,24 @@ return  {
     _updateSettings() {
 
         this._keyboardSpeed = this.config.keyboardSpeed;
-        this.primaryViewport.orbit.dampingFactor = this.config.damping;
+        this.viewport.orbit.dampingFactor = this.config.damping;
         this._depthOfFieldEffect.getCircleOfConfusionMaterial().uniforms.focalLength.value = this.config.focalLength;
         this._depthOfFieldEffect.bokehScale = this.config.bokehScale;
     },
 
     async onEnterScene(prevData) {
-        const orbit = this.primaryViewport.orbit;
+        const orbit = this.viewport.orbit;
         if (prevData?.target?.isVector3) {
             orbit.setTarget(prevData.target.x, 0, prevData.target.z, false);
         } else {
             orbit.setTarget(0, 0, 0, false);
         }
 
-        this.primaryViewport.orbit.rotateAzimuthTo((this.config.rotateAzimuthStart-1) * (Math.PI/2), false); 
-        this.primaryViewport.orbit.rotatePolarTo((this.config.rotatePolarStart-1) * (Math.PI/2), false); 
+        this.viewport.orbit.rotateAzimuthTo((this.config.rotateAzimuthStart-1) * (Math.PI/3), false); 
+        this.viewport.orbit.rotatePolarTo((this.config.rotatePolarStart-1) * (Math.PI/3), false); 
 
-        this.primaryViewport.orbit.rotateAzimuthTo((this.config.rotateAzimuthStart-1) * (Math.PI/4), true); 
-        this.primaryViewport.orbit.rotatePolarTo((this.config.rotatePolarStart-1) * (Math.PI/4), true); 
+        this.viewport.orbit.rotateAzimuthTo((this.config.rotateAzimuthStart-1) * (Math.PI/4), true); 
+        this.viewport.orbit.rotatePolarTo((this.config.rotatePolarStart-1) * (Math.PI/4), true); 
 
         orbit.camera.far = BATTLE_FAR;
         orbit.camera.fov = this.config.fov;
@@ -68,9 +68,21 @@ return  {
         orbit.dollyTo(this.config.defaultDistance, false);
         orbit.zoomTo(1, false);
 
-        this.primaryViewport.renderOptions.fogOfWarOpacity = 0.5;
-        this.primaryViewport.renderOptions.rotateSprites = true;
-        this.primaryViewport.cameraShake.enabled = false;
+        this.viewport.spriteRenderOptions.rotateSprites = true;
+        this.viewport.cameraShake.enabled = true;
+
+
+        // effects.push(this._depthOfFieldEffect);
+        // this.viewport.effects.push(this._depthOfFieldEffect);
+
+        this.viewport.postProcessing = {
+            effects: [this._depthOfFieldEffect],
+            passes: [this.viewport.postProcessing.renderPass, new EffectPass(this.viewport.camera, this._depthOfFieldEffect)],
+        }
+
+        this.viewport.postProcessing.fogOfWarEffect.blendMode.opacity.value  = 0.5;
+
+
 
     },
 
@@ -97,9 +109,9 @@ return  {
     },
 
     onBeforeRender(delta, elapsed) {
-        this.primaryViewport.orbit.getTarget(_target);
+        this.viewport.orbit.getTarget(_target);
         this._depthOfFieldEffect.setTarget(_target);
-        this._depthOfFieldEffect.getCircleOfConfusionMaterial().adoptCameraSettings(this.primaryViewport.camera);
+        this._depthOfFieldEffect.getCircleOfConfusionMaterial().adoptCameraSettings(this.viewport.camera);
     },
 
     onConfigChanged(oldConfig) {
@@ -107,15 +119,15 @@ return  {
 
         // only update default distance if it's changed otherwise we'll get a jump
         if (this.config.defaultDistance !== oldConfig.defaultDistance) {
-            this.primaryViewport.orbit.dollyTo(this.config.defaultDistance, true);
+            this.viewport.orbit.dollyTo(this.config.defaultDistance, true);
         }
 
         if (this.config.rotateAzimuthStart !== oldConfig.rotateAzimuthStart) {
-            this.primaryViewport.orbit.rotateAzimuthTo((this.config.rotateAzimuthStart-1) * (Math.PI/4), true); 
+            this.viewport.orbit.rotateAzimuthTo((this.config.rotateAzimuthStart-1) * (Math.PI/4), true); 
         }
 
         if (this.config.rotatePolarStart !== oldConfig.rotatePolarStart) {
-            this.primaryViewport.orbit.rotatePolarTo((this.config.rotatePolarStart-1) * (Math.PI/4), true); 
+            this.viewport.orbit.rotatePolarTo((this.config.rotatePolarStart-1) * (Math.PI/4), true); 
         }
 
     },
@@ -130,23 +142,23 @@ return  {
     onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked) {
         // zoom in or out depending on left click or right click
         if (clicked) {
-            this.primaryViewport.orbit.zoomTo(this.primaryViewport.camera.zoom * (clicked.z === 0 ? 2 : 1 / 2), false);
+            this.viewport.orbit.zoomTo(this.viewport.camera.zoom * (clicked.z === 0 ? 2 : 1 / 2), false);
         }
 
         // rotate according to mouse direction (pointer lock)
         if (lookAt.x || lookAt.y) {
-            this.primaryViewport.orbit.rotate((-lookAt.x / 1000) * this.config.rotateSpeed, (-lookAt.y / 1000)  * this.config.rotateSpeed, true);
+            this.viewport.orbit.rotate((-lookAt.x / 1000) * this.config.rotateSpeed, (-lookAt.y / 1000)  * this.config.rotateSpeed, true);
             
         }
 
         // elevate the y position if mouse scroll is used
         if (scrollY) {
-            this.primaryViewport.orbit.getPosition(deltaYP);
+            this.viewport.orbit.getPosition(deltaYP);
 
             if (scrollY < 0) {
-                this.primaryViewport.orbit.setPosition(deltaYP.x, deltaYP.y - this.config.elevateAmount, deltaYP.z, true);
+                this.viewport.orbit.setPosition(deltaYP.x, deltaYP.y - this.config.elevateAmount, deltaYP.z, true);
             } else {
-                this.primaryViewport.orbit.setPosition(deltaYP.x, deltaYP.y + this.config.elevateAmount, deltaYP.z, true);
+                this.viewport.orbit.setPosition(deltaYP.x, deltaYP.y + this.config.elevateAmount, deltaYP.z, true);
             }
         }
     },
@@ -157,11 +169,11 @@ return  {
 
     onCameraKeyboardUpdate(delta, elapsed, move) {
         if (move.x !== 0) {
-            this.primaryViewport.orbit.truck(move.x * delta * this._keyboardSpeed, 0, true);
+            this.viewport.orbit.truck(move.x * delta * this._keyboardSpeed, 0, true);
         }
 
         if (move.y !== 0) {
-            this.primaryViewport.orbit.forward(move.y * delta * this._keyboardSpeed, true);
+            this.viewport.orbit.forward(move.y * delta * this._keyboardSpeed, true);
         }
 
         if (move.y === 0 && move.x === 0) {
@@ -178,7 +190,7 @@ return  {
     onFrame() {
         if (this.followedUnitsPosition) {
             const target = this.followedUnitsPosition;
-            this.primaryViewport.orbit.moveTo(target.x, target.y, target.z, true);
+            this.viewport.orbit.moveTo(target.x, target.y, target.z, true);
         }
     }
 }

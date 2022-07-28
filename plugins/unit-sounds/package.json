@@ -13,6 +13,10 @@
         "onlyBuildings": {
             "label": "Only building selections play sounds",
             "value": false
+        },
+        "playReadySounds": {
+            "label": "Play 'ready' sounds",
+            "value": false
         }
     }
 }

@@ -88,7 +88,7 @@
         "blurQuality": {
             "label": "Blur Quality",
             "folder": "Visual Effects",
-            "value": 120,
+            "value": 240,
             "options": [
                 120,
                 240,

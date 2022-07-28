@@ -9,7 +9,7 @@ return  {
 
     async onEnterScene(prevData) {
 
-        const orbit = this.primaryViewport.orbit;
+        const orbit = this.viewport.orbit;
 
         this._exitCamera = {
             target: new THREE.Vector3()
@@ -29,11 +29,11 @@ return  {
         orbit.setLookAt(0, distance, 0, 0, 0, 0, false);
         await orbit.zoomTo(1, false);   
 
-        this.primaryViewport.renderOptions.unitScale = 2.5;
-        this.primaryViewport.renderOptions.fogOfWarOpacity = 0.7;
+        this.viewport.spriteRenderOptions.unitScale = 2.5;
+        this.viewport.postProcessing.fogOfWarEffect.blendMode.opacity.value  = 0.7;
 
-        this.secondaryViewport.height = this.config.pipSize;
-        this.secondaryViewport.center = new THREE.Vector2;
+        this.secondViewport.height = this.config.pipSize;
+        this.secondViewport.center = new THREE.Vector2;
     },
 
     onExitScene() {
@@ -46,7 +46,7 @@ return  {
 
     onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked) {
         if (clicked && clicked.z === 0) {
-            _rayCaster.setFromCamera(clicked, this.primaryViewport.camera);
+            _rayCaster.setFromCamera(clicked, this.viewport.camera);
             intersections.length = 0;
             _rayCaster.intersectObject(this.terrain.mesh, true, intersections);
             if (intersections.length) {
@@ -56,23 +56,23 @@ return  {
         }
 
         if (!clicked && mouse.z === 2) {
-            _rayCaster.setFromCamera(mouse, this.primaryViewport.camera);
+            _rayCaster.setFromCamera(mouse, this.viewport.camera);
             intersections.length = 0;
             _rayCaster.intersectObject(this.terrain.mesh, true, intersections);
             if (intersections.length) {
-                this.secondaryViewport.enabled = true;
-                this.secondaryViewport.orbit.moveTo(intersections[0].point.x, 0, intersections[0].point.z);
-                this.secondaryViewport.center.set(clientX, clientY);
-                this.secondaryViewport.update();
+                this.secondViewport.enabled = true;
+                this.secondViewport.orbit.moveTo(intersections[0].point.x, 0, intersections[0].point.z);
+                this.secondViewport.center.set(clientX, clientY);
+                this.secondViewport.update();
                 this._exitCamera.target.set(intersections[0].point.x, 0, intersections[0].point.z);
             }
         } else {
-            this.secondaryViewport.enabled = false;
+            this.secondViewport.enabled = false;
         }
     },
 
     onUpdateAudioMixerLocation(delta, elapsed, target, position) {
-        if (this.secondaryViewport.enabled) {
+        if (this.secondViewport.enabled) {
             return this._exitCamera.target;
         }
         return position;

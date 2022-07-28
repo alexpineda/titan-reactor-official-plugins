@@ -5,9 +5,11 @@ const POLAR_MIN = (2 * Math.PI) / 64;
 const POV_COMMANDS = [0x0c, 0x14, 0x15, 0x60, 0x61];
 const PIP_PROXIMITY = 16;
 
-const _target = new THREE.Vector3();
+const _a = new THREE.Vector3();
+const _b = new THREE.Vector3();
+const _c = new THREE.Vector3();
 
-const pipColor = "#aaaaaa"
+const pipColor = "#aaaaaa";
 
 return {
   gameOptions: {
@@ -23,19 +25,14 @@ return {
   _updateSettings() {
     this._edgeSpeed = this.config.screenDragSpeed;
     this._keyboardSpeed = this.config.keyboardSpeed;
-    this.primaryViewport.orbit.dampingFactor = this.config.damping;
+    this.viewport.orbit.dampingFactor = this.config.damping;
   },
 
   async onEnterScene(prevData, camera) {
-    const orbit = this.primaryViewport.orbit;
+    const orbit = this.viewport.orbit;
 
     if (prevData?.target?.isVector3) {
-      await orbit.setTarget(
-        prevData.target.x,
-        0,
-        prevData.target.z,
-        false
-      );
+      await orbit.setTarget(prevData.target.x, 0, prevData.target.z, false);
     } else {
       await orbit.setTarget(0, 0, 0, false);
     }
@@ -61,22 +58,25 @@ return {
     await orbit.zoomTo(1, false);
     await orbit.dollyTo(this.config.defaultDistance, false);
 
-    this.secondaryViewport.height = this.config.pipSize;
-    this.secondaryViewport.right = .05;
-    this.secondaryViewport.bottom = .05;
+    this._pip = this.secondViewport;
+
+    this._pip.height = this.config.pipSize;
+    this._pip.right = 0.05;
+    this._pip.bottom = 0.05;
+
   },
 
   onConfigChanged(oldConfig) {
-      this._updateSettings();
+    this._updateSettings();
 
-      // only update default distance if it's changed otherwise we'll get a jump
-      if (this.config.defaultDistance !== oldConfig.defaultDistance) {
-        this.primaryViewport.orbit.dollyTo(this.config.defaultDistance, true);
-      }
+    // only update default distance if it's changed otherwise we'll get a jump
+    if (this.config.defaultDistance !== oldConfig.defaultDistance) {
+      this.viewport.orbit.dollyTo(this.config.defaultDistance, true);
+    }
 
-      if (this.config.pipSize !== oldConfig.pipSize) {
-        this.secondaryViewport.height = this.config.pipSize;
-      }
+    if (this.config.pipSize !== oldConfig.pipSize) {
+      this._pip.height = this.config.pipSize;
+    }
   },
 
   onCameraMouseUpdate(
@@ -92,20 +92,32 @@ return {
   ) {
     if (scrollY) {
       if (scrollY < 0) {
-        this.primaryViewport.orbit.dolly(this.config.dollyAmount, true);
-        this.primaryViewport.orbit.rotate(0, (Math.PI * this.config.rotateAmount) / 96, true);
+        this.viewport.orbit.dolly(this.config.dollyAmount, true);
+        this.viewport.orbit.rotate(
+          0,
+          (Math.PI * this.config.rotateAmount) / 96,
+          true
+        );
       } else {
-        this.primaryViewport.orbit.dolly(-this.config.dollyAmount, true);
-        this.primaryViewport.orbit.rotate(0, -(Math.PI * this.config.rotateAmount) / 96, true);
+        this.viewport.orbit.dolly(-this.config.dollyAmount, true);
+        this.viewport.orbit.rotate(
+          0,
+          -(Math.PI * this.config.rotateAmount) / 96,
+          true
+        );
       }
     }
 
     if (screenDrag.x !== 0) {
-      this.primaryViewport.orbit.truck(screenDrag.x * delta * this._edgeSpeed, 0, true);
+      this.viewport.orbit.truck(
+        screenDrag.x * delta * this._edgeSpeed,
+        0,
+        true
+      );
     }
 
     if (screenDrag.y !== 0) {
-      this.primaryViewport.orbit.forward(screenDrag.y * delta * this._edgeSpeed, true);
+      this.viewport.orbit.forward(screenDrag.y * delta * this._edgeSpeed, true);
     }
 
     if (screenDrag.y === 0 && screenDrag.x === 0) {
@@ -116,15 +128,19 @@ return {
         this._edgeSpeed * (1 + this.config.screenDragAccel)
       );
     }
+
+    // if (clicked?.z === 2) {
+    //   this._pip.enabled = false;
+    // }
   },
 
   onCameraKeyboardUpdate(delta, elapsed, move) {
     if (move.x !== 0) {
-      this.primaryViewport.orbit.truck(move.x * delta * this._keyboardSpeed, 0, true);
+      this.viewport.orbit.truck(move.x * delta * this._keyboardSpeed, 0, true);
     }
 
     if (move.y !== 0) {
-      this.primaryViewport.orbit.forward(move.y * delta * this._keyboardSpeed, true);
+      this.viewport.orbit.forward(move.y * delta * this._keyboardSpeed, true);
     }
 
     if (move.y === 0 && move.x === 0) {
@@ -142,7 +158,7 @@ return {
   },
 
   onDrawMinimap(ctx) {
-    const view = this.primaryViewport.projectedView;
+    const view = this.viewport.projectedView;
     ctx.strokeStyle = "white";
     ctx.lineWidth = 0.8;
     ctx.beginPath();
@@ -153,57 +169,88 @@ return {
     ctx.lineTo(...view.tl);
     ctx.stroke();
 
-    if (this.secondaryViewport.enabled) {
-    const view = this.secondaryViewport.projectedView;
-    const camera = this.secondaryViewport.camera;
-        const h = 5;
-        const w = h * camera.aspect;
-        ctx.strokeStyle = pipColor;
-    ctx.lineWidth = 0.8;
-    ctx.beginPath();
-        ctx.moveTo(...view.tl);
-        ctx.lineTo(...view.tr);
-        ctx.lineTo(...view.br);
-        ctx.lineTo(...view.bl);
-        ctx.lineTo(...view.tl);
-        ctx.stroke();
-        // ctx.beginPath();
-        // ctx.moveTo(camera.position.x - w, camera.position.z - h);
-        // ctx.lineTo(camera.position.x + w, camera.position.z - h);
-        // ctx.lineTo(camera.position.x + w, camera.position.z + h);
-        // ctx.lineTo(camera.position.x - w, camera.position.z + h);
-        // ctx.lineTo(camera.position.x - w, camera.position.z - h);
-        // ctx.stroke();
-      }
+    if (this._pip.enabled) {
+      const view = this._pip.projectedView;
+      const camera = this._pip.camera;
+      const h = 5;
+      const w = h * camera.aspect;
+      ctx.strokeStyle = pipColor;
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(...view.tl);
+      ctx.lineTo(...view.tr);
+      ctx.lineTo(...view.br);
+      ctx.lineTo(...view.bl);
+      ctx.lineTo(...view.tl);
+      ctx.stroke();
+      // ctx.beginPath();
+      // ctx.moveTo(camera.position.x - w, camera.position.z - h);
+      // ctx.lineTo(camera.position.x + w, camera.position.z - h);
+      // ctx.lineTo(camera.position.x + w, camera.position.z + h);
+      // ctx.lineTo(camera.position.x - w, camera.position.z + h);
+      // ctx.lineTo(camera.position.x - w, camera.position.z - h);
+      // ctx.stroke();
+    }
   },
 
+  _groundTarget(viewport, t) {
+    return viewport.orbit.getTarget(t).setY(0);
+  },
 
-  onMinimapDragUpdate(pos, isDragStart, isDragging, mouseButton) {
-      if (
-        this.secondaryViewport.enabled && 
-        this.primaryViewport.orbit
-        .getTarget(_target)
-        .setY(this.secondaryViewport.camera.position.y)
-        .distanceTo(this.secondaryViewport.camera.position) < PIP_PROXIMITY
-      ) {
-        this.secondaryViewport.enabled = false;
+  _areProximate(a, b) {
+    return a.distanceTo(b) < PIP_PROXIMITY;
+  },
+
+  _areProximateViewports(a, b) {
+    return this._areProximate(
+      this._groundTarget(a, _a),
+      this._groundTarget(b, _b)
+    );
+  },
+
+  onMinimapDragUpdate(pos, isDragStart, mouseButton) {
+    const viewportsAreProximate = this._areProximateViewports(
+      this.viewport,
+      this._pip
+    );
+
+    if (mouseButton === 0) {
+      this.viewport.orbit.moveTo(pos.x, 0, pos.z, !isDragStart);
+      if (this._pip.enabled) {
+        this._pip.enabled = !viewportsAreProximate;
+      } else {
+        this._pip.orbit.moveTo(-10000, 0, 0, false);
       }
-      
-      if (mouseButton === 0) {
-        this.primaryViewport.orbit.moveTo(pos.x, 0, pos.z, !isDragStart);
-      } else if (mouseButton === 2) { 
-        this.secondaryViewport.enabled = true;
-        this.secondaryViewport.orbit.moveTo(pos.x, 0, pos.z)
-        this._pipPovPlayerId = null;
+    } else if (mouseButton === 2) {
+      _c.set(pos.x, 0, pos.z);
+      this._pipPovPlayerId = null;
+
+      const isProximateToPrevious = this._areProximate(_c, _b);
+
+      if (isDragStart) {
+        if (this._pip.enabled) {
+          this._pip.enabled =
+            !viewportsAreProximate && isProximateToPrevious;
+        } else {
+          this._pip.enabled = !viewportsAreProximate;
+        }
+      } else {
+        this._pip.enabled =
+          !viewportsAreProximate &&
+          isProximateToPrevious;
       }
 
-      
+      if (this._pip.enabled) {
+        this._pip.orbit.moveTo(pos.x, 0, pos.z, !isDragStart);
+      } else {
+        this._pip.orbit.moveTo(-10000, 0, 0, false);
+      }
+    }
   },
 
   onFrame() {
     if (this.followedUnitsPosition) {
       const pos = this.followedUnitsPosition;
-      this.primaryViewport.orbit.moveTo(pos.x, pos.y, pos.z, true);
     }
   },
 
@@ -211,16 +258,14 @@ return {
     if (button === 2) {
       if (this._pipPovPlayerId === playerId) {
         this._pipPovPlayerId = null;
-        this.secondaryViewport.enabled = false;
-        } else {
-        this.secondaryViewport.enabled = true;
+        this._pip.enabled = false;
+      } else {
+        this._pip.enabled = true;
         this._pipPovPlayerId = playerId;
       }
       return true;
     }
   },
 
-  onMacroPIPPlayer(playerId) {
-
-  }
+  onMacroPIPPlayer(playerId) {},
 };
