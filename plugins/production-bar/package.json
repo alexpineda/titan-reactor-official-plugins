@@ -10,10 +10,6 @@
         "titan-reactor-api": "2.0.0"
     },
     "config": {
-        "toggleVisible": {
-            "label": "Toggle Visible",
-            "value": true
-        },
         "backgroundColor": {
             "folder": "Style",
             "label": "Background",

@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  registerComponent,
   usePlayers,
   useProduction,
   useStyleSheet,
@@ -59,10 +58,6 @@ const ProductionBar = () => {
     );
   };
 
-  if (config.toggleVisible === false) {
-    return null;
-  }
-
   return (
     <div
       style={{
@@ -109,6 +104,6 @@ const ProductionBar = () => {
 };
 
 registerComponent(
-  { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "top-left" },
+  { screen: "@replay/ready", snap: "top-left" },
   ProductionBar
 );

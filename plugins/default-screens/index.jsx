@@ -1,12 +1,10 @@
 import {
-  registerComponent,
-  usePluginConfig,
   useReplay,
   useMap,
 } from "titan-reactor";
 import React from "react";
 
-const LoadingScreen = ({ type }) => {
+const LoadingScreen = () => {
   const replay = useReplay();
   const map = useMap();
 
@@ -36,11 +34,11 @@ const LoadingScreen = ({ type }) => {
 };
 
 registerComponent(
-  { pluginId: "_plugin_id_", screen: "@replay/loading" },
+  { screen: "@replay/loading" },
   () => <LoadingScreen type="replay" />
 );
 
 registerComponent(
-  { pluginId: "_plugin_id_", screen: "@map/loading" },
+  { screen: "@map/loading" },
   () => <LoadingScreen type="map" />
 );

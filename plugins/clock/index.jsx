@@ -1,11 +1,11 @@
 import React from "react";
-import { registerComponent, useFrame, usePluginConfig, useReplay, getFriendlyTime } from "titan-reactor";
+import { useFrame, usePluginConfig, useReplay, getFriendlyTime } from "titan-reactor";
 import ModernClock from "./modern-clock.jsx";
 import ClassicClock from "./classic-clock.jsx";
 
 
 registerComponent(
-  { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "left", order: -100 },
+  { screen: "@replay/ready", snap: "left", order: -100 },
   () => {
     // we can use the plugin config to determine which clock to show as well as colors and other settings
     const config = usePluginConfig();

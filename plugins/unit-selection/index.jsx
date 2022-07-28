@@ -1,10 +1,10 @@
 import React from "react";
-import { registerComponent, useSelectedUnits } from "titan-reactor";
+import { useSelectedUnits } from "titan-reactor";
 import UnitDisplayLarge from "./unit-display-large.jsx";
 import UnitsDisplaySmall from "./units-display-small.jsx";
 
 registerComponent(
-  { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "right" },
+  { screen: "@replay/ready", snap: "right" },
   () => {
     const units = useSelectedUnits();
 

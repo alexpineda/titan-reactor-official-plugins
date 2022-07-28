@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { registerComponent, usePlayer, usePluginConfig, useMessage } from "titan-reactor"
+import { usePlayer, usePluginConfig, useMessage } from "titan-reactor"
 
 let _chatIndex = 0;
 
 registerComponent(
-    { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "left" },
+    { screen: "@replay/ready", snap: "left" },
     () => {
         const config = usePluginConfig();
         // we'll need player information for coloring the text and assigning the correct messages

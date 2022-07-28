@@ -1,8 +1,8 @@
 import React, { useRef } from "react";
-import { registerComponent, useMessage } from "titan-reactor";
+import { useMessage } from "titan-reactor";
 
 registerComponent(
-  { pluginId: "_plugin_id_", screen: "@replay/ready" },
+  { screen: "@replay/ready" },
   () => {
     const ref = useRef();
 

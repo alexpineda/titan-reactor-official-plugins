@@ -1,7 +1,6 @@
 import React from "react";
 // import { Color } from "three";
 import {
-  registerComponent,
   usePluginConfig,
   useSendMessage,
   usePlayers,
@@ -52,7 +51,7 @@ const _imgStyle = {
 
 
 registerComponent(
-  { pluginId: "_plugin_id_", screen: "@replay/ready", snap: "top-right" },
+  { screen: "@replay/ready", snap: "top-right" },
   () => {
     const config = usePluginConfig();
     const sendMessage = useSendMessage();
