@@ -75,37 +75,12 @@ return  {
         // effects.push(this._depthOfFieldEffect);
         // this.viewport.effects.push(this._depthOfFieldEffect);
 
+        const postProcessing = this.viewport.postProcessing;
         this.viewport.postProcessing = {
-            effects: [this._depthOfFieldEffect],
-            passes: [this.viewport.postProcessing.renderPass, new EffectPass(this.viewport.camera, this._depthOfFieldEffect)],
+            effects: [postProcessing.fogOfWarEffect, this._depthOfFieldEffect],
+            passes: [postProcessing.renderPass, new EffectPass(this.viewport.camera, postProcessing.fogOfWarEffect, this._depthOfFieldEffect)],
         }
-
-        this.viewport.postProcessing.fogOfWarEffect.blendMode.opacity.value  = 0.5;
-
-
-
-    },
-
-    onSetComposerPasses(renderPass, fogOfWarEffect) {
-
-        const effects = [];
-                    
-        if (this.config.depthOfFieldEnabled) {
-            effects.push(this._depthOfFieldEffect);
-        }
-
-        effects.push(fogOfWarEffect);
-
-        return {
-            effects,
-            passes: [
-                renderPass,
-                new EffectPass(
-                    this.orbit.camera,
-                    ...effects
-                )
-            ]
-        };
+        this.togglePointerLock(true);
     },
 
     onBeforeRender(delta, elapsed) {
@@ -140,9 +115,14 @@ return  {
     },
 
     onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked) {
+        
         // zoom in or out depending on left click or right click
         if (clicked) {
-            this.viewport.orbit.zoomTo(this.viewport.camera.zoom * (clicked.z === 0 ? 2 : 1 / 2), false);
+            if (this.pointerLockLost) {
+                this.togglePointerLock(true);
+            } else {
+                this.viewport.orbit.zoomTo(this.viewport.camera.zoom * (clicked.z === 0 ? 2 : 1 / 2), false);
+            }
         }
 
         // rotate according to mouse direction (pointer lock)

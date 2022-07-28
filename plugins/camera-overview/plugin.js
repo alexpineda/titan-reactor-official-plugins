@@ -30,7 +30,7 @@ return  {
         await orbit.zoomTo(1, false);   
 
         this.viewport.spriteRenderOptions.unitScale = 2.5;
-        this.viewport.postProcessing.fogOfWarEffect.blendMode.opacity.value  = 0.7;
+        this.viewport.postProcessing.fogOfWarEffect.blendMode.setOpacity(0.7);
 
         this.secondViewport.height = this.config.pipSize;
         this.secondViewport.center = new THREE.Vector2;
