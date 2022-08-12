@@ -104,6 +104,6 @@ const ProductionBar = () => {
 };
 
 registerComponent(
-  { screen: "@replay/ready", snap: "top-left" },
+  { screen: "@replay", snap: "top-left" },
   ProductionBar
 );

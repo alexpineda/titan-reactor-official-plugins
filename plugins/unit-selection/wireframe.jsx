@@ -1,9 +1,13 @@
-import shuffle from 'https://cdn.skypack.dev/lodash.shuffle';
 import range from 'https://cdn.skypack.dev/lodash.range';
 import React, { useEffect, useRef } from "react";
 import { assets } from "titan-reactor";
 
 let stepLayers = range(0, 4).map(() => 0);
+
+function shuffle(array) {
+  array.sort(() => Math.random() - 0.5);
+  return array;
+}
 
 const findRandomIndex = (list, pred) => {
   const eligible = shuffle(range(0, list.length));

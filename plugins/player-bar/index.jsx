@@ -51,7 +51,7 @@ const _imgStyle = {
 
 
 registerComponent(
-  { screen: "@replay/ready", snap: "top-right" },
+  { screen: "@replay", snap: "top-right" },
   () => {
     const config = usePluginConfig();
     const sendMessage = useSendMessage();

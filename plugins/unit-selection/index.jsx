@@ -4,7 +4,7 @@ import UnitDisplayLarge from "./unit-display-large.jsx";
 import UnitsDisplaySmall from "./units-display-small.jsx";
 
 registerComponent(
-  { screen: "@replay/ready", snap: "right" },
+  { screen: "@replay", snap: "right" },
   () => {
     const units = useSelectedUnits();
 

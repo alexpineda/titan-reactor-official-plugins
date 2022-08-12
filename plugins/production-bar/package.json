@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/production-bar",
-    "version": "1.1.2",
+    "version": "2.0.0",
     "description": "Production Bar",
     "author": "Dark Matter",
     "keywords": [
@@ -67,7 +67,7 @@
         "showUpgrades": {
             "folder": "Upgrades",
             "label": "Display Upgrades",
-            "value": false
+            "value": true
         },
         "showCompletedUpgrades": {
             "folder": "Upgrades",
@@ -77,7 +77,7 @@
         "showResearch": {
             "folder": "Research",
             "label": "Display Research",
-            "value": false
+            "value": true
         },
         "showCompletedResearch": {
             "folder": "Research",

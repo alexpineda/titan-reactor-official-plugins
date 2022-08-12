@@ -4,7 +4,7 @@ import { usePlayer, usePluginConfig, useMessage } from "titan-reactor"
 let _chatIndex = 0;
 
 registerComponent(
-    { screen: "@replay/ready", snap: "left" },
+    { screen: "@replay", snap: "left" },
     () => {
         const config = usePluginConfig();
         // we'll need player information for coloring the text and assigning the correct messages

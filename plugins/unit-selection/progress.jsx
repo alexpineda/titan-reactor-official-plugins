@@ -128,7 +128,9 @@ const Progress = ({ unit }) => {
       wrapperRef.current.style.visibility = "hidden";
     }
     return () => {
-      progressRef.current.style.transition = "transform 0s";
+      if (progressRef.current) {
+        progressRef.current.style.transition = "transform 0s";
+      }
     }
   }, [unit]);
 

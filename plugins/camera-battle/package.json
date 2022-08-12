@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/camera-battle",
-    "version": "1.1.1",
+    "version": "2.0.0",
     "description": "Battle Camera Mode",
     "author": "Dark Matter",
     "keywords": [
@@ -29,7 +29,7 @@
         "fov": {
             "folder": "Camera Parameters",
             "label": "Field Of View",
-            "value": 65,
+            "value": 85,
             "min": 35,
             "max": 125,
             "step": 1

@@ -13,7 +13,6 @@ const pipColor = "#aaaaaa";
 
 return {
   gameOptions: {
-    showMinimap: true,
     allowUnitSelection: true,
     audio: "stereo",
   },
@@ -31,7 +30,7 @@ return {
   async onEnterScene(prevData, camera) {
     const orbit = this.viewport.orbit;
 
-    if (prevData?.target?.isVector3) {
+    if (typeof prevData?.target?.x === "number" && typeof prevData?.target?.z === "number") {
       await orbit.setTarget(prevData.target.x, 0, prevData.target.z, false);
     } else {
       await orbit.setTarget(0, 0, 0, false);
@@ -129,9 +128,6 @@ return {
       );
     }
 
-    // if (clicked?.z === 2) {
-    //   this._pip.enabled = false;
-    // }
   },
 
   onCameraKeyboardUpdate(delta, elapsed, move) {
@@ -183,13 +179,6 @@ return {
       ctx.lineTo(...view.bl);
       ctx.lineTo(...view.tl);
       ctx.stroke();
-      // ctx.beginPath();
-      // ctx.moveTo(camera.position.x - w, camera.position.z - h);
-      // ctx.lineTo(camera.position.x + w, camera.position.z - h);
-      // ctx.lineTo(camera.position.x + w, camera.position.z + h);
-      // ctx.lineTo(camera.position.x - w, camera.position.z + h);
-      // ctx.lineTo(camera.position.x - w, camera.position.z - h);
-      // ctx.stroke();
     }
   },
 

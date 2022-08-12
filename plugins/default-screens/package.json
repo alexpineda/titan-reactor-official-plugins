@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/default-screens",
-    "version": "1.2.0",
+    "version": "2.0.0",
     "description": "Default Screens",
     "author": "Dark Matter",
     "keywords": [
@@ -9,5 +9,9 @@
     "peerDependencies": {
         "titan-reactor-api": "2.0.0"
     },
-    "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5"
+    "config": {
+        "system": {
+            "deprecated": true
+        }
+    }
 }

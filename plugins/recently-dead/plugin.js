@@ -13,7 +13,7 @@ return {
     _updateVisibility(updateColors) {
         //as of three 137 css renderer only respects CSS2DObject visible 
         for (const deadUnit of this._deadUnits) {
-            deadUnit.obj.visible = this._visible;
+            deadUnit.obj.visible = this.config.showDeadUnits;
             if (updateColors) {
                 this._setStyleFilter(deadUnit);
             }
@@ -44,7 +44,7 @@ return {
         // and need to be flushed from the list
         this._lastFrameCheck = 0;
 
-        this._visible = false;
+        this.config.showDeadUnits = false;
         
         // A Group to keep all the dead unit icons in so we the CSSRenderer can display them for us
         this._group = new THREE.Group();
@@ -72,7 +72,7 @@ return {
         obj.position.x = this.pxToGameUnit.x(unit.x);
         obj.position.y = 0;
         obj.position.z = this.pxToGameUnit.y(unit.y);
-        obj.visible = this._visible;
+        obj.visible = this.config.showDeadUnits;
 
         // work-around for scale being overwritten css renderer
         obj.onAfterRender = () => image.style.transform += ` scale(${this.config.iconScale})`;
@@ -82,7 +82,7 @@ return {
 
         // track this unit so we can remove it from the scene when it times out
         const deadUnit = {
-            deathFrame: this.getFrame(),
+            deathFrame: this.currentFrame,
             obj,
             color: this.getPlayerColor(unit.owner),
             style: image.style,
@@ -131,12 +131,12 @@ return {
     /*
      * When the game is reset, make sure to remove everything from the scene.
      */
-    onGameDisposed() {
+    onGameDispose() {
         this._reset();
-        this._visible = false;
+        this.config.showDeadUnits = false;
     },
     
-    onPluginDispose() {
+    dispose() {
         this._reset();
     }
 }

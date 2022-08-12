@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/camera-overview",
-    "version": "1.1.1",
+    "version": "2.0.0",
     "description": "Overview Camera Mode",
     "author": "Dark Matter",
     "keywords": [
@@ -10,10 +10,8 @@
         "titan-reactor-api": "2.0.0"
     },
     "config": {
-        "cameraModeKey": {
-            "label": "Toggle Camera",
-            "type": "keyboard-shortcut",
-            "value": "F7"
+        "system": {
+            "customHooks": ["onCustomPIPEntered", "onCustomPIPExited"]
         },
         "pipSize": {
             "label": "PIP Size",
@@ -21,6 +19,21 @@
             "min": 100,
             "max": 400,
             "step": 25
+        },
+        "fullScreenPIP": {
+            "label": "Full Screen PIP",
+            "value": false
+        },
+        "polarRotation": {
+            "label": "Polar Rotation",
+            "value": 4,
+            "min": 4,
+            "max": 10,
+            "step": 0.5
+        },
+        "animateTransition": {
+            "label": "Animation Transition",
+            "value": true
         }
     }
 }

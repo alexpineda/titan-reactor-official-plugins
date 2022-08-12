@@ -5,7 +5,7 @@ import ClassicClock from "./classic-clock.jsx";
 
 
 registerComponent(
-  { screen: "@replay/ready", snap: "left", order: -100 },
+  { screen: "@replay", snap: "left", order: -100 },
   () => {
     // we can use the plugin config to determine which clock to show as well as colors and other settings
     const config = usePluginConfig();

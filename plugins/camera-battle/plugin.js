@@ -7,14 +7,11 @@ const deltaYP = new THREE.Vector3();
 const _target = new THREE.Vector3();
 const audioListenerPosition = new THREE.Vector3();
 
-const { DepthOfFieldEffect, ScanlineEffect, EffectPass, ToneMappingEffect, ToneMappingMode } = postprocessing;
+const { DepthOfFieldEffect, EffectPass } = postprocessing;
 
 return  {
     gameOptions: {
-        showMinimap: true,
-        allowUnitSelection: false,
         audio: "3d",
-        usePointerLock: true,
     },
 
     // a few shared settings we can update on init and config change
@@ -27,12 +24,18 @@ return  {
     },
 
     async onEnterScene(prevData) {
-        const orbit = this.viewport.orbit;
         if (prevData?.target?.isVector3) {
-            orbit.setTarget(prevData.target.x, 0, prevData.target.z, false);
+            this.viewport.orbit.setTarget(prevData.target.x, 0, prevData.target.z, false);
         } else {
-            orbit.setTarget(0, 0, 0, false);
+            this.viewport.orbit.setTarget(0, 0, 0, false);
         }
+
+        this._depthOfFieldEffect = this._depthOfFieldEffect ?? new DepthOfFieldEffect(this.viewport.orbit.camera, {
+            focusDistance: 0.01,
+            focalLength: 0.1,
+            bokehScale: 1.0,
+            height: this.config.blurQuality,
+        });
 
         this.viewport.orbit.rotateAzimuthTo((this.config.rotateAzimuthStart-1) * (Math.PI/3), false); 
         this.viewport.orbit.rotatePolarTo((this.config.rotatePolarStart-1) * (Math.PI/3), false); 
@@ -40,40 +43,30 @@ return  {
         this.viewport.orbit.rotateAzimuthTo((this.config.rotateAzimuthStart-1) * (Math.PI/4), true); 
         this.viewport.orbit.rotatePolarTo((this.config.rotatePolarStart-1) * (Math.PI/4), true); 
 
-        orbit.camera.far = BATTLE_FAR;
-        orbit.camera.fov = this.config.fov;
-        orbit.camera.updateProjectionMatrix();
+        this.viewport.orbit.camera.far = BATTLE_FAR;
+        this.viewport.orbit.camera.fov = this.config.fov;
+        this.viewport.orbit.camera.updateProjectionMatrix();
 
-        orbit.dollyToCursor = false;
-      
-        orbit.maxDistance = Math.max(this.terrain.mapWidth, this.terrain.mapHeight) * 2;
-        orbit.minDistance = 3;
-        orbit.maxZoom = 20;
-        orbit.minZoom = 0.3;
-        orbit.dampingFactor = 0.01;
-      
-        orbit.maxPolarAngle = Infinity;
-        orbit.minPolarAngle = -Infinity
-        orbit.maxAzimuthAngle = Infinity;
-        orbit.minAzimuthAngle = -Infinity;
-      
-        this._depthOfFieldEffect = new DepthOfFieldEffect(orbit.camera, {
-            focusDistance: 0.01,
-            focalLength: 0.1,
-            bokehScale: 1.0,
-            height: this.config.blurQuality,
-          });
+        Object.assign(this.viewport.orbit, {
+            dollyToCursor: false,
+            maxDistance: Math.max(this.mapWidth, this.mapHeight) * 2,
+            minDistance: 3,
+            maxZoom: 20,
+            minZoom: 0.3,
+            dampingFactor:0.01,
+            maxPolarAngle: Infinity,
+            minPolarAngle: -Infinity,
+            maxAzimuthAngle: Infinity,
+            minAzimuthAngle: -Infinity,
+        })
+
         this._updateSettings();
 
-        orbit.dollyTo(this.config.defaultDistance, false);
-        orbit.zoomTo(1, false);
+        this.viewport.orbit.dollyTo(this.config.defaultDistance, false);
+        this.viewport.orbit.zoomTo(1, false);
 
         this.viewport.spriteRenderOptions.rotateSprites = true;
         this.viewport.cameraShake.enabled = true;
-
-
-        // effects.push(this._depthOfFieldEffect);
-        // this.viewport.effects.push(this._depthOfFieldEffect);
 
         const postProcessing = this.viewport.postProcessing;
         this.viewport.postProcessing = {
@@ -83,16 +76,14 @@ return  {
         this.togglePointerLock(true);
     },
 
-    onBeforeRender(delta, elapsed) {
-        this.viewport.orbit.getTarget(_target);
-        this._depthOfFieldEffect.setTarget(_target);
+    onBeforeRender() {
+        this._depthOfFieldEffect.setTarget(this.viewport.orbit.getTarget(_target));
         this._depthOfFieldEffect.getCircleOfConfusionMaterial().adoptCameraSettings(this.viewport.camera);
     },
 
     onConfigChanged(oldConfig) {
         this._updateSettings();
 
-        // only update default distance if it's changed otherwise we'll get a jump
         if (this.config.defaultDistance !== oldConfig.defaultDistance) {
             this.viewport.orbit.dollyTo(this.config.defaultDistance, true);
         }
@@ -172,5 +163,9 @@ return  {
             const target = this.followedUnitsPosition;
             this.viewport.orbit.moveTo(target.x, target.y, target.z, true);
         }
+},
+
+    dispose() {
+        this._depthOfFieldEffect && this._depthOfFieldEffect.dispose();
     }
 }

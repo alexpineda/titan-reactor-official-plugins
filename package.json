@@ -9,6 +9,16 @@
   "author": "Alex Pineda <alexpineda@fastmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "lerna": "^4.0.0"
+    "lerna": "^4.0.0",
+    "react": "^18.2.0"
+  },
+  "repository": "https://github.com/imbateam-gg/titan-reactor-community.git",
+  "dependencies": {
+    "chalk": "^5.0.1",
+    "commander": "^9.4.0",
+    "inquirer": "^9.1.0",
+    "libnpmsearch": "^5.0.3",
+    "rimraf": "^3.0.2",
+    "semver": "^7.3.7"
   }
 }

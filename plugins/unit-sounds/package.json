@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/unit-sounds",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "Play Unit Selection Sound",
     "author": "Dark Matter",
     "keywords": [
@@ -12,10 +12,6 @@
     "config": {
         "onlyBuildings": {
             "label": "Only building selections play sounds",
-            "value": false
-        },
-        "playReadySounds": {
-            "label": "Play 'ready' sounds",
             "value": false
         }
     }
