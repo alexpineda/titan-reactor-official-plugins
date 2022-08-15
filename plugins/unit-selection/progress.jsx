@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import { assets, enums } from "titan-reactor";
+import { assets, enums } from "titan-reactor/runtime";
 
 const unitIsComplete = (unit) => {
   return unit.statusFlags & enums.UnitFlags.Completed === 1;

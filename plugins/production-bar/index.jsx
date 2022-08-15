@@ -4,7 +4,7 @@ import {
   useProduction,
   useStyleSheet,
   usePluginConfig,
-} from "titan-reactor";
+} from "titan-reactor/runtime";
 import ProductionItem from "./production-item.jsx";
 
 // Scanner Sweep

@@ -1,5 +1,5 @@
 import React from "react";
-import { assets } from "titan-reactor";
+import { assets } from "titan-reactor/runtime";
 
 const Queue = ({ units }) => {
   const cmdIcons = assets.cmdIcons;

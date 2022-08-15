@@ -1,5 +1,5 @@
 import React from "react";
-import { useSelectedUnits } from "titan-reactor";
+import { useSelectedUnits } from "titan-reactor/runtime";
 import UnitDisplayLarge from "./unit-display-large.jsx";
 import UnitsDisplaySmall from "./units-display-small.jsx";
 

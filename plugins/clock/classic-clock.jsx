@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { usePluginConfig } from "titan-reactor";
+import { usePluginConfig } from "titan-reactor/runtime";
 
 export default ({ time, pct, styles }) => {
   const [showPct, setShowPct] = useState(false);

@@ -1,6 +1,6 @@
 import range from 'https://cdn.skypack.dev/lodash.range';
 import React, { useEffect, useRef } from "react";
-import { assets } from "titan-reactor";
+import { assets } from "titan-reactor/runtime";
 
 let stepLayers = range(0, 4).map(() => 0);
 

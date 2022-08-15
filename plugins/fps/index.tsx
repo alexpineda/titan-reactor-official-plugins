@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { useMessage } from "titan-reactor-runtime";
+import React, { useRef } from "react";
+import { useMessage } from "titan-reactor/runtime";
 
 //@ts-ignore
 registerComponent({ screen: "@replay" }, () => {

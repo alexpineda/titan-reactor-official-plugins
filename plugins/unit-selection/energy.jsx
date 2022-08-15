@@ -1,5 +1,5 @@
 import React from "react";
-import { assets, RollingNumber } from "titan-reactor";
+import { assets, RollingNumber } from "titan-reactor/runtime";
 
 const Energy = ({ unit }) => {
   const gameIcons = assets.gameIcons;

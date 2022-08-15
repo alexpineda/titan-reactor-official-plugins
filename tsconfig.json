@@ -1,8 +1,14 @@
 {
     "compilerOptions": {
-        "jsx": "react-jsx",
+        "jsx": "react",
         "target": "ESNext",
         "module": "ESNext",
-        "moduleResolution": "node"
-    }
+        "moduleResolution": "node",
+        "isolatedModules": true,
+        "typeRoots": [
+            "node_modules/@types",
+            "./titan-reactor-runtime"
+        ],
+    },
+    
 }

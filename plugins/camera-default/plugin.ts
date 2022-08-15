@@ -1,8 +1,11 @@
+import * as THREE from "three";
+import { SceneController, GameViewPort } from "titan-reactor/host";
+
 const DEFAULT_FAR = 256;
 const POLAR_MAX = (10 * Math.PI) / 64;
 const POLAR_MIN = (2 * Math.PI) / 64;
 
-const POV_COMMANDS = [0x0c, 0x14, 0x15, 0x60, 0x61];
+// const POV_COMMANDS = [0x0c, 0x14, 0x15, 0x60, 0x61];
 const PIP_PROXIMITY = 16;
 
 const _a = new THREE.Vector3();
@@ -11,23 +14,26 @@ const _c = new THREE.Vector3();
 
 const pipColor = "#aaaaaa";
 
-return {
-  gameOptions: {
-    allowUnitSelection: true,
-    audio: "stereo",
-  },
+export default class PluginAddon extends SceneController implements SceneController {
+  #edgeSpeed = 0;
+  #keyboardSpeed = 0;
+  #pip: GameViewPort;
 
-  _pipPovPlayerId: null,
-  _isPreviewing: false,
+  gameOptions = {
+    allowUnitSelection: true,
+    audio: "stereo" as const,
+  }
+
+  #pipPovPlayerId = null
 
   // a few shared setings we can update on init and config change
   _updateSettings() {
-    this._edgeSpeed = this.config.screenDragSpeed;
-    this._keyboardSpeed = this.config.keyboardSpeed;
+    this.#edgeSpeed = this.config.screenDragSpeed;
+    this.#keyboardSpeed = this.config.keyboardSpeed;
     this.viewport.orbit.dampingFactor = this.config.damping;
-  },
+  }
 
-  async onEnterScene(prevData, camera) {
+  async onEnterScene(prevData) {
     const orbit = this.viewport.orbit;
 
     if (typeof prevData?.target?.x === "number" && typeof prevData?.target?.z === "number") {
@@ -57,13 +63,12 @@ return {
     await orbit.zoomTo(1, false);
     await orbit.dollyTo(this.config.defaultDistance, false);
 
-    this._pip = this.secondViewport;
+    this.#pip = this.secondViewport;
+    this.#pip.height = this.config.pipSize;
+    this.#pip.right = 0.05;
+    this.#pip.bottom = 0.05;
 
-    this._pip.height = this.config.pipSize;
-    this._pip.right = 0.05;
-    this._pip.bottom = 0.05;
-
-  },
+  }
 
   onConfigChanged(oldConfig) {
     this._updateSettings();
@@ -74,9 +79,9 @@ return {
     }
 
     if (this.config.pipSize !== oldConfig.pipSize) {
-      this._pip.height = this.config.pipSize;
+      this.#pip.height = this.config.pipSize;
     }
-  },
+  }
 
   onCameraMouseUpdate(
     delta,
@@ -109,49 +114,48 @@ return {
 
     if (screenDrag.x !== 0) {
       this.viewport.orbit.truck(
-        screenDrag.x * delta * this._edgeSpeed,
+        screenDrag.x * delta * this.#edgeSpeed,
         0,
         true
       );
     }
 
     if (screenDrag.y !== 0) {
-      this.viewport.orbit.forward(screenDrag.y * delta * this._edgeSpeed, true);
+      this.viewport.orbit.forward(screenDrag.y * delta * this.#edgeSpeed, true);
     }
 
     if (screenDrag.y === 0 && screenDrag.x === 0) {
-      this._edgeSpeed = this.config.screenDragSpeed;
+      this.#edgeSpeed = this.config.screenDragSpeed;
     } else {
-      this._edgeSpeed = Math.min(
+      this.#edgeSpeed = Math.min(
         this.config.screenDragAccelMax,
-        this._edgeSpeed * (1 + this.config.screenDragAccel)
+        this.#edgeSpeed * (1 + this.config.screenDragAccel)
       );
     }
-
-  },
+  }
 
   onCameraKeyboardUpdate(delta, elapsed, move) {
     if (move.x !== 0) {
-      this.viewport.orbit.truck(move.x * delta * this._keyboardSpeed, 0, true);
+      this.viewport.orbit.truck(move.x * delta * this.#keyboardSpeed, 0, true);
     }
 
     if (move.y !== 0) {
-      this.viewport.orbit.forward(move.y * delta * this._keyboardSpeed, true);
+      this.viewport.orbit.forward(move.y * delta * this.#keyboardSpeed, true);
     }
 
     if (move.y === 0 && move.x === 0) {
-      this._keyboardSpeed = this.config.keyboardSpeed;
+      this.#keyboardSpeed = this.config.keyboardSpeed;
     } else {
-      this._keyboardSpeed = Math.min(
+      this.#keyboardSpeed = Math.min(
         this.config.keyboardAccelMax,
-        this._keyboardSpeed * (1 + this.config.keyboardAccel)
+        this.#keyboardSpeed * (1 + this.config.keyboardAccel)
       );
     }
-  },
+  }
 
   onUpdateAudioMixerLocation(delta, elapsed, target, position) {
     return target;
-  },
+  }
 
   onDrawMinimap(ctx) {
     const view = this.viewport.projectedView;
@@ -165,11 +169,8 @@ return {
     ctx.lineTo(...view.tl);
     ctx.stroke();
 
-    if (this._pip.enabled) {
-      const view = this._pip.projectedView;
-      const camera = this._pip.camera;
-      const h = 5;
-      const w = h * camera.aspect;
+    if (this.#pip.enabled) {
+      const view = this.#pip.projectedView;
       ctx.strokeStyle = pipColor;
       ctx.lineWidth = 0.8;
       ctx.beginPath();
@@ -180,81 +181,80 @@ return {
       ctx.lineTo(...view.tl);
       ctx.stroke();
     }
-  },
+  }
 
   _groundTarget(viewport, t) {
     return viewport.orbit.getTarget(t).setY(0);
-  },
+  }
 
   _areProximate(a, b) {
     return a.distanceTo(b) < PIP_PROXIMITY;
-  },
+  }
 
   _areProximateViewports(a, b) {
     return this._areProximate(
       this._groundTarget(a, _a),
       this._groundTarget(b, _b)
     );
-  },
+  }
 
   onMinimapDragUpdate(pos, isDragStart, mouseButton) {
     const viewportsAreProximate = this._areProximateViewports(
       this.viewport,
-      this._pip
+      this.#pip
     );
 
     if (mouseButton === 0) {
       this.viewport.orbit.moveTo(pos.x, 0, pos.z, !isDragStart);
-      if (this._pip.enabled) {
-        this._pip.enabled = !viewportsAreProximate;
+      if (this.#pip.enabled) {
+        this.#pip.enabled = !viewportsAreProximate;
       } else {
-        this._pip.orbit.moveTo(-10000, 0, 0, false);
+        this.#pip.orbit.moveTo(-10000, 0, 0, false);
       }
     } else if (mouseButton === 2) {
       _c.set(pos.x, 0, pos.z);
-      this._pipPovPlayerId = null;
+      this.#pipPovPlayerId = null;
 
       const isProximateToPrevious = this._areProximate(_c, _b);
 
       if (isDragStart) {
-        if (this._pip.enabled) {
-          this._pip.enabled =
+        if (this.#pip.enabled) {
+          this.#pip.enabled =
             !viewportsAreProximate && isProximateToPrevious;
         } else {
-          this._pip.enabled = !viewportsAreProximate;
+          this.#pip.enabled = !viewportsAreProximate;
         }
       } else {
-        this._pip.enabled =
+        this.#pip.enabled =
           !viewportsAreProximate &&
           isProximateToPrevious;
       }
 
-      if (this._pip.enabled) {
-        this._pip.orbit.moveTo(pos.x, 0, pos.z, !isDragStart);
+      if (this.#pip.enabled) {
+        this.#pip.orbit.moveTo(pos.x, 0, pos.z, !isDragStart);
       } else {
-        this._pip.orbit.moveTo(-10000, 0, 0, false);
+        this.#pip.orbit.moveTo(-10000, 0, 0, false);
       }
     }
-  },
+  }
 
   onFrame() {
     if (this.followedUnitsPosition) {
       const pos = this.followedUnitsPosition;
     }
-  },
+  }
 
   onCustomPlayerBarClicked({ playerId, button }) {
     if (button === 2) {
-      if (this._pipPovPlayerId === playerId) {
-        this._pipPovPlayerId = null;
-        this._pip.enabled = false;
+      if (this.#pipPovPlayerId === playerId) {
+        this.#pipPovPlayerId = null;
+        this.#pip.enabled = false;
       } else {
-        this._pip.enabled = true;
-        this._pipPovPlayerId = playerId;
+        this.#pip.enabled = true;
+        this.#pipPovPlayerId = playerId;
       }
       return true;
     }
-  },
+  }
 
-  onMacroPIPPlayer(playerId) {},
 };

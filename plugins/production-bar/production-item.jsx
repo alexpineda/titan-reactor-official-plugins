@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { easePolyOut } from 'https://cdn.skypack.dev/d3-ease';
-import { assets, usePluginConfig } from "titan-reactor";
+import { assets, usePluginConfig } from "titan-reactor/runtime";
 
 const poly = easePolyOut.exponent(0.5);
 

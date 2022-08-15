@@ -37,7 +37,7 @@ return {
 
     },
 
-    onGameReady() {
+    onSceneReady() {
         // the dead units we are tracking
         this._deadUnits = [];
         // the last time we checked if our dead units timed out
@@ -56,7 +56,7 @@ return {
         this._updateVisibility(this.config.usePlayerColors !== oldConfig.usePlayerColors);
     },
 
-    onUnitKilled(unit) {
+    onUnitDestroyed(unit) {
         // it's not a human player controlled unit so we don't care
         if (unit.owner > 7) {
             return;

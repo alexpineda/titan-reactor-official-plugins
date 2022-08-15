@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { assets, usePlayer } from "titan-reactor";
+import { assets, usePlayer } from "titan-reactor/runtime";
 
 const filters = [
   "grayscale(1) brightness(2)",

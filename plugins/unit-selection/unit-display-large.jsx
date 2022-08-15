@@ -1,5 +1,5 @@
 import React from "react";
-import { enums, usePluginConfig, assets, getUnitIcon } from "titan-reactor";
+import { enums, usePluginConfig, assets, getUnitIcon } from "titan-reactor/runtime";
 
 import Health from "./health.jsx";
 import Shields from "./shields.jsx";

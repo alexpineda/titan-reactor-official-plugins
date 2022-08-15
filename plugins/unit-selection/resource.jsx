@@ -1,5 +1,5 @@
 import React from "react";
-import { assets, enums } from "titan-reactor";
+import { assets, enums } from "titan-reactor/runtime";
 
 const Resource = ({ unit }) => {
   const gameIcons = assets.gameIcons;

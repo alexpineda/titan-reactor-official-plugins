@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useMap, usePluginConfig } from "titan-reactor";
+import { useMap, usePluginConfig } from "titan-reactor/runtime";
 
 export default ({ time, pct, styles }) => {
   const config = usePluginConfig();

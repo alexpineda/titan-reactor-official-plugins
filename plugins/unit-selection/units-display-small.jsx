@@ -1,6 +1,6 @@
 import React from "react";
 import range from "https://cdn.skypack.dev/lodash.range";
-import { enums, usePluginConfig, useSendMessage } from "titan-reactor";
+import { enums, usePluginConfig, useSendMessage } from "titan-reactor/runtime";
 import SmallUnitItem from "./small-unit-item.jsx";
 
 const sumKills = (tkills, { kills }) => tkills + kills;

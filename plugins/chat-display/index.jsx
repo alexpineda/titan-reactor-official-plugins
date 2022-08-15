@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { usePlayer, usePluginConfig, useMessage } from "titan-reactor"
+import { usePlayer, usePluginConfig, useMessage } from "titan-reactor/runtime"
 
 let _chatIndex = 0;
 

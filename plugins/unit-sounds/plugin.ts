@@ -1,13 +1,14 @@
+import { PluginBase } from "titan-reactor/host";
 
 function sample(array) {
     const length = array == null ? 0 : array.length
     return length ? array[Math.floor(Math.random() * length)] : undefined
 }
 
-
-return {
-    _lastUnitId: -1,
-    _clickCount: 0,
+// 8 (high) to 4 (med high)
+export default class Plugin extends PluginBase {
+    _lastUnitId = -1;
+    _clickCount = 0;
 
     _getSound(unit) {
         if (this.config.onlyBuildings && !unit.extras.dat.isBuilding) {
@@ -15,7 +16,7 @@ return {
         }
 
         if (this._lastUnitId === unit.id) {
-           this._clickCount++;
+            this._clickCount++;
         } else {
             this._clickCount = 0;
             this._lastUnitId = unit.id;
@@ -30,7 +31,7 @@ return {
                 return sample(unit.extras.dat.pissSound);
             }
         }
-    },
+    }
 
     _playSelected(units) {
         if (units.length === 0) return;
@@ -42,18 +43,18 @@ return {
             }
             unitTypes.add(unit.typeId);
             const sound = this._getSound(unit);
-            if (sound!== undefined) {
+            if (sound !== undefined) {
                 this.playSound(sound, unit.x, unit.y, unit.typeId);
             }
         }
-        
-    },
+
+    }
 
     onUnitsSelected(units) {
         this._playSelected(units);
-    },
+    }
 
     onMacroPlaySelected() {
-        this._playSelected(this.getSelectedUnits());
+        this._playSelected(this.selectedUnits);
     }
 }

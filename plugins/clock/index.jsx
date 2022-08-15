@@ -1,5 +1,5 @@
 import React from "react";
-import { useFrame, usePluginConfig, useReplay, getFriendlyTime } from "titan-reactor";
+import { useFrame, usePluginConfig, useReplay, getFriendlyTime } from "titan-reactor/runtime";
 import ModernClock from "./modern-clock.jsx";
 import ClassicClock from "./classic-clock.jsx";
 

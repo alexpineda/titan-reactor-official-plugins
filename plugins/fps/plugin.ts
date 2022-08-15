@@ -1,3 +1,5 @@
+import { PluginBase, NativePlugin } from "titan-reactor/host";
+
 /**
  * https://github.com/vanruesc/postprocessing/blob/main/manual/js/src/utils/FPSMeter.js
  */
@@ -8,7 +10,7 @@ class FPSMeter {
     acc = 0;
     frames = 0;
 
-    update(timestamp) {
+    update(timestamp: number) {
 
         this.acc += timestamp - this.timestamp;
         this.timestamp = timestamp;
@@ -38,18 +40,18 @@ class FPSMeter {
 
 const fps = new FPSMeter();
 
-return {
-    onGameReady(){
+export default class PluginAddon extends PluginBase implements NativePlugin {
+    onSceneReady() {
         fps.reset();
-    },
+    }
 
     onFrame() {
         this.sendUIMessage(fps.fps);
-    },
+    }
 
     onRender(_, elapsed) {
         fps.update(elapsed);
-    },
+    }
 
     onFrameReset() {
         fps.reset();

@@ -1,5 +1,5 @@
 import React from "react";
-import { assets } from "titan-reactor";
+import { assets } from "titan-reactor/runtime";
 
 const removeRacePrefix = (name) => name.replace(/^(Terran|Zerg|Protoss)/, "").trim();
 

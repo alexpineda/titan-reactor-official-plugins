@@ -7,7 +7,7 @@ import {
   usePlayerFrame,
   assets,
   RollingNumber,
-} from "titan-reactor";
+} from "titan-reactor/runtime";
 
 // const createAltColors = (color) => {
 //   let darken = new Color(0.1, 0.1, 0.1);

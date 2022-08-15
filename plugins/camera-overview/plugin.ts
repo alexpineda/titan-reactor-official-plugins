@@ -1,26 +1,33 @@
 
+
+import * as THREE from "three";
+import cameraControls from "camera-controls";
+import { SceneController } from "titan-reactor/host";
+
 const _rayCaster = new THREE.Raycaster();
 const _intersections = [];
 const OVERVIEW_FAR = 1000;
 
-return  {
-    gameOptions: {
-        audio: "3d",
-    },
+export default class PluginAddon extends SceneController {
+    #exitCamera = {
+        target: new THREE.Vector3()
+    }
+    gameOptions = {
+        allowUnitSelection: false,
+        audio: "3d" as const,
+    }
 
-    async onEnterScene(prevData, camera) {
+    async onEnterScene(prevData) {
 
         const orbit = this.viewport.orbit;
 
-        this._exitCamera = {
+        this.#exitCamera = {
             target: new THREE.Vector3()
         };
 
         if (prevData?.target?.isVector3) {
-            this._exitCamera.target.copy(prevData.target);
+            this.#exitCamera.target.copy(prevData.target);
         }
-
-        this._pipLocation = new THREE.Vector2();
 
         orbit.camera.far = OVERVIEW_FAR;
         orbit.camera.fov = 15;
@@ -28,7 +35,7 @@ return  {
 
         const oDistance = Math.max(this.mapWidth, this.mapHeight) * 4;
 
-        orbit.zoomTo(1, false);   
+        orbit.zoomTo(1, false);
         orbit.setLookAt(0, oDistance, 0, 0, 0, 0, false);
         // 8 (high) to 4 (med high)
 
@@ -42,8 +49,6 @@ return  {
         orbit.minZoom = 0.75;
         orbit.maxZoom = 1.5;
 
-        this.maxSoundDistance = orbit.distance;
-
         (async () => {
             await orbit.rotatePolarTo(Math.PI / this.config.polarRotation, this.config.animateTransition);
             orbit.minPolarAngle = Math.PI / this.config.polarRotation - 0.1;
@@ -52,10 +57,10 @@ return  {
 
         this.viewport.spriteRenderOptions.unitScale = 2.5;
         this.viewport.postProcessing.fogOfWarEffect.blendMode.setOpacity(0.7);
-        
+
         this.secondViewport.center = new THREE.Vector2;
         if (this.config.fullScreenPIP) {
-            this.secondViewport.center.set(0.5,0.5);
+            this.secondViewport.center.set(0.5, 0.5);
             this.secondViewport.height = this.secondViewport.surfaceHeight;
         } else {
             this.secondViewport.height = this.config.pipSize;
@@ -66,9 +71,8 @@ return  {
 
         this.minimap.enabled = false;
         this.minimap.scale = 0.5;
-        this._gameSpeed = this.gameSpeed;
-        
-    },
+
+    }
 
     onConfigChanged(oldConfig) {
         if (this.config.polarRotation !== oldConfig.polarRotation) {
@@ -81,30 +85,30 @@ return  {
 
         if (this.config.fullScreenPIP !== oldConfig.fullScreenPIP) {
             if (this.config.fullScreenPIP) {
-                this.secondViewport.center.set(0.5,0.5);
+                this.secondViewport.center.set(0.5, 0.5);
                 this.secondViewport.height = this.secondViewport.surfaceHeight;
             } else {
                 this.secondViewport.height = this.config.pipSize;
             }
         }
-    },
+    }
 
     onExitScene() {
-        return this._exitCamera;
-    },
+        return this.#exitCamera;
+    }
 
     onShouldHideUnit(unit) {
         return unit.extras.dat.isAddon;
-    },
+    }
 
     onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked) {
-        
+
         if (screenDrag.x !== 0) {
-          this.viewport.orbit.truck(screenDrag.x * delta * 2, 0, true);
+            this.viewport.orbit.truck(screenDrag.x * delta * 2, 0, true);
         }
-    
+
         if (screenDrag.y !== 0) {
-          this.viewport.orbit.forward(screenDrag.y * delta * 2, true);
+            this.viewport.orbit.forward(screenDrag.y * delta * 2, true);
         }
 
         if (clicked && clicked.z === 0) {
@@ -112,7 +116,7 @@ return  {
             _rayCaster.setFromCamera(clicked, this.viewport.camera);
             _rayCaster.intersectObject(this.terrain, true, _intersections);
             if (_intersections.length) {
-                this._exitCamera.target.set(_intersections[0].point.x, 0, _intersections[0].point.z);
+                this.#exitCamera.target.set(_intersections[0].point.x, 0, _intersections[0].point.z);
                 this.exitScene();
             }
         }
@@ -134,30 +138,30 @@ return  {
                     this.secondViewport.center.set(clientX, clientY);
                 }
                 this.secondViewport.update();
-                this._exitCamera.target.set(_intersections[0].point.x, 0, _intersections[0].point.z);
+                this.#exitCamera.target.set(_intersections[0].point.x, 0, _intersections[0].point.z);
             }
         } else if (this.secondViewport.enabled) {
             this.callCustomHook("onCustomPIPExited");
             this.secondViewport.enabled = false;
             this.minimap.enabled = false;
         }
-    },
+    }
 
     onCameraKeyboardUpdate(delta, elapsed, move) {
         if (move.x !== 0) {
-          this.viewport.orbit.truck(move.x * delta * 2, 0, true);
+            this.viewport.orbit.truck(move.x * delta * 2, 0, true);
         }
-    
+
         if (move.y !== 0) {
-          this.viewport.orbit.forward(move.y * delta * 2, true);
+            this.viewport.orbit.forward(move.y * delta * 2, true);
         }
-      },
-    
+    }
+
 
     onUpdateAudioMixerLocation(delta, elapsed, target, position) {
         if (this.secondViewport.enabled) {
-            return this._exitCamera.target;
+            return this.#exitCamera.target;
         }
         return position;
-    },
+    }
 }

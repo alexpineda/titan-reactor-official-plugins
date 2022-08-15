@@ -1,5 +1,5 @@
 import React from "react";
-import { RollingNumber } from "titan-reactor";
+import { RollingNumber } from "titan-reactor/runtime";
 
 const healthColorRed = "#d60000";
 const healthColorYellow = "#aaaa00";
