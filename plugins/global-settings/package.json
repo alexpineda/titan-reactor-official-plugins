@@ -4,7 +4,7 @@
     "description": "Global Settings",
     "author": "Dark Matter",
     "keywords": [
-        "titan-reactor-plugin"
+        "titan-reactor-plugin", "deprecated"
     ],
     "peerDependencies": {
         "titan-reactor-api": "2.0.0"

@@ -241,6 +241,7 @@ export default class PluginAddon extends SceneController implements SceneControl
   onFrame() {
     if (this.followedUnitsPosition) {
       const pos = this.followedUnitsPosition;
+      this.viewport.orbit.moveTo(pos.x, pos.y, pos.z, true);
     }
   }
 
