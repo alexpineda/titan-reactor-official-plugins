@@ -13,10 +13,21 @@ const _b = new THREE.Vector3();
 const _c = new THREE.Vector3();
 
 const pipColor = "#aaaaaa";
-
+interface Config {
+  config: {
+    defaultDistance: number;
+    tilt: number;
+    rotateAmount: number;
+    dollyAmount: number;
+    screenDragSpeed: number;
+    screenDragAccel: number;
+    screenDragAccelMax: number;
+    pipSize: number;
+    camera: string
+  }
+}
 export default class PluginAddon extends SceneController implements SceneController {
   #edgeSpeed = 0;
-  #keyboardSpeed = 0;
   #pip: GameViewPort;
 
   gameOptions = {
@@ -29,8 +40,6 @@ export default class PluginAddon extends SceneController implements SceneControl
   // a few shared setings we can update on init and config change
   _updateSettings() {
     this.#edgeSpeed = this.config.screenDragSpeed;
-    this.#keyboardSpeed = this.config.keyboardSpeed;
-    this.viewport.orbit.dampingFactor = this.config.damping;
   }
 
   async onEnterScene(prevData) {
@@ -53,12 +62,12 @@ export default class PluginAddon extends SceneController implements SceneControl
     orbit.minDistance = 20;
 
     orbit.maxPolarAngle = POLAR_MAX;
-    orbit.minPolarAngle = POLAR_MIN;
+    orbit.minPolarAngle = POLAR_MIN + THREE.MathUtils.degToRad(this.config.tilt);
     orbit.maxAzimuthAngle = 0;
     orbit.minAzimuthAngle = 0;
     this._updateSettings();
 
-    await orbit.rotatePolarTo(POLAR_MIN, false);
+    await orbit.rotatePolarTo(orbit.minPolarAngle, false);
     await orbit.rotateAzimuthTo(0, false);
     await orbit.zoomTo(1, false);
     await orbit.dollyTo(this.config.defaultDistance, false);
@@ -81,6 +90,12 @@ export default class PluginAddon extends SceneController implements SceneControl
     if (this.config.pipSize !== oldConfig.pipSize) {
       this.#pip.height = this.config.pipSize;
     }
+
+    if (this.config.tilt !== oldConfig.tilt) {
+      this.viewport.orbit.minPolarAngle = POLAR_MIN + THREE.MathUtils.degToRad(this.config.tilt);
+      this.viewport.orbit.rotatePolarTo(this.viewport.orbit.minPolarAngle, true);
+    }
+
   }
 
   onCameraMouseUpdate(
@@ -136,21 +151,13 @@ export default class PluginAddon extends SceneController implements SceneControl
 
   onCameraKeyboardUpdate(delta, elapsed, move) {
     if (move.x !== 0) {
-      this.viewport.orbit.truck(move.x * delta * this.#keyboardSpeed, 0, true);
+      this.viewport.orbit.truck(move.x * delta * this.cameraMovementSpeed, 0, true);
     }
 
     if (move.y !== 0) {
-      this.viewport.orbit.forward(move.y * delta * this.#keyboardSpeed, true);
+      this.viewport.orbit.forward(move.y * delta * this.cameraMovementSpeed, true);
     }
 
-    if (move.y === 0 && move.x === 0) {
-      this.#keyboardSpeed = this.config.keyboardSpeed;
-    } else {
-      this.#keyboardSpeed = Math.min(
-        this.config.keyboardAccelMax,
-        this.#keyboardSpeed * (1 + this.config.keyboardAccel)
-      );
-    }
   }
 
   onUpdateAudioMixerLocation(delta, elapsed, target, position) {

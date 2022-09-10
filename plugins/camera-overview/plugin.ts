@@ -9,6 +9,7 @@ const _intersections = [];
 const OVERVIEW_FAR = 1000;
 
 export default class PluginAddon extends SceneController {
+
     #exitCamera = {
         target: new THREE.Vector3()
     }
@@ -47,16 +48,13 @@ export default class PluginAddon extends SceneController {
         orbit.maxAzimuthAngle = Math.PI / 32;
         orbit.minAzimuthAngle = -Math.PI / 32;
         orbit.minZoom = 0.75;
-        orbit.maxZoom = 1.5;
+        orbit.maxZoom = 3;
 
         (async () => {
             await orbit.rotatePolarTo(Math.PI / this.config.polarRotation, this.config.animateTransition);
             orbit.minPolarAngle = Math.PI / this.config.polarRotation - 0.1;
             orbit.maxPolarAngle = Math.PI / this.config.polarRotation;
         })();
-
-        this.viewport.spriteRenderOptions.unitScale = 2.5;
-        this.viewport.postProcessing.fogOfWarEffect.blendMode.setOpacity(0.7);
 
         this.secondViewport.center = new THREE.Vector2;
         if (this.config.fullScreenPIP) {
@@ -68,6 +66,7 @@ export default class PluginAddon extends SceneController {
         this.secondViewport.cameraShake.enabled = true;
         this.secondViewport.cameraShake.maxShakeDistance = 100;
         this.secondViewport.orbit.dampingFactor = 0.5;
+        this.secondViewport.orbit.zoomTo(2, false);
 
         this.minimap.enabled = false;
         this.minimap.scale = 0.5;
@@ -75,6 +74,7 @@ export default class PluginAddon extends SceneController {
     }
 
     onConfigChanged(oldConfig) {
+
         if (this.config.polarRotation !== oldConfig.polarRotation) {
             this.viewport.orbit.rotatePolarTo(Math.PI / this.config.polarRotation, this.config.animateTransition);
         }
@@ -91,14 +91,19 @@ export default class PluginAddon extends SceneController {
                 this.secondViewport.height = this.config.pipSize;
             }
         }
+
     }
 
     onExitScene() {
+
         return this.#exitCamera;
+
     }
 
     onShouldHideUnit(unit) {
+
         return unit.extras.dat.isAddon;
+
     }
 
     onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked) {
@@ -111,17 +116,18 @@ export default class PluginAddon extends SceneController {
             this.viewport.orbit.forward(screenDrag.y * delta * 2, true);
         }
 
-        if (clicked && clicked.z === 0) {
+        if (clicked && clicked.z === 2) {
             _intersections.length = 0;
             _rayCaster.setFromCamera(clicked, this.viewport.camera);
             _rayCaster.intersectObject(this.terrain, true, _intersections);
             if (_intersections.length) {
                 this.#exitCamera.target.set(_intersections[0].point.x, 0, _intersections[0].point.z);
+                this.callCustomHook("onCustomExitScene");
                 this.exitScene();
             }
         }
 
-        if (!clicked && mouse.z === 2) {
+        if (!clicked && mouse.z === 0) {
             _rayCaster.setFromCamera(mouse, this.viewport.camera);
             _intersections.length = 0;
             _rayCaster.intersectObject(this.terrain, true, _intersections);

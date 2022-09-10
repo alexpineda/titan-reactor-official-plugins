@@ -1,15 +1,15 @@
 
 import * as THREE from "three";
 import * as postprocessing from "postprocessing";
-import { SceneController } from "titan-reactor/host";
+import CameraControls from "camera-controls";
+import { GameViewPort, SceneController } from "titan-reactor/host";
 
 const BATTLE_FAR = 128;
 
 const deltaYP = new THREE.Vector3();
-const _target = new THREE.Vector3();
+
 const audioListenerPosition = new THREE.Vector3();
 
-const { DepthOfFieldEffect, EffectPass } = postprocessing;
 
 interface Config {
     elevateAmount: number;
@@ -17,8 +17,6 @@ interface Config {
     fov: number;
     damping: number;
     keyboardSpeed: number;
-    keyboardAccel: number;
-    keyboardAccelMax: number;
     focalLength: number;
     bokehScale: number;
     blurQuality: number;
@@ -30,21 +28,10 @@ interface Config {
 }
 
 export default class PluginAddon extends SceneController implements SceneController {
-    #keyboardSpeed: number;
-    #depthOfFieldEffect: postprocessing.DepthOfFieldEffect;
 
     gameOptions = {
         allowUnitSelection: false,
         audio: "3d" as const,
-    }
-
-    // a few shared settings we can update on init and config change
-    _updateSettings() {
-
-        this.#keyboardSpeed = this.config.keyboardSpeed;
-        this.viewport.orbit.dampingFactor = this.config.damping;
-        this.#depthOfFieldEffect.circleOfConfusionMaterial.uniforms.focalLength.value = this.config.focalLength;
-        this.#depthOfFieldEffect.bokehScale = this.config.bokehScale;
     }
 
     async onEnterScene(prevData) {
@@ -53,13 +40,6 @@ export default class PluginAddon extends SceneController implements SceneControl
         } else {
             this.viewport.orbit.setTarget(0, 0, 0, false);
         }
-
-        this.#depthOfFieldEffect = this.#depthOfFieldEffect ?? new DepthOfFieldEffect(this.viewport.orbit.camera, {
-            focusDistance: 0.01,
-            focalLength: 0.1,
-            bokehScale: 1.0,
-            height: this.config.blurQuality,
-        });
 
         this.viewport.orbit.rotateAzimuthTo((this.config.rotateAzimuthStart - 1) * (Math.PI / 3), false);
         this.viewport.orbit.rotatePolarTo((this.config.rotatePolarStart - 1) * (Math.PI / 3), false);
@@ -73,40 +53,24 @@ export default class PluginAddon extends SceneController implements SceneControl
 
         Object.assign(this.viewport.orbit, {
             dollyToCursor: false,
-            maxDistance: Math.max(this.mapWidth, this.mapHeight) * 2,
+            maxDistance: Math.max(this.mapWidth, this.mapHeight) * 10,
             minDistance: 3,
-            maxZoom: 20,
+            maxZoom: 10,
             minZoom: 0.3,
-            dampingFactor: 0.01,
-            maxPolarAngle: Infinity,
+            maxPolarAngle: Math.PI * 0.4,
             minPolarAngle: -Infinity,
             maxAzimuthAngle: Infinity,
             minAzimuthAngle: -Infinity,
         })
 
-        this._updateSettings();
-
         this.viewport.orbit.dollyTo(this.config.defaultDistance, false);
         this.viewport.orbit.zoomTo(1, false);
 
-        this.viewport.spriteRenderOptions.rotateSprites = true;
-        this.viewport.cameraShake.enabled = true;
-
-        const postProcessing = this.viewport.postProcessing;
-        this.viewport.postProcessing = {
-            effects: [postProcessing.fogOfWarEffect, this.#depthOfFieldEffect],
-            passes: [postProcessing.renderPass, new EffectPass(this.viewport.camera, postProcessing.fogOfWarEffect, this.#depthOfFieldEffect)],
-        }
         this.togglePointerLock(true);
-    }
 
-    onBeforeRender() {
-        this.#depthOfFieldEffect.target = this.viewport.orbit.getTarget(_target);
-        this.#depthOfFieldEffect.circleOfConfusionMaterial.adoptCameraSettings(this.viewport.orbit.camera);
     }
 
     onConfigChanged(oldConfig) {
-        this._updateSettings();
 
         if (this.config.defaultDistance !== oldConfig.defaultDistance) {
             this.viewport.orbit.dollyTo(this.config.defaultDistance, true);
@@ -135,15 +99,20 @@ export default class PluginAddon extends SceneController implements SceneControl
         if (clicked) {
             if (this.pointerLockLost) {
                 this.togglePointerLock(true);
-            } else {
-                this.viewport.orbit.zoomTo(this.viewport.camera.zoom * (clicked.z === 0 ? 2 : 1 / 2), false);
             }
         }
 
-        // rotate according to mouse direction (pointer lock)
-        if (lookAt.x || lookAt.y) {
-            this.viewport.orbit.rotate((-lookAt.x / 1000) * this.config.rotateSpeed, (-lookAt.y / 1000) * this.config.rotateSpeed, true);
+        if (mouse.z === 0) {
+            this.viewport.orbit.rotate(-lookAt.x * delta * this.cameraRotateSpeed, -lookAt.y * delta * this.cameraRotateSpeed, true);
+        }
 
+
+        if (lookAt.x !== 0 && mouse.z === -1) {
+            this.viewport.orbit.truck(lookAt.x * delta * this.cameraMovementSpeed, 0, true);
+        }
+
+        if (lookAt.y !== 0 && mouse.z === -1) {
+            this.viewport.orbit.forward(-lookAt.y * delta * this.cameraMovementSpeed, true);
         }
 
         // elevate the y position if mouse scroll is used
@@ -158,23 +127,22 @@ export default class PluginAddon extends SceneController implements SceneControl
         }
     }
 
+    _groundTarget(viewport: GameViewPort, t: THREE.Vector3) {
+        return viewport.orbit.getTarget(t).setY(0);
+    }
+
     onShouldHideUnit(unit) {
         return unit.extras.dat.isAddon;
     }
 
     onCameraKeyboardUpdate(delta, elapsed, move) {
+        this.viewport.orbit.dollyToCursor = this.config.controlMode === "fps";
         if (move.x !== 0) {
-            this.viewport.orbit.truck(move.x * delta * this.#keyboardSpeed, 0, true);
+            this.viewport.orbit.truck(move.x * delta * this.cameraMovementSpeed, 0, true);
         }
 
         if (move.y !== 0) {
-            this.viewport.orbit.forward(move.y * delta * this.#keyboardSpeed, true);
-        }
-
-        if (move.y === 0 && move.x === 0) {
-            this.#keyboardSpeed = this.config.keyboardSpeed;
-        } else {
-            this.#keyboardSpeed = Math.min(this.config.keyboardAccelMax, this.#keyboardSpeed * (1 + this.config.keyboardAccel));
+            this.viewport.orbit.forward(move.y * delta * this.cameraMovementSpeed, true);
         }
     }
 
@@ -189,7 +157,4 @@ export default class PluginAddon extends SceneController implements SceneControl
         }
     }
 
-    dispose() {
-        this.#depthOfFieldEffect && this.#depthOfFieldEffect.dispose();
-    }
 }

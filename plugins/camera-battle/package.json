@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/camera-battle",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "Battle Camera Mode",
     "author": "Dark Matter",
     "keywords": [
@@ -10,22 +10,6 @@
         "titan-reactor-api": "2.0.0"
     },
     "config": {
-        "elevateAmount": {
-            "folder": "Middle Mouse Scroll",
-            "label": "Elevation Change",
-            "value": 2.5,
-            "min": 1,
-            "max": 5,
-            "step": 0.5
-        },
-        "rotateSpeed": {
-            "folder": "Mouse Look",
-            "label": "Rotate Speed",
-            "value": 0.5,
-            "min": 0.1,
-            "max": 5,
-            "step": 0.1
-        },
         "fov": {
             "folder": "Camera Parameters",
             "label": "Field Of View",
@@ -34,71 +18,21 @@
             "max": 125,
             "step": 1
         },
-        "damping": {
-            "folder": "Camera Parameters",
-            "label": "Movement Damping",
-            "factor": 0.005,
-            "value": 2,
-            "min": 1,
-            "max": 20,
-            "step": 0.5
-        },
-        "keyboardSpeed": {
-            "label": "Speed",
-            "folder": "Keyboard Movement",
-            "value": 2,
-            "min": 0,
-            "max": 4,
-            "step": 0.5
-        },
-        "keyboardAccel": {
-            "label": "Acceleration",
-            "folder": "Keyboard Movement",
-            "factor": 0.01,
-            "value": 1,
-            "min": 0,
-            "max": 10,
-            "step": 1
-        },
-        "keyboardAccelMax": {
-            "label": "Max Acceleration",
-            "folder": "Keyboard Movement",
-            "value": 2,
-            "min": 0,
-            "max": 4,
-            "step": 0.1
-        },
-        "focalLength": {
-            "label": "Focal Length",
-            "folder": "Visual Effects",
-            "factor": 0.01,
-            "value": 50,
-            "min": 5,
-            "max": 100,
-            "step": 1
-        },
-        "bokehScale": {
-            "label": "Bokeh Scale",
-            "folder": "Visual Effects",
-            "value": 1,
+        "rotateSpeed": {
+            "folder": "Camera Movement",
+            "label": "Rotate Speed",
+            "value": 0.1,
             "min": 0.1,
             "max": 5,
             "step": 0.1
         },
-        "blurQuality": {
-            "label": "Blur Quality",
-            "folder": "Visual Effects",
-            "value": 240,
-            "options": [
-                120,
-                240,
-                480
-            ]
-        },
-        "depthOfFieldEnabled": {
-            "label": "Depth Of Field",
-            "folder": "Enable Visual Effects",
-            "value": true
+        "elevateAmount": {
+            "folder": "Middle Mouse Scroll",
+            "label": "Camera Movement",
+            "value": 2.5,
+            "min": 1,
+            "max": 5,
+            "step": 0.5
         },
         "audioSourceDistance": {
             "label": "Audio Source Distance From Terrain",
@@ -110,7 +44,7 @@
         "rotateAzimuthStart": {
             "label": "Starting Azumuth Rotation",
             "folder": "Starting Position",
-            "value": 0.09999999999999998,
+            "value": 1,
             "min": 0,
             "max": 2,
             "step": 0.1
@@ -118,7 +52,7 @@
         "rotatePolarStart": {
             "label": "Starting Polar Rotation",
             "folder": "Starting Position",
-            "value": 2,
+            "value": 1.4,
             "min": 0,
             "max": 2,
             "step": 0.1

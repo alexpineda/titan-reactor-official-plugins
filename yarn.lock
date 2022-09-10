@@ -4535,6 +4535,11 @@ text-extensions@^1.0.0:
   resolved "https://registry.yarnpkg.com/text-extensions/-/text-extensions-1.9.0.tgz#1853e45fee39c945ce6f6c36b2d659b5aabc2a26"
   integrity sha512-wiBrwC1EhBelW12Zy26JeOUkQ5mRu+5o8rpsJk5+2t+Y5vE7e842qtZDQ2g1NpX/29HdyFeJ4nSIhI47ENSxlQ==
 
+three-janitor@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/three-janitor/-/three-janitor-1.0.4.tgz#47bd0d689e2b71519520353ea1eca8132313f33d"
+  integrity sha512-SNj3vOhL1Qorw3yLbjZGeR0X/i9c1HeeY/hnj7ojdYjsnlkxRnl8k8dEBvBrqjOTHVdLXbD4MDOm9pO523exCg==
+
 three@^0.143.0:
   version "0.143.0"
   resolved "https://registry.yarnpkg.com/three/-/three-0.143.0.tgz#1455bca132cc2b20beb7f41d313e10c29e5ed9df"

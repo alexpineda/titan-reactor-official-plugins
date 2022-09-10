@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/camera-standard",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "Default Camera Mode",
     "author": "Dark Matter",
     "keywords": [
@@ -22,13 +22,20 @@
             "max": 100,
             "step": 1
         },
-        "damping": {
-            "label": "Movement Damping",
-            "factor": 0.01,
-            "value": 9,
+        "tilt": {
+            "label": "Tilt",
             "min": 0,
-            "max": 30,
-            "step": 1
+            "max": 45,
+            "step": 1,
+            "value": 45
+        },
+        "camera": {
+            "label": "Camera",
+            "value": "perspective",
+            "options": [
+                "perspective",
+                "orthographic"
+            ]
         },
         "dollyAmount": {
             "label": "Dolly",
@@ -66,31 +73,6 @@
         "screenDragAccelMax": {
             "label": "Max Acceleration",
             "folder": "Screen Edge Movement",
-            "value": 2,
-            "min": 0,
-            "max": 4,
-            "step": 0.1
-        },
-        "keyboardSpeed": {
-            "label": "Speed",
-            "folder": "Keyboard Movement",
-            "value": 1,
-            "min": 0,
-            "max": 4,
-            "step": 0.5
-        },
-        "keyboardAccel": {
-            "label": "Acceleration",
-            "folder": "Keyboard Movement",
-            "factor": 0.01,
-            "value": 1,
-            "min": 0,
-            "max": 10,
-            "step": 1
-        },
-        "keyboardAccelMax": {
-            "label": "Max Acceleration",
-            "folder": "Keyboard Movement",
             "value": 2,
             "min": 0,
             "max": 4,
