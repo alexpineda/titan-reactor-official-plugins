@@ -27,7 +27,7 @@
             "min": 0,
             "max": 45,
             "step": 1,
-            "value": 45
+            "value": 0
         },
         "camera": {
             "label": "Camera",

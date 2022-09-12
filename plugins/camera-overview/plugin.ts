@@ -34,14 +34,13 @@ export default class PluginAddon extends SceneController {
         orbit.camera.fov = 15;
         orbit.camera.updateProjectionMatrix();
 
-        const oDistance = Math.max(this.mapWidth, this.mapHeight) * 4;
+        const oDistance = Math.max(this.scene.mapWidth, this.scene.mapHeight) * 4;
 
         orbit.zoomTo(1, false);
         orbit.setLookAt(0, oDistance, 0, 0, 0, 0, false);
         // 8 (high) to 4 (med high)
 
-        orbit.fitToBox(this.terrain);
-        // const distance = await this.zoomCameraToSelection(this.terrain.mesh);
+        orbit.fitToBox(this.scene.terrain);
         orbit.mouseButtons.wheel = cameraControls.ACTION.ZOOM;
         orbit.mouseButtons.middle = cameraControls.ACTION.ROTATE;
 
@@ -68,8 +67,10 @@ export default class PluginAddon extends SceneController {
         this.secondViewport.orbit.dampingFactor = 0.5;
         this.secondViewport.orbit.zoomTo(2, false);
 
-        this.minimap.enabled = false;
-        this.minimap.scale = 0.5;
+        console.log(this.settings);
+
+        this.settings.game.minimapEnabled.value = true;
+        this.settings.game.minimapSize.min();
 
     }
 
@@ -119,7 +120,7 @@ export default class PluginAddon extends SceneController {
         if (clicked && clicked.z === 2) {
             _intersections.length = 0;
             _rayCaster.setFromCamera(clicked, this.viewport.camera);
-            _rayCaster.intersectObject(this.terrain, true, _intersections);
+            _rayCaster.intersectObject(this.scene.terrain, true, _intersections);
             if (_intersections.length) {
                 this.#exitCamera.target.set(_intersections[0].point.x, 0, _intersections[0].point.z);
                 this.callCustomHook("onCustomExitScene");
@@ -130,7 +131,7 @@ export default class PluginAddon extends SceneController {
         if (!clicked && mouse.z === 0) {
             _rayCaster.setFromCamera(mouse, this.viewport.camera);
             _intersections.length = 0;
-            _rayCaster.intersectObject(this.terrain, true, _intersections);
+            _rayCaster.intersectObject(this.scene.terrain, true, _intersections);
             if (_intersections.length) {
                 if (!this.secondViewport.enabled) {
                     this.callCustomHook("onCustomPIPEntered");
@@ -138,7 +139,7 @@ export default class PluginAddon extends SceneController {
                 this.secondViewport.orbit.moveTo(_intersections[0].point.x, 0, _intersections[0].point.z, this.secondViewport.enabled);
                 this.secondViewport.enabled = true;
                 this.mouseCursor = false;
-                this.minimap.enabled = this.config.fullScreenPIP;
+                this.settings.game.minimapEnabled.value = this.config.fullScreenPIP;
 
                 if (!this.config.fullScreenPIP) {
                     this.secondViewport.center.set(clientX, clientY);
@@ -149,7 +150,7 @@ export default class PluginAddon extends SceneController {
         } else if (this.secondViewport.enabled) {
             this.callCustomHook("onCustomPIPExited");
             this.secondViewport.enabled = false;
-            this.minimap.enabled = false;
+            this.settings.game.minimapEnabled.value = false;
         }
     }
 

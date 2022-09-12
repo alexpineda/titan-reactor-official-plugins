@@ -161,10 +161,13 @@ export default class PluginAddon extends SceneController implements SceneControl
   }
 
   onUpdateAudioMixerLocation(delta, elapsed, target, position) {
+
     return target;
+
   }
 
   onDrawMinimap(ctx) {
+
     const view = this.viewport.projectedView;
     ctx.strokeStyle = "white";
     ctx.lineWidth = 0.8;
@@ -177,6 +180,7 @@ export default class PluginAddon extends SceneController implements SceneControl
     ctx.stroke();
 
     if (this.#pip.enabled) {
+
       const view = this.#pip.projectedView;
       ctx.strokeStyle = pipColor;
       ctx.lineWidth = 0.8;
@@ -187,7 +191,9 @@ export default class PluginAddon extends SceneController implements SceneControl
       ctx.lineTo(...view.bl);
       ctx.lineTo(...view.tl);
       ctx.stroke();
+
     }
+
   }
 
   _groundTarget(viewport, t) {
@@ -206,6 +212,7 @@ export default class PluginAddon extends SceneController implements SceneControl
   }
 
   onMinimapDragUpdate(pos, isDragStart, mouseButton) {
+
     const viewportsAreProximate = this._areProximateViewports(
       this.viewport,
       this.#pip
@@ -243,13 +250,18 @@ export default class PluginAddon extends SceneController implements SceneControl
         this.#pip.orbit.moveTo(-10000, 0, 0, false);
       }
     }
+
   }
 
   onFrame() {
-    if (this.followedUnitsPosition) {
-      const pos = this.followedUnitsPosition;
-      this.viewport.orbit.moveTo(pos.x, pos.y, pos.z, true);
-    }
+
+    // if (this.followedUnitsPosition) {
+
+    //   const pos = this.followedUnitsPosition;
+    //   this.viewport.orbit.moveTo(pos.x, pos.y, pos.z, true);
+
+    // }
+
   }
 
   onCustomPlayerBarClicked({ playerId, button }) {

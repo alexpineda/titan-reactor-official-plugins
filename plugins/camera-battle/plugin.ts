@@ -1,7 +1,5 @@
 
 import * as THREE from "three";
-import * as postprocessing from "postprocessing";
-import CameraControls from "camera-controls";
 import { GameViewPort, SceneController } from "titan-reactor/host";
 
 const BATTLE_FAR = 128;
@@ -9,23 +7,6 @@ const BATTLE_FAR = 128;
 const deltaYP = new THREE.Vector3();
 
 const audioListenerPosition = new THREE.Vector3();
-
-
-interface Config {
-    elevateAmount: number;
-    rotateSpeed: number;
-    fov: number;
-    damping: number;
-    keyboardSpeed: number;
-    focalLength: number;
-    bokehScale: number;
-    blurQuality: number;
-    audioSourceDistance: number;
-    depthOfFieldEnabled: boolean;
-    rotateAzimuthStart: number;
-    rotatePolarStart: number;
-    defaultDistance: number;
-}
 
 export default class PluginAddon extends SceneController implements SceneController {
 
@@ -35,6 +16,7 @@ export default class PluginAddon extends SceneController implements SceneControl
     }
 
     async onEnterScene(prevData) {
+
         if (prevData?.target?.isVector3) {
             this.viewport.orbit.setTarget(prevData.target.x, 0, prevData.target.z, false);
         } else {
@@ -53,7 +35,7 @@ export default class PluginAddon extends SceneController implements SceneControl
 
         Object.assign(this.viewport.orbit, {
             dollyToCursor: false,
-            maxDistance: Math.max(this.mapWidth, this.mapHeight) * 10,
+            maxDistance: Math.max(this.scene.mapWidth, this.scene.mapHeight) * 10,
             minDistance: 3,
             maxZoom: 10,
             minZoom: 0.3,
@@ -87,10 +69,12 @@ export default class PluginAddon extends SceneController implements SceneControl
     }
 
     onExitScene({ target, position }) {
+
         return {
             target,
             position
         }
+
     }
 
     onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked) {
@@ -132,11 +116,15 @@ export default class PluginAddon extends SceneController implements SceneControl
     }
 
     onShouldHideUnit(unit) {
+
         return unit.extras.dat.isAddon;
+
     }
 
     onCameraKeyboardUpdate(delta, elapsed, move) {
+
         this.viewport.orbit.dollyToCursor = this.config.controlMode === "fps";
+
         if (move.x !== 0) {
             this.viewport.orbit.truck(move.x * delta * this.cameraMovementSpeed, 0, true);
         }
@@ -144,17 +132,22 @@ export default class PluginAddon extends SceneController implements SceneControl
         if (move.y !== 0) {
             this.viewport.orbit.forward(move.y * delta * this.cameraMovementSpeed, true);
         }
+
     }
 
     onUpdateAudioMixerLocation(delta, elapsed, target, position) {
+
         return audioListenerPosition.lerpVectors(target, position, this.config.audioSourceDistance);
+
     }
 
     onFrame() {
-        if (this.followedUnitsPosition) {
-            const target = this.followedUnitsPosition;
-            this.viewport.orbit.moveTo(target.x, target.y, target.z, true);
-        }
+
+        // if (this.followedUnitsPosition) {
+        //     const target = this.followedUnitsPosition;
+        //     this.viewport.orbit.moveTo(target.x, target.y, target.z, true);
+        // }
+
     }
 
 }
