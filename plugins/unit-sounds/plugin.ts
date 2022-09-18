@@ -54,7 +54,4 @@ export default class Plugin extends PluginBase {
         this._playSelected(units);
     }
 
-    onMacroPlaySelected() {
-        this._playSelected(this.selectedUnits);
-    }
 }

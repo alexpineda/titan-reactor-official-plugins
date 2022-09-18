@@ -37,7 +37,7 @@ return {
 
     },
 
-    onSceneReady() {
+    onPluginsReady() {
         // the dead units we are tracking
         this._deadUnits = [];
         // the last time we checked if our dead units timed out
@@ -69,9 +69,9 @@ return {
         // add the HTMLImageElement to a new CSS2DObject which our CSSRenderer can use
         const obj = new STDLIB.CSS2DObject(image);
         // convert px game units to 3d map units
-        obj.position.x = this.pxToGameUnit.x(unit.x);
+        obj.position.x = this.pxToWorld.x(unit.x);
         obj.position.y = 0;
-        obj.position.z = this.pxToGameUnit.y(unit.y);
+        obj.position.z = this.pxToWorld.y(unit.y);
         obj.visible = this.config.showDeadUnits;
 
         // work-around for scale being overwritten css renderer

@@ -12,26 +12,11 @@ const _a = new THREE.Vector3();
 const _b = new THREE.Vector3();
 const _c = new THREE.Vector3();
 
-const pipColor = "#aaaaaa";
-interface Config {
-  config: {
-    defaultDistance: number;
-    tilt: number;
-    rotateAmount: number;
-    dollyAmount: number;
-    screenDragSpeed: number;
-    screenDragAccel: number;
-    screenDragAccelMax: number;
-    pipSize: number;
-    camera: string
-  }
-}
 export default class PluginAddon extends SceneController implements SceneController {
   #edgeSpeed = 0;
   #pip: GameViewPort;
 
   gameOptions = {
-    allowUnitSelection: true,
     audio: "stereo" as const,
   }
 
@@ -151,11 +136,11 @@ export default class PluginAddon extends SceneController implements SceneControl
 
   onCameraKeyboardUpdate(delta, elapsed, move) {
     if (move.x !== 0) {
-      this.viewport.orbit.truck(move.x * delta * this.cameraMovementSpeed, 0, true);
+      this.viewport.orbit.truck(move.x * delta * this.settings.getInputMovementSpeed(), 0, true);
     }
 
     if (move.y !== 0) {
-      this.viewport.orbit.forward(move.y * delta * this.cameraMovementSpeed, true);
+      this.viewport.orbit.forward(move.y * delta * this.settings.getInputMovementSpeed(), true);
     }
 
   }
@@ -163,36 +148,6 @@ export default class PluginAddon extends SceneController implements SceneControl
   onUpdateAudioMixerLocation(delta, elapsed, target, position) {
 
     return target;
-
-  }
-
-  onDrawMinimap(ctx) {
-
-    const view = this.viewport.projectedView;
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 0.8;
-    ctx.beginPath();
-    ctx.moveTo(...view.tl);
-    ctx.lineTo(...view.tr);
-    ctx.lineTo(...view.br);
-    ctx.lineTo(...view.bl);
-    ctx.lineTo(...view.tl);
-    ctx.stroke();
-
-    if (this.#pip.enabled) {
-
-      const view = this.#pip.projectedView;
-      ctx.strokeStyle = pipColor;
-      ctx.lineWidth = 0.8;
-      ctx.beginPath();
-      ctx.moveTo(...view.tl);
-      ctx.lineTo(...view.tr);
-      ctx.lineTo(...view.br);
-      ctx.lineTo(...view.bl);
-      ctx.lineTo(...view.tl);
-      ctx.stroke();
-
-    }
 
   }
 
@@ -219,14 +174,14 @@ export default class PluginAddon extends SceneController implements SceneControl
     );
 
     if (mouseButton === 0) {
-      this.viewport.orbit.moveTo(pos.x, 0, pos.z, !isDragStart);
+      this.viewport.orbit.moveTo(pos.x, 0, pos.y, !isDragStart);
       if (this.#pip.enabled) {
         this.#pip.enabled = !viewportsAreProximate;
       } else {
         this.#pip.orbit.moveTo(-10000, 0, 0, false);
       }
     } else if (mouseButton === 2) {
-      _c.set(pos.x, 0, pos.z);
+      _c.set(pos.x, 0, pos.y);
       this.#pipPovPlayerId = null;
 
       const isProximateToPrevious = this._areProximate(_c, _b);
@@ -245,7 +200,7 @@ export default class PluginAddon extends SceneController implements SceneControl
       }
 
       if (this.#pip.enabled) {
-        this.#pip.orbit.moveTo(pos.x, 0, pos.z, !isDragStart);
+        this.#pip.orbit.moveTo(pos.x, 0, pos.y, !isDragStart);
       } else {
         this.#pip.orbit.moveTo(-10000, 0, 0, false);
       }

@@ -13,7 +13,7 @@
         "enabled": {
             "folder": "Custom Colors",
             "label": "Use Custom Colors",
-            "value": true
+            "value": false
         },
         "randomized": {
             "folder": "Custom Colors",

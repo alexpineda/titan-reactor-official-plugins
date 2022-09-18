@@ -67,10 +67,6 @@ export default class PluginAddon extends SceneController {
         this.secondViewport.orbit.dampingFactor = 0.5;
         this.secondViewport.orbit.zoomTo(2, false);
 
-        console.log(this.settings);
-
-        this.settings.game.minimapEnabled.value = true;
-        this.settings.game.minimapSize.min();
 
     }
 
@@ -98,12 +94,6 @@ export default class PluginAddon extends SceneController {
     onExitScene() {
 
         return this.#exitCamera;
-
-    }
-
-    onShouldHideUnit(unit) {
-
-        return unit.extras.dat.isAddon;
 
     }
 
@@ -138,8 +128,7 @@ export default class PluginAddon extends SceneController {
                 }
                 this.secondViewport.orbit.moveTo(_intersections[0].point.x, 0, _intersections[0].point.z, this.secondViewport.enabled);
                 this.secondViewport.enabled = true;
-                this.mouseCursor = false;
-                this.settings.game.minimapEnabled.value = this.config.fullScreenPIP;
+                // this.mouseCursor = false;
 
                 if (!this.config.fullScreenPIP) {
                     this.secondViewport.center.set(clientX, clientY);
@@ -150,7 +139,6 @@ export default class PluginAddon extends SceneController {
         } else if (this.secondViewport.enabled) {
             this.callCustomHook("onCustomPIPExited");
             this.secondViewport.enabled = false;
-            this.settings.game.minimapEnabled.value = false;
         }
     }
 

@@ -31,7 +31,7 @@ export default class Plugin extends PluginBase {
   /*
   * When the game is ready to start but before it has been drawn. 
   */
-  onSceneReady() {
+  onPluginsReady() {
     this.#updateColors();
   }
 

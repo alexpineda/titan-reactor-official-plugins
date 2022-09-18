@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/camera-standard",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "description": "Default Camera Mode",
     "author": "Dark Matter",
     "keywords": [
@@ -27,7 +27,7 @@
             "min": 0,
             "max": 45,
             "step": 1,
-            "value": 0
+            "value": 35
         },
         "camera": {
             "label": "Camera",
