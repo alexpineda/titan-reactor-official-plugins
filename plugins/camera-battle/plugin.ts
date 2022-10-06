@@ -86,16 +86,16 @@ export default class PluginAddon extends SceneController implements SceneControl
         }
 
         if (mouse.z === 0) {
-            this.viewport.orbit.rotate(-lookAt.x * delta * this.settings.getInputRotateSpeed(), -lookAt.y * delta * this.settings.getInputRotateSpeed(), true);
+            this.viewport.orbit.rotate(-lookAt.x * delta * this.settings.input.rotateSpeed(), -lookAt.y * delta * this.settings.input.rotateSpeed(), true);
         }
 
 
         if (lookAt.x !== 0 && mouse.z === -1) {
-            this.viewport.orbit.truck(lookAt.x * delta * this.settings.getInputMovementSpeed(), 0, true);
+            this.viewport.orbit.truck(lookAt.x * delta * this.settings.input.movementSpeed(), 0, true);
         }
 
         if (lookAt.y !== 0 && mouse.z === -1) {
-            this.viewport.orbit.forward(-lookAt.y * delta * this.settings.getInputMovementSpeed(), true);
+            this.viewport.orbit.forward(-lookAt.y * delta * this.settings.input.movementSpeed(), true);
         }
 
         // elevate the y position if mouse scroll is used
@@ -125,11 +125,11 @@ export default class PluginAddon extends SceneController implements SceneControl
         this.viewport.orbit.dollyToCursor = this.config.controlMode === "fps";
 
         if (move.x !== 0) {
-            this.viewport.orbit.truck(move.x * delta * this.settings.getInputMovementSpeed(), 0, true);
+            this.viewport.orbit.truck(move.x * delta * this.settings.input.movementSpeed(), 0, true);
         }
 
         if (move.y !== 0) {
-            this.viewport.orbit.forward(move.y * delta * this.settings.getInputMovementSpeed(), true);
+            this.viewport.orbit.forward(move.y * delta * this.settings.input.movementSpeed(), true);
         }
 
     }

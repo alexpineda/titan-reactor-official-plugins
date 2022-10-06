@@ -50,8 +50,8 @@ export default class Plugin extends PluginBase {
 
     }
 
-    onUnitsSelected(units) {
-        this._playSelected(units);
+    init() {
+        this.events.on("selected-units-changed", (units) => this._playSelected(units));
     }
 
 }

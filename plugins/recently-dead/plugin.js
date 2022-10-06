@@ -37,7 +37,7 @@ return {
 
     },
 
-    onPluginsReady() {
+    init() {
         // the dead units we are tracking
         this._deadUnits = [];
         // the last time we checked if our dead units timed out
@@ -50,13 +50,16 @@ return {
         this._group = new THREE.Group();
         this.cssScene.add(this._group);
 
+        this.events.on("unit-killed", (unit) => this.#onUnitDestroyed(unit));
+        this.events.on("frame-reset", () => this._reset());
+
     },
 
     onConfigChanged(oldConfig) {
         this._updateVisibility(this.config.usePlayerColors !== oldConfig.usePlayerColors);
     },
 
-    onUnitDestroyed(unit) {
+    #onUnitDestroyed(unit) {
         // it's not a human player controlled unit so we don't care
         if (unit.owner > 7) {
             return;
@@ -121,21 +124,6 @@ return {
         this._deadUnits.length = 0;
     },
 
-    /**
-     * When a user seeks to a different location in the replay, reset all dead units.
-     */
-    onFrameReset() {
-        this._reset();
-    },
-
-    /*
-     * When the game is reset, make sure to remove everything from the scene.
-     */
-    onGameDispose() {
-        this._reset();
-        this.config.showDeadUnits = false;
-    },
-    
     dispose() {
         this._reset();
     }

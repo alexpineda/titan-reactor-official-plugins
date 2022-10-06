@@ -41,8 +41,12 @@ class FPSMeter {
 const fps = new FPSMeter();
 
 export default class PluginAddon extends PluginBase implements NativePlugin {
-    onPluginsReady() {
+
+    init() {
         fps.reset();
+
+        this.events.on("frame-reset", () => fps.reset());
+
     }
 
     onFrame() {
@@ -53,7 +57,4 @@ export default class PluginAddon extends PluginBase implements NativePlugin {
         fps.update(elapsed);
     }
 
-    onFrameReset() {
-        fps.reset();
-    }
 }

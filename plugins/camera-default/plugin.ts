@@ -28,6 +28,7 @@ export default class PluginAddon extends SceneController implements SceneControl
   }
 
   async onEnterScene(prevData) {
+
     const orbit = this.viewport.orbit;
 
     if (typeof prevData?.target?.x === "number" && typeof prevData?.target?.z === "number") {
@@ -136,11 +137,11 @@ export default class PluginAddon extends SceneController implements SceneControl
 
   onCameraKeyboardUpdate(delta, elapsed, move) {
     if (move.x !== 0) {
-      this.viewport.orbit.truck(move.x * delta * this.settings.getInputMovementSpeed(), 0, true);
+      this.viewport.orbit.truck(move.x * delta * this.settings.input.movementSpeed(), 0, true);
     }
 
     if (move.y !== 0) {
-      this.viewport.orbit.forward(move.y * delta * this.settings.getInputMovementSpeed(), true);
+      this.viewport.orbit.forward(move.y * delta * this.settings.input.movementSpeed(), true);
     }
 
   }

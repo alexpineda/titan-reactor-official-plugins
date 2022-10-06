@@ -16,8 +16,10 @@ return {
       this.sendUIMessage(messages);
     },
 
-    onFrameReset() {
-      // if the user has seeked somewhere on the replay then we need to reset the messages
-      this.sendUIMessage("reset");
+    init() {
+
+      this.events.on("frame-reset", () => this.sendUIMessage("reset"));
+
     }
+    
 }

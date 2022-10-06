@@ -28,12 +28,14 @@ export default class Plugin extends PluginBase {
     }
   }
 
+  init() {
+    console.log(this);
+    this.#updateColors();
+  }
+
   /*
   * When the game is ready to start but before it has been drawn. 
   */
-  onPluginsReady() {
-    this.#updateColors();
-  }
 
   /*
    * If this plugins config has changed, let's update any colors that we have set.
