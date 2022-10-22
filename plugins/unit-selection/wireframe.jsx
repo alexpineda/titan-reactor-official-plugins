@@ -149,7 +149,7 @@ const Wireframe = ({ unit, size = "lg" }) => {
         layerRefs[i].filter = filter;
       }
 
-      const backgroundImage = wireframeIcons[typeId];
+      const backgroundImage = `url(${wireframeIcons[typeId]})`;
       if (layerRefs[i].backgroundImage !== backgroundImage) {
         layerRefs[i].ref.current.style.backgroundImage = backgroundImage;
         layerRefs[i].backgroundImage = backgroundImage;
@@ -160,18 +160,19 @@ const Wireframe = ({ unit, size = "lg" }) => {
 
   }, [unit]);
 
-  const style =
-    size === "lg"
-      ? { width: "128px", height: "128px", position: "relative",  }
-      : { width: "64px", height: "64px", position: "relative" };
-
+  let style = { width: "128px", height: "128px", position: "relative"  }
   const layerStyle = {
     width: "128px",
     height: "128px",
     position: "absolute",
   };
+
   if (size === "md") {
+    style = { width: "64px", height: "64px", position: "relative" };
     layerStyle.transform = "translate(-32px, -32px) scale(0.5)";
+  } else if (size === "sm") {
+    style = { width: "32px", height: "32px", position: "relative" };
+    layerStyle.transform = "translate(-16px, -16px) scale(0.25)";
   }
 
   return (

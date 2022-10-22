@@ -6,14 +6,7 @@ const BATTLE_FAR = 128;
 
 const deltaYP = new THREE.Vector3();
 
-const audioListenerPosition = new THREE.Vector3();
-
 export default class PluginAddon extends SceneController implements SceneController {
-
-    gameOptions = {
-        allowUnitSelection: false,
-        audio: "3d" as const,
-    }
 
     async onEnterScene(prevData) {
 
@@ -48,7 +41,13 @@ export default class PluginAddon extends SceneController implements SceneControl
         this.viewport.orbit.dollyTo(this.config.defaultDistance, false);
         this.viewport.orbit.zoomTo(1, false);
 
+        this.viewport.rotateSprites = true;
+
         this.togglePointerLock(true);
+
+        this.viewport.audioType = "3d";
+
+        this.settings.input.unitSelection.set(false);
 
     }
 
@@ -70,6 +69,8 @@ export default class PluginAddon extends SceneController implements SceneControl
 
     onExitScene({ target, position }) {
 
+        this.settings.input.unitSelection.set(true);
+
         return {
             target,
             position
@@ -80,7 +81,7 @@ export default class PluginAddon extends SceneController implements SceneControl
     onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked) {
 
         if (clicked) {
-            if (this.pointerLockLost) {
+            if (this.isPointerLockLost()) {
                 this.togglePointerLock(true);
             }
         }
@@ -134,19 +135,16 @@ export default class PluginAddon extends SceneController implements SceneControl
 
     }
 
-    onUpdateAudioMixerLocation(delta, elapsed, target, position) {
-
-        return audioListenerPosition.lerpVectors(target, position, this.config.audioSourceDistance);
-
-    }
-
     onFrame() {
 
-        // if (this.followedUnitsPosition) {
-        //     const target = this.followedUnitsPosition;
-        //     this.viewport.orbit.moveTo(target.x, target.y, target.z, true);
-        // }
-
+        const pos = this.getFollowedUnitsPosition();
+    
+        if (pos) {
+    
+          this.viewport.orbit.moveTo(pos.x, pos.y, pos.z, true);
+    
+        }
+    
     }
 
 }

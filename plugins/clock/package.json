@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/clock",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "Titan Clock",
     "author": "Dark Matter",
     "keywords": [
@@ -40,6 +40,11 @@
             "folder": "Color",
             "label": "Background 2",
             "value": "#4a556870"
+        },
+        "_visible": {
+            "value": true,
+            "label": "UI Visible",
+            "folder": "System"
         }
     },
     "gitHead": "e47a73f384a275e14c56d8ada4a9bb4dc2cb53a0"

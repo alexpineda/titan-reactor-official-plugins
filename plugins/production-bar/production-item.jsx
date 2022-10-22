@@ -66,7 +66,7 @@ const ProductionItem = ({ item, color }) => {
       <img
         ref={imgRef}
         style={{
-          filter: "hue-rotate(64deg) brightness(10) contrast(0.8) grayscale(1)",
+          filter: "hue-rotate(64deg) brightness(1.5) contrast(0.8) grayscale(1)",
         }}
       />
       <div

@@ -90,9 +90,9 @@ const UnitDisplayLarge = ({ unit }) => {
               borderRadius: "var(--radius-2)",
               width: "var(--size-8)",
               height: "var(--size-8)",
-              filter: "hue-rotate(69deg) brightness(9)",
-              background: "black",
-              border: "1px solid #aaaaaa22",
+              filter: "sepia(1) brightness(1.1)",
+              background: "#111",
+              border: "1px solid #555",
             }}
           />
         )}

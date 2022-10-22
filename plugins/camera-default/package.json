@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/camera-standard",
-    "version": "2.0.3",
+    "version": "2.0.4",
     "description": "Default Camera Mode",
     "author": "Dark Matter",
     "keywords": [
@@ -17,9 +17,9 @@
         },
         "defaultDistance": {
             "label": "Default Distance",
-            "value": 80,
+            "value": 55,
             "min": 40,
-            "max": 100,
+            "max": 80,
             "step": 1
         },
         "tilt": {
@@ -27,7 +27,7 @@
             "min": 0,
             "max": 45,
             "step": 1,
-            "value": 35
+            "value": 5
         },
         "camera": {
             "label": "Camera",
@@ -51,31 +51,6 @@
             "value": 1,
             "min": 0,
             "max": 2,
-            "step": 0.1
-        },
-        "screenDragSpeed": {
-            "label": "Speed",
-            "folder": "Screen Edge Movement",
-            "value": 1,
-            "min": 0,
-            "max": 4,
-            "step": 0.1
-        },
-        "screenDragAccel": {
-            "label": "Acceleration",
-            "folder": "Screen Edge Movement",
-            "factor": 0.01,
-            "value": 1,
-            "min": 0,
-            "max": 10,
-            "step": 1
-        },
-        "screenDragAccelMax": {
-            "label": "Max Acceleration",
-            "folder": "Screen Edge Movement",
-            "value": 2,
-            "min": 0,
-            "max": 4,
             "step": 0.1
         },
         "pipSize": {

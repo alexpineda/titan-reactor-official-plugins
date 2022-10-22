@@ -18,8 +18,8 @@ registerComponent(
       return null;
     }
     
-    const pct = `${Math.round((frame.frame / replay.frameCount) * 100)}%`;
-    const time = getFriendlyTime(frame.frame);
+    const pct = `${Math.round((frame / replay.frameCount) * 100)}%`;
+    const time = getFriendlyTime(frame);
     
     const styles = {
       timeLabel: "white",

@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/production-bar",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "Production Bar",
     "author": "Dark Matter",
     "keywords": [
@@ -32,10 +32,9 @@
         "iconSize": {
             "folder": "Style",
             "label": "Icon Size",
-            "factor": 8,
-            "value": 5,
-            "min": 2,
-            "max": 8,
+            "value": 40,
+            "min": 16,
+            "max": 64,
             "step": 1
         },
         "useCustomProgressColor": {

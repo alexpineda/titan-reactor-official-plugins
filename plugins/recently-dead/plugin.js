@@ -85,7 +85,7 @@ return {
 
         // track this unit so we can remove it from the scene when it times out
         const deadUnit = {
-            deathFrame: this.currentFrame,
+            deathFrame: this.getCurrentFrame(),
             obj,
             color: this.getPlayerColor(unit.owner),
             style: image.style,

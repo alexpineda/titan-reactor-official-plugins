@@ -29,7 +29,6 @@ export default class Plugin extends PluginBase {
   }
 
   init() {
-    console.log(this);
     this.#updateColors();
   }
 

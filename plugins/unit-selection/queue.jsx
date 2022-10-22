@@ -13,7 +13,7 @@ const Queue = ({ units }) => {
         style={{
           width: "var(--size-5)",
           height: "var(--size-5)",
-          filter: "hue-rotate(69deg) brightness(20)",
+          filter: "hue-rotate(69deg) brightness(1.5)",
         }}
       />)}</div>;
 };

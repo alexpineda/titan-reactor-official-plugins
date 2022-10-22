@@ -11,10 +11,6 @@ export default class Plugin extends PluginBase {
     _clickCount = 0;
 
     _getSound(unit) {
-        if (this.config.onlyBuildings && !unit.extras.dat.isBuilding) {
-            return;
-        }
-
         if (this._lastUnitId === unit.id) {
             this._clickCount++;
         } else {

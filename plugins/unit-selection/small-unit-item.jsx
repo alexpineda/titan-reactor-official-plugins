@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from "react";
 import { assets, usePlayer } from "titan-reactor/runtime";
+import Wireframe from "./wireframe.jsx";
 
 const filters = [
-  "grayscale(1) brightness(2)",
-  "brightness(2)",
-  "hue-rotate(50deg)   brightness(3)",
-  "hue-rotate(66deg)   brightness(5)",
-  "hue-rotate(91deg)   brightness(4)",
+  "grayscale(1) brightness(1.1)",
+  "brightness(1.1)",
+  "hue-rotate(50deg)   brightness(1.1)",
+  "hue-rotate(66deg)   brightness(1.1)",
+  "hue-rotate(91deg)   brightness(1.1)",
 ];
 
 const calcStep = (unit, maxHp) => unit ? Math.ceil(Math.min(1, unit.hp / (maxHp * 0.8)) * 3) : 0;
@@ -22,7 +23,7 @@ const SmallUnitItem = ({ unit, owner, showLoaded, onClick }) => {
   const getPlayer = usePlayer();
 
   useEffect(() => {
-    if (!imgRef.current || !borderRef.current) {
+    if ( !borderRef.current) {
       return;
     }
 
@@ -32,11 +33,13 @@ const SmallUnitItem = ({ unit, owner, showLoaded, onClick }) => {
     const trans = "filter 1s linear";
 
     if (unit) {
-      imgRef.current.src = cmdIcons[unit.typeId];
-      imgRef.current.style.display = "block";
-      imgRef.current.style.filter = filters[step];
-      if (!isFirstRun.current) {
-        imgRef.current.style.transition = trans;
+      if (imgRef.current) {
+        imgRef.current.src = cmdIcons[unit.typeId];
+        imgRef.current.style.display = "block";
+        imgRef.current.style.filter = filters[step];
+        if (!isFirstRun.current) {
+          imgRef.current.style.transition = trans;
+        }
       }
       isFirstRun.current = false;
 
@@ -62,7 +65,7 @@ const SmallUnitItem = ({ unit, owner, showLoaded, onClick }) => {
     } else if (!unit && !showLoaded) {
       borderRef.current.style.borderColor = "";
     } else {
-      imgRef.current.style.display = "none";
+      if (imgRef.current) imgRef.current.style.display = "none";
       borderRef.current.style.borderColor = showLoaded ? "transparent" : "";
     }
   }, [unit]);
@@ -81,6 +84,7 @@ const SmallUnitItem = ({ unit, owner, showLoaded, onClick }) => {
         transition: "border 300ms linear",
       }}
     >
+      {/* <Wireframe unit={unit} size="sm" /> */}
       <img ref={imgRef} />
     </div>
   );

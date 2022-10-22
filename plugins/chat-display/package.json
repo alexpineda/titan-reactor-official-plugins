@@ -17,11 +17,10 @@
         },
         "hideTime": {
             "label": "Hide Time (seconds)",
-            "factor": 1000,
-            "value": 5,
-            "min": 2,
-            "max": 20,
-            "step": 1
+            "value": 5000,
+            "min": 2000,
+            "max": 20000,
+            "step": 1000
         }
     }
 }

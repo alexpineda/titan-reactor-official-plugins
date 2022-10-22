@@ -13,7 +13,6 @@ const _b = new THREE.Vector3();
 const _c = new THREE.Vector3();
 
 export default class PluginAddon extends SceneController implements SceneController {
-  #edgeSpeed = 0;
   #pip: GameViewPort;
 
   gameOptions = {
@@ -21,11 +20,6 @@ export default class PluginAddon extends SceneController implements SceneControl
   }
 
   #pipPovPlayerId = null
-
-  // a few shared setings we can update on init and config change
-  _updateSettings() {
-    this.#edgeSpeed = this.config.screenDragSpeed;
-  }
 
   async onEnterScene(prevData) {
 
@@ -51,7 +45,6 @@ export default class PluginAddon extends SceneController implements SceneControl
     orbit.minPolarAngle = POLAR_MIN + THREE.MathUtils.degToRad(this.config.tilt);
     orbit.maxAzimuthAngle = 0;
     orbit.minAzimuthAngle = 0;
-    this._updateSettings();
 
     await orbit.rotatePolarTo(orbit.minPolarAngle, false);
     await orbit.rotateAzimuthTo(0, false);
@@ -63,11 +56,11 @@ export default class PluginAddon extends SceneController implements SceneControl
     this.#pip.right = 0.05;
     this.#pip.bottom = 0.05;
 
+    this.settings.session.audioListenerDistance.set(1);
+
   }
 
   onConfigChanged(oldConfig) {
-    this._updateSettings();
-
     // only update default distance if it's changed otherwise we'll get a jump
     if (this.config.defaultDistance !== oldConfig.defaultDistance) {
       this.viewport.orbit.dollyTo(this.config.defaultDistance, true);
@@ -115,24 +108,16 @@ export default class PluginAddon extends SceneController implements SceneControl
 
     if (screenDrag.x !== 0) {
       this.viewport.orbit.truck(
-        screenDrag.x * delta * this.#edgeSpeed,
+        screenDrag.x * delta * this.settings.input.movementSpeed(),
         0,
         true
       );
     }
 
     if (screenDrag.y !== 0) {
-      this.viewport.orbit.forward(screenDrag.y * delta * this.#edgeSpeed, true);
+      this.viewport.orbit.forward(screenDrag.y * delta * this.settings.input.movementSpeed(), true);
     }
 
-    if (screenDrag.y === 0 && screenDrag.x === 0) {
-      this.#edgeSpeed = this.config.screenDragSpeed;
-    } else {
-      this.#edgeSpeed = Math.min(
-        this.config.screenDragAccelMax,
-        this.#edgeSpeed * (1 + this.config.screenDragAccel)
-      );
-    }
   }
 
   onCameraKeyboardUpdate(delta, elapsed, move) {
@@ -143,12 +128,6 @@ export default class PluginAddon extends SceneController implements SceneControl
     if (move.y !== 0) {
       this.viewport.orbit.forward(move.y * delta * this.settings.input.movementSpeed(), true);
     }
-
-  }
-
-  onUpdateAudioMixerLocation(delta, elapsed, target, position) {
-
-    return target;
 
   }
 
@@ -211,12 +190,13 @@ export default class PluginAddon extends SceneController implements SceneControl
 
   onFrame() {
 
-    // if (this.followedUnitsPosition) {
+    const pos = this.getFollowedUnitsPosition();
 
-    //   const pos = this.followedUnitsPosition;
-    //   this.viewport.orbit.moveTo(pos.x, pos.y, pos.z, true);
+    if (pos) {
 
-    // }
+      this.viewport.orbit.moveTo(pos.x, pos.y, pos.z, true);
+
+    }
 
   }
 

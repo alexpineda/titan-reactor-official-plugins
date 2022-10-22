@@ -13,10 +13,6 @@ export default class PluginAddon extends SceneController {
     #exitCamera = {
         target: new THREE.Vector3()
     }
-    gameOptions = {
-        allowUnitSelection: false,
-        audio: "3d" as const,
-    }
 
     async onEnterScene(prevData) {
 
@@ -68,6 +64,10 @@ export default class PluginAddon extends SceneController {
         this.secondViewport.orbit.zoomTo(2, false);
 
 
+        this.viewport.audioType = "3d";
+        this.settings.input.unitSelection.set(false);
+
+
     }
 
     onConfigChanged(oldConfig) {
@@ -92,6 +92,8 @@ export default class PluginAddon extends SceneController {
     }
 
     onExitScene() {
+
+        this.settings.input.unitSelection.set(true);
 
         return this.#exitCamera;
 
@@ -153,7 +155,7 @@ export default class PluginAddon extends SceneController {
     }
 
 
-    onUpdateAudioMixerLocation(delta, elapsed, target, position) {
+    onUpdateAudioMixerLocation(_, position) {
         if (this.secondViewport.enabled) {
             return this.#exitCamera.target;
         }

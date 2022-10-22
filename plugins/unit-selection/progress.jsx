@@ -147,7 +147,7 @@ const Progress = ({ unit }) => {
           borderRadius: "var(--radius-2)",
           width: "var(--size-8)",
           height: "var(--size-8)",
-          filter: "hue-rotate(69deg) brightness(9)",
+          filter: "hue-rotate(69deg) brightness(1.5)",
           background: "black",
           border: "1px solid #aaaaaa22",
         }}
