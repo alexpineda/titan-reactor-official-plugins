@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/camera-overview",
-    "version": "2.0.3",
+    "version": "2.0.4",
     "description": "Overview Camera Mode",
     "author": "Dark Matter",
     "keywords": [
@@ -10,13 +10,6 @@
         "titan-reactor-api": "2.0.0"
     },
     "config": {
-        "system": {
-            "customHooks": [
-                "onCustomPIPEntered",
-                "onCustomPIPExited",
-                "onCustomExitScene"
-            ]
-        },
         "pipSize": {
             "label": "PIP Size",
             "value": 300,

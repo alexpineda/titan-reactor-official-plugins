@@ -115,7 +115,7 @@ export default class PluginAddon extends SceneController {
             _rayCaster.intersectObject(this.scene.terrain, true, _intersections);
             if (_intersections.length) {
                 this.#exitCamera.target.set(_intersections[0].point.x, 0, _intersections[0].point.z);
-                this.callCustomHook("onCustomExitScene");
+                // this.callCustomHook("onCustomExitScene");
                 this.exitScene();
             }
         }
@@ -125,9 +125,9 @@ export default class PluginAddon extends SceneController {
             _intersections.length = 0;
             _rayCaster.intersectObject(this.scene.terrain, true, _intersections);
             if (_intersections.length) {
-                if (!this.secondViewport.enabled) {
-                    this.callCustomHook("onCustomPIPEntered");
-                }
+                // if (!this.secondViewport.enabled) {
+                //     this.callCustomHook("onCustomPIPEntered");
+                // }
                 this.secondViewport.orbit.moveTo(_intersections[0].point.x, 0, _intersections[0].point.z, this.secondViewport.enabled);
                 this.secondViewport.enabled = true;
                 // this.mouseCursor = false;
@@ -139,7 +139,7 @@ export default class PluginAddon extends SceneController {
                 this.#exitCamera.target.set(_intersections[0].point.x, 0, _intersections[0].point.z);
             }
         } else if (this.secondViewport.enabled) {
-            this.callCustomHook("onCustomPIPExited");
+            // this.callCustomHook("onCustomPIPExited");
             this.secondViewport.enabled = false;
         }
     }

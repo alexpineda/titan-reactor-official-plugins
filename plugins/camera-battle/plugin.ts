@@ -48,6 +48,7 @@ export default class PluginAddon extends SceneController implements SceneControl
         this.viewport.audioType = "3d";
 
         this.settings.input.unitSelection.set(false);
+        this.settings.input.cursorVisible.set(false);
 
     }
 
@@ -70,6 +71,7 @@ export default class PluginAddon extends SceneController implements SceneControl
     onExitScene({ target, position }) {
 
         this.settings.input.unitSelection.set(true);
+        this.settings.input.cursorVisible.set(true);
 
         return {
             target,

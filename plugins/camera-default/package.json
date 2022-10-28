@@ -10,11 +10,6 @@
         "titan-reactor-api": "2.0.0"
     },
     "config": {
-        "system": {
-            "permissions": [
-                "replay.commands"
-            ]
-        },
         "defaultDistance": {
             "label": "Default Distance",
             "value": 55,
