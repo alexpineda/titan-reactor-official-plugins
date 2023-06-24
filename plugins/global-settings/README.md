@@ -1,1 +1,0 @@
-This plugin is deprecated. Please use Global Settings.

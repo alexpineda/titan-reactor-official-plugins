@@ -1,51 +1,55 @@
 {
-    "name": "@titan-reactor-plugins/clock",
-    "version": "2.0.1",
-    "description": "Titan Clock",
-    "author": "Dark Matter",
-    "keywords": [
-        "titan-reactor-plugin"
-    ],
-    "peerDependencies": {
-        "titan-reactor-api": "2.0.0"
+  "name": "@titan-reactor-plugins/clock",
+  "version": "2.0.1",
+  "description": "Titan Clock",
+  "author": "DM",
+  "keywords": [
+    "titan-reactor-plugin"
+  ],
+  "peerDependencies": {
+    "titan-reactor-api": "2.0.0"
+  },
+  "config": {
+    "style": {
+      "value": "modern",
+      "options": [
+        "classic",
+        "modern"
+      ]
     },
-    "config": {
-        "style": {
-            "value": "modern",
-            "options": [
-                "classic",
-                "modern"
-            ]
-        },
-        "fontSize": {
-            "label": "Font Size",
-            "value": "12px"
-        },
-        "textColor": {
-            "folder": "Color",
-            "label": "Text 1",
-            "value": "rgb(124, 124, 124)"
-        },
-        "textColor2": {
-            "folder": "Color",
-            "label": "Text 2",
-            "value": "rgb(213, 213, 213)"
-        },
-        "bgDark": {
-            "folder": "Color",
-            "label": "Background 1",
-            "value": "#2d374861"
-        },
-        "bgLight": {
-            "folder": "Color",
-            "label": "Background 2",
-            "value": "#4a556870"
-        },
-        "_visible": {
-            "value": true,
-            "label": "UI Visible",
-            "folder": "System"
-        }
+    "fontSize": {
+      "label": "Font Size",
+      "value": "12px"
     },
-    "gitHead": "e47a73f384a275e14c56d8ada4a9bb4dc2cb53a0"
+    "textColor": {
+      "folder": "Color",
+      "label": "Text 1",
+      "value": "rgb(124, 124, 124)"
+    },
+    "textColor2": {
+      "folder": "Color",
+      "label": "Text 2",
+      "value": "rgb(213, 213, 213)"
+    },
+    "bgDark": {
+      "folder": "Color",
+      "label": "Background 1",
+      "value": "#2d374861"
+    },
+    "bgLight": {
+      "folder": "Color",
+      "label": "Background 2",
+      "value": "#4a556870"
+    },
+    "_visible": {
+      "value": true,
+      "label": "UI Visible",
+      "folder": "System"
+    }
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "ISC"
 }

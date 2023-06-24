@@ -1,6 +1,6 @@
 {
     "name": "@titan-reactor-plugins/players-bar",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "Player Bar",
     "author": "Dark Matter",
     "keywords": [
@@ -27,6 +27,10 @@
             "label": "Text",
             "value": "rgb(255, 255, 255)"
         },
+        "fontSize": {
+            "label": "Font Size",
+            "value": "16px"
+        },
         "backgroundColor": {
             "folder": "Color",
             "label": "Background",
@@ -36,6 +40,11 @@
             "folder": "Color",
             "label": "Supply Capped Text",
             "value": "#ff4c26"
+        },
+        "_visible": {
+            "value": true,
+            "label": "UI Visible",
+            "folder": "System"
         }
     },
     "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5"

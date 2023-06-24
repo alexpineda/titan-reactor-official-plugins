@@ -1,10 +1,11 @@
 {
     "name": "@titan-reactor-plugins/recently-dead",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "description": "Recently Dead Units",
     "author": "Dark Matter",
     "keywords": [
-        "titan-reactor-plugin"
+        "titan-reactor-plugin",
+        "deprecated"
     ],
     "peerDependencies": {
         "titan-reactor-api": "2.0.0"

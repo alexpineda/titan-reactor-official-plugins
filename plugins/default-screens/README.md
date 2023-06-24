@@ -1,1 +1,0 @@
-Displays basic information about the map and replay being loaded.

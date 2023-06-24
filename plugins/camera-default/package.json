@@ -1,8 +1,8 @@
 {
     "name": "@titan-reactor-plugins/camera-standard",
-    "version": "2.0.4",
+    "version": "2.0.5",
     "description": "Default Camera Mode",
-    "author": "Dark Matter",
+    "author": "DM",
     "keywords": [
         "titan-reactor-plugin"
     ],
@@ -10,6 +10,12 @@
         "titan-reactor-api": "2.0.0"
     },
     "config": {
+        "sensitivity": {
+            "label": "Input Sensitivity",
+            "value": 20,
+            "min": 1,
+            "max": 25
+        },
         "defaultDistance": {
             "label": "Default Distance",
             "value": 55,

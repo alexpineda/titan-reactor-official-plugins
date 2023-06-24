@@ -1,15 +1,23 @@
 {
     "name": "@titan-reactor-plugins/camera-battle",
-    "version": "2.0.5",
+    "version": "2.0.6",
     "description": "Battle Camera Mode",
-    "author": "Dark Matter",
+    "author": "DM",
     "keywords": [
         "titan-reactor-plugin"
     ],
     "peerDependencies": {
-        "titan-reactor-api": "2.0.0"
+        "titan-reactor-api": "2.0.0",
+        "titan-reactor-runtime": "^2.0.0",
+        "titan-reactor-host": "^2.0.0"
     },
     "config": {
+        "sensitivity": {
+            "label": "Input Sensitivity",
+            "value": 5,
+            "min": 1,
+            "max": 25
+        },
         "fov": {
             "folder": "Camera Parameters",
             "label": "Field Of View",

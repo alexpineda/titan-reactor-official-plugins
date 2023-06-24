@@ -1,14 +1,12 @@
 {
     "name": "@titan-reactor-plugins/chat-display",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "description": "Chat Display",
-    "author": "Dark Matter",
+    "author": "DM",
+    "type": "module",
     "keywords": [
         "titan-reactor-plugin"
     ],
-    "peerDependencies": {
-        "titan-reactor-api": "2.0.0"
-    },
     "permissions": [
         "replay.commands"
     ],
@@ -20,5 +18,8 @@
             "max": 20000,
             "step": 1000
         }
+    },
+    "peerDependencies": {
+        "titan-reactor-runtime": "^2.0.0"
     }
 }

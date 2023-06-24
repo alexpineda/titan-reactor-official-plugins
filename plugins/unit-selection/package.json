@@ -14,12 +14,25 @@
         "largeShowUnitName": {
             "folder": "Large Unit Display",
             "label": "Show Unit Name",
-            "value": false
+            "value": true
+        },
+        "unitNameFontSize": {
+            "label": "Unit Name Font Size",
+            "value": "16px"
+        },
+        "bodyFontSize": {
+            "label": "Body Font Size",
+            "value": "12px"
         },
         "smallShowKills": {
             "folder": "Small Unit Display",
             "label": "Show Group Kills",
             "value": true
+        },
+        "_visible": {
+            "value": true,
+            "label": "UI Visible",
+            "folder": "System"
         }
     }
 }
