@@ -1,0 +1,97 @@
+{
+    "name": "@titan-reactor-plugins/narrative-maker",
+    "version": "0.0.1",
+    "description": "Narrative Maker",
+    "author": "Dark Matter",
+    "keywords": [
+        "titan-reactor-plugin"
+    ],
+    "peerDependencies": {
+        "titan-reactor-api": "2.0.0"
+    },
+    "config": {
+        "_visible": {
+            "value": true,
+            "label": "UI Visible",
+            "folder": "System"
+        },
+        "speedScale": {
+            "label": "Speed Scale",
+            "value": 0.5,
+            "min": 0.5,
+            "max": 2,
+            "step": 0.1
+        },
+        "cameraMoveTime": {
+            "label": "Camera Move Time",
+            "value": 4300,
+            "min": 500,
+            "max": 20000,
+            "step": 100
+        },
+        "urgentCameraMoveTime": {
+            "label": "Camera Move Time ( Urgent Events )",
+            "value": 1000,
+            "min": 500,
+            "max": 20000,
+            "step": 100
+        },
+        "tilt": {
+            "label": "Tilt",
+            "min": 0,
+            "max": 45,
+            "step": 1,
+            "value": 44
+        },
+        "baseDistance": {
+            "label": "Default Distance",
+            "value": 54,
+            "min": 40,
+            "max": 200,
+            "step": 1
+        },
+        "distanceVariance": {
+            "label": "Distance Variance",
+            "value": 30,
+            "min": 0,
+            "max": 30,
+            "step": 1
+        },
+        "azimuthVariance": {
+            "label": "Azimuth Variance",
+            "value": 25,
+            "min": 0,
+            "max": 90,
+            "step": 1
+        },
+        "polarVariance": {
+            "label": "Polar Variance",
+            "value": 10,
+            "min": 0,
+            "max": 45,
+            "step": 1
+        },
+        "heatMapDecay": {
+            "label": "Heat Map Decay",
+            "value": 0.9,
+            "min": 0.001,
+            "max": 0.999,
+            "step": 0.001
+        },
+        "heatmapUpdateInterval": {
+            "label": "Heatmap Update Interval",
+            "value": 670,
+            "min": 10,
+            "max": 10000,
+            "step": 10
+        },
+        "pipSize": {
+            "label": "PIP Size",
+            "value": 600,
+            "min": 100,
+            "max": 800,
+            "step": 25
+        }
+    },
+    "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5"
+}
