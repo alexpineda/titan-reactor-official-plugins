@@ -1,12 +1,13 @@
 
 import * as THREE from "three";
-import { BwDAT, GameViewPort, Player, UnitStruct } from "@titan-reactor-runtime/host";
+import { BwDAT, GameViewPort, Player, Unit, UnitStruct } from "@titan-reactor-runtime/host";
 
 
 const _pos = new THREE.Vector3(0, 0, 0);
 
 const unitTypes = enums.unitTypes;
 const orders = enums.orders;
+const UnitFlags = enums.UnitFlags;
 
 const workerTypes = [enums.unitTypes.scv, enums.unitTypes.drone, enums.unitTypes.probe];
 
@@ -14,7 +15,7 @@ const DEFAULT_FAR = 256;
 const POLAR_MAX = (10 * Math.PI) / 64;
 const POLAR_MIN = (2 * Math.PI) / 64;
 
-const PIP_PROXIMITY = 16;
+const PIP_PROXIMITY = 32;
 
 const _a = new THREE.Vector3();
 const _b = new THREE.Vector3();
@@ -28,7 +29,7 @@ const rankA = [
   unitTypes.covertOps, unitTypes.physicsLab, unitTypes.infestedCommandCenter, unitTypes.hive, unitTypes.nydusCanal, unitTypes.defilerMound,
   unitTypes.nuclearSilo, unitTypes.greaterSpire, unitTypes.queensNest, unitTypes.ultraliskCavern,
 
-  unitTypes.templarArchives, unitTypes.fleetBeacon, unitTypes.arbitalTribunal,
+  unitTypes.templarArchives, unitTypes.fleetBeacon, unitTypes.arbitalTribunal, unitTypes.scarab, unitTypes.scannerSweep
 ];
 
 const rankB = [
@@ -38,7 +39,7 @@ const rankB = [
   unitTypes.commandCenter, unitTypes.starport, unitTypes.scienceFacility, unitTypes.engineeringBay, unitTypes.armory,
   unitTypes.bunker,
   unitTypes.hatchery, unitTypes.lair, unitTypes.spire, unitTypes.darkSwarm,
-  unitTypes.nexus, unitTypes.cyberneticsCore, unitTypes.stargate, unitTypes.roboticsSupportBay
+  unitTypes.nexus, unitTypes.cyberneticsCore, unitTypes.stargate, unitTypes.roboticsSupportBay,
 ];
 
 const rankC = [
@@ -50,7 +51,7 @@ const rankC = [
 ];
 
 const rankD = [
-  unitTypes.marine, unitTypes.medic, unitTypes.zergling, unitTypes.interceptor,
+  unitTypes.marine, unitTypes.medic, unitTypes.zergling, unitTypes.interceptor, unitTypes.lurkerEgg,
 
   unitTypes.supplyDepot, unitTypes.refinery, unitTypes.controlTower,
   unitTypes.evolutionChamber, unitTypes.spawningPool, unitTypes.pylon,
@@ -58,20 +59,66 @@ const rankD = [
 ];
 
 const rankE = [
-  unitTypes.scv, unitTypes.spiderMine, unitTypes.scannerSweep, unitTypes.drone, unitTypes.overlord, unitTypes.mutaliskCocoon, unitTypes.probe, unitTypes.observer, unitTypes.scarab, unitTypes.lurkerEgg, unitTypes.disruptionWeb,
+  unitTypes.spiderMine, unitTypes.mutaliskCocoon, unitTypes.observer, unitTypes.disruptionWeb,
 
   unitTypes.comsatStation, unitTypes.creepColony, unitTypes.sporeColony, unitTypes.sunkenColony,
   unitTypes.extractor,
   unitTypes.assimilator,
 ];
 
+/*
+ unitTypes.overlord,
+unitTypes.scv, unitTypes.drone, unitTypes.probe
+*/
+
 function easeOutQuint(x: number): number {
   return 1 - Math.pow(1 - x, 5);
-  }
+}
 
-  function easeOutCubic(x: number): number {
-    return 1 - Math.pow(1 - x, 3);
-    }
+function easeOutCubic(x: number): number {
+  return 1 - Math.pow(1 - x, 3);
+}
+
+function distance(point1: { x: number, y: number }, point2: { x: number, y: number }): number {
+  const deltaX = point2.x - point1.x;
+  const deltaY = point2.y - point1.y;
+
+  return Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
+}
+
+const unitIsCompleted = (unit: UnitStruct) => {
+  return unit.statusFlags & UnitFlags.Completed;
+};
+
+const canSelectUnit = (unit: Unit | undefined) => {
+  if (!unit) return null;
+
+  return unit.typeId !== unitTypes.darkSwarm &&
+    unit.typeId !== unitTypes.disruptionWeb &&
+    unit.order !== orders.die &&
+    !unit.extras.dat.isTurret &&
+    (unit.statusFlags & UnitFlags.Loaded) === 0 &&
+    (unit.statusFlags & UnitFlags.InBunker) === 0 &&
+    unit.order !== orders.harvestGas &&
+    unit.typeId !== unitTypes.spiderMine &&
+    (unitIsCompleted(unit) || unit.extras.dat.isZerg || unit.extras.dat.isBuilding)
+    ? unit
+    : null;
+};
+
+const _canOnlySelectOne = [
+  unitTypes.larva,
+  unitTypes.zergEgg,
+  unitTypes.vespeneGeyser,
+  unitTypes.mineral1,
+  unitTypes.mineral2,
+  unitTypes.mineral3,
+  unitTypes.mutaliskCocoon,
+  unitTypes.lurkerEgg,
+];
+
+const canOnlySelectOne = (unit: UnitStruct) =>
+  _canOnlySelectOne.includes(unit.typeId);
 
 type Quadrant<T> = { items: T[], x: number, y: number };
 
@@ -161,6 +208,7 @@ class SimpleQuadtree<T> {
 class SimpleHeatmap {
   #heatmap: number[] = [];
   #size: number;
+  defaultDecay = 0.9
 
   constructor(size: number) {
     this.#size = size;
@@ -169,13 +217,13 @@ class SimpleHeatmap {
     }
   }
 
-  decayAll(decay = 0.9) {
+  decayAll(decay = this.defaultDecay) {
     for (let i = 0; i < this.#size * this.#size; i++) {
       this.#heatmap[i] *= decay;
     }
   }
 
-  decay(x: number, y: number, decay = 0.9) {
+  decay(x: number, y: number, decay = this.defaultDecay) {
     this.#heatmap[y * this.#size + x] *= decay;
   }
 
@@ -196,7 +244,31 @@ class SimpleHeatmap {
   toString() {
     return arrToString(this.#heatmap, this.#size);
   }
+
+  getNearby(x: number, y: number, radius = 0) {
+
+    if (radius === 0) {
+      return [this.#heatmap[y * this.#size + x]];
+    } else {
+      const items: number[] = [];
+
+      const minX = Math.floor(Math.max(0, x - radius));
+      const minY = Math.floor(Math.max(0, y - radius));
+      const maxX = Math.floor(Math.min(this.#size - 1, x + radius));
+      const maxY = Math.floor(Math.min(this.#size - 1, y + radius));
+
+      for (let y = minY; y <= maxY; y++) {
+        for (let x = minX; x <= maxX; x++) {
+          items.push(this.#heatmap[y * this.#size + x]);
+        }
+      }
+
+      return items;
+    }
+  }
 }
+
+
 
 const arrToString = (arr: any[], size: number) => {
   let str = "";
@@ -283,18 +355,23 @@ class UnitInterestScore {
       case orders.playerGaurd:
       case orders.turretGaurd:
       case orders.bunkerGaurd:
-      case orders.castScannerSweep:
       case orders.placeBuilding:
       case orders.placeProtossBuilding:
       case orders.createProtossBuilding:
       case orders.constructingBuilding:
+      case orders.buildingLand:
+      case orders.buildingLiftOff:
 
         return 0.1;
       case orders.holdPosition:
-      case orders.interceptorAttack:
       case orders.trainFighter:
       case orders.repair:
       case orders.move:
+      case orders.researchTech:
+      case orders.upgrade:
+      case orders.attackMove:
+      case orders.attackFixedRange:
+        
         return 0.3;
       case orders.unburrowing:
       case orders.medicHeal:
@@ -302,19 +379,10 @@ class UnitInterestScore {
       case orders.placeAddOn:
       case orders.buildAddOn:
         return 0.5;
-      case orders.attackMove:
-      case orders.attackFixedRange:
-      case orders.unload:
-      case orders.moveUnload:
-      case orders.enterTransport:
-      case orders.buildingLand:
-      case orders.buildingLiftOff:
-      case orders.researchTech:
-      case orders.burrowing:
-      case orders.upgrade:
-      case orders.sieging:
-        return 0.8;
+
       case orders.attackUnit:
+
+        return 0.8;
       case orders.castConsume:
       case orders.castDarkSwarm:
       case orders.castDefensiveMatrix:
@@ -337,8 +405,17 @@ class UnitInterestScore {
       case orders.castRestoration:
       case orders.castSpawnBroodlings:
       case orders.castStasisField:
+
       case orders.scarabAttack:
       case orders.die:
+      case orders.interceptorAttack:
+      case orders.unload:
+      case orders.moveUnload:
+      case orders.enterTransport:
+      case orders.sieging:
+      case orders.castScannerSweep:
+      case orders.burrowing:
+
         return 1;
 
       default:
@@ -348,22 +425,12 @@ class UnitInterestScore {
 
   unitOfInterestFilter(unit: UnitStruct) {
     const unitType = this.#bwDat.units[unit.typeId];
-    return !unitType.isResourceContainer && unit.owner < 8;
-    // if (unitType.isResourceMiner) {
-    //   return unit.order === orders.attackMove || unit.order === orders.attackUnit;
-    // } else if (
-    //   unit.typeId === unitTypes.sunkenColony || unit.typeId === unitTypes.sporeColony || unit.typeId === unitTypes.bunker || unit.typeId === unitTypes.photonCannon) {
-    //   return true;
-    // } else if (unitType.isResourceContainer) {
-    //   return false;
-    // }
-    // return true;
+    return !unitType.isResourceContainer && unit.owner < 8 && canSelectUnit(unit);
   }
 
 }
 
-
-function spreadFactorVariance(units: UnitStruct[]): number {
+function spreadFactorVariance(units: THREE.Vector2[]): number {
   let meanX = 0;
   let meanY = 0;
   let n = units.length;
@@ -406,29 +473,60 @@ function maxTotalVariance(deltaX: number, deltaY: number): number {
   return maxVarianceX + maxVarianceY;;
 }
 
+const getCameraDistance = (units: UnitStruct[], mapSize: number[]) => {
+  let meanX = 0;
+  let meanY = 0;
+  let n = units.length;
+
+  // Calculate mean coordinates
+  for (let unit of units) {
+    meanX += unit.x;
+    meanY += unit.y;
+  }
+  meanX /= n;
+  meanY /= n;
+
+  // Calculate variance for X and Y
+  let varianceX = 0;
+  let varianceY = 0;
+  for (let unit of units) {
+    varianceX += Math.pow(unit.x - meanX, 2);
+    varianceY += Math.pow(unit.y - meanY, 2);
+  }
+  varianceX /= n;
+  varianceY /= n;
+
+  // Optional: Normalize the variance by the dimensions of the map
+  const normalizedVarianceX = varianceX / Math.pow(mapSize[0] * 32 / QUAD_SIZE, 2);
+  const normalizedVarianceY = varianceY / Math.pow(mapSize[1] * 32 / QUAD_SIZE, 2);
+
+  // Adjust camera distance. This can be a function of normalized variance.
+  // For this example, let's say we linearly scale camera distance
+  const cameraDistance = Math.sqrt(normalizedVarianceX + normalizedVarianceY);
+
+  return cameraDistance;
+}
 
 const QUAD_SIZE = 8;
 
 
 export default class PluginAddon extends SceneController {
 
-  #pointsOfInterest: THREE.Vector3[] = [];
-  // userData.priority, userData.position, userData.unit, userData.player, userData.frame, userData.type , userData.score, userData.rankScore, userData.interestScore
-
   #unitWorkerScore: UnitInterestScore;
   #units: SimpleQuadtree<UnitStruct>;
-  #heatmap: SimpleHeatmap;
+  #adhd: SimpleHeatmap;
+  #quadScores: SimpleHeatmap;
 
   #lastUpdateFrame = 0;
   #lastHeatMapUpdateFrame = 0;
-  #maxTotalSpreadVariance = 0;
 
   init() {
 
     this.#unitWorkerScore = new UnitInterestScore(this.assets.bwDat);
 
-    this.#units = new SimpleQuadtree<UnitStruct>(QUAD_SIZE, new THREE.Vector2(this.map.size[0] * 32, this.map.size[1] * 32), new THREE.Vector2(0, 0));
-    this.#heatmap = new SimpleHeatmap(QUAD_SIZE);
+    this.#units = new SimpleQuadtree<Unit>(QUAD_SIZE, new THREE.Vector2(this.map.size[0] * 32, this.map.size[1] * 32), new THREE.Vector2(0, 0));
+    this.#adhd = new SimpleHeatmap(QUAD_SIZE);
+    this.#quadScores = new SimpleHeatmap(QUAD_SIZE);
 
     // this.events.on("pre-run:frame", () => {
     //     for (const u of this.openBW.iterators.units) {
@@ -448,26 +546,39 @@ export default class PluginAddon extends SceneController {
 
     });
 
+    this.events.on("unit-killed", (unit) => {
+      this.#adhd.set(unit.x, unit.y, 0);
+    });
+
     this.events.on("unit-destroyed", (unit) => {
       if (this.#secondFollowedUnit?.id === unit.id) {
         this.#secondFollowedUnit = undefined;
       }
-      this.#heatmap.decay(unit.x, unit.y);
+      this.selectedUnits.delete(unit);
     });
 
     this.events.on("unit-updated", (unit) => {
       if (this.#unitWorkerScore.unitOfInterestFilter(unit)) {
         this.#units.add(unit.x, unit.y, unit);
       }
+      if (unit.extras.recievingDamage) {
+        this.#adhd.decay(unit.x, unit.y);
+        if (!canOnlySelectOne(unit)) {
+          this.selectedUnits.add(unit);
+        }
+      } else {
+        this.selectedUnits.delete(unit);
+      }
+
+      if (unit.isAttacking) {
+        this.#adhd.decay(unit.x, unit.y);
+      }
     });
 
     this.events.on("frame-reset", () => {
       this.#reset();
-      this.#heatmap.clear();
+      this.#adhd.clear();
     })
-    console.log("PLENGTH", this.players.length);
-
-    this.#maxTotalSpreadVariance = maxTotalVariance(this.map.size[0] * 32, this.map.size[1] * 32);
 
   }
 
@@ -501,39 +612,7 @@ export default class PluginAddon extends SceneController {
     await orbit.dollyTo(55, false);
   }
 
-  #cameraAdjustment(units: UnitStruct[]): number {
-    let meanX = 0;
-    let meanY = 0;
-    let n = units.length;
   
-    // Calculate mean coordinates
-    for (let unit of units) {
-      meanX += unit.x;
-      meanY += unit.y;
-    }
-    meanX /= n;
-    meanY /= n;
-  
-    // Calculate variance for X and Y
-    let varianceX = 0;
-    let varianceY = 0;
-    for (let unit of units) {
-      varianceX += Math.pow(unit.x - meanX, 2);
-      varianceY += Math.pow(unit.y - meanY, 2);
-    }
-    varianceX /= n;
-    varianceY /= n;
-  
-    // Optional: Normalize the variance by the dimensions of the map
-    const normalizedVarianceX = varianceX / Math.pow(this.map.size[0] * 32 / QUAD_SIZE, 2);
-    const normalizedVarianceY = varianceY / Math.pow(this.map.size[1] * 32 / QUAD_SIZE, 2);
-  
-    // Adjust camera distance. This can be a function of normalized variance.
-    // For this example, let's say we linearly scale camera distance
-    const cameraDistance = Math.sqrt(normalizedVarianceX + normalizedVarianceY);
-  
-    return cameraDistance;
-  }
 
   public async onEnterScene(prevData) {
     this.viewport.fullScreen();
@@ -541,18 +620,29 @@ export default class PluginAddon extends SceneController {
 
     this.#reset();
 
-    this.#setupCamera(this.viewport) ;
-    this.#setupCamera(this.secondViewport) ;
+    await this.#setupCamera(this.viewport);
+    await this.#setupCamera(this.secondViewport);
 
     this.secondViewport.name = "pip";
     this.secondViewport.height = this.config.pipSize;
     this.secondViewport.right = 0.05;
     this.secondViewport.bottom = 0.05;
 
+    this.settings.input.unitSelection.set(false);
+    this.settings.input.cursorVisible.set(false);
+
+    this.viewport.cameraShake.enabled = true;
+    this.viewport.cameraShake.maxShakeDistance = 100;
+    this.viewport.orbit.dampingFactor = 0.000001;
+
+    console.log("CONFIG DECAY", this.config.heatmapDecay)
+    this.#adhd.defaultDecay = 0.5;
+
   }
 
   onConfigChanged(oldConfig: Record<string, unknown>): void {
     this.secondViewport.height = this.config.pipSize;
+    this.#adhd.defaultDecay = this.config.heatmapDecay;
   }
 
   #secondFollowedUnit: UnitStruct | undefined;
@@ -571,7 +661,7 @@ export default class PluginAddon extends SceneController {
       _pos.z,
       true
     );
-    this.secondViewport.orbit.dollyTo(this.config.baseDistance * 3/4, true)
+    this.secondViewport.orbit.dollyTo(this.config.baseDistance * 3 / 4, true)
 
     // this.secondViewport.orbit.rotatePolarTo(this.secondViewport.orbit.minPolarAngle + Math.random() * THREE.MathUtils.degToRad(this.config.polarVariance), true);
     // this.secondViewport.orbit.rotateAzimuthTo((-0.5 + Math.random()) * THREE.MathUtils.degToRad(this.config.azimuthVariance), true);
@@ -596,19 +686,20 @@ export default class PluginAddon extends SceneController {
 
     this.pxToWorld.xyz(nx, ny, _pos);
 
+    this.viewport.orbit.getTarget(_a);
+    
     this.viewport.orbit.moveTo(
       _pos.x,
       _pos.y,
       _pos.z,
-      true
+      this.#areProximate(_pos, _a)
     );
 
-    const cameraAdjustment = this.#cameraAdjustment(quadrant.items);
+    const cameraAdjustment = getCameraDistance(quadrant.items, this.map.size);
     // const spread = spreadFactorVariance(quadrant.items) / this.#maxTotalSpreadVariance;
-    console.log("SPREAD", cameraAdjustment, easeOutCubic(cameraAdjustment));
-    // 0 is zoom all the way
+    // console.log("SPREAD", cameraAdjustment, easeOutCubic(cameraAdjustment));
     // 1 is zoom all the way out
-    const lerpedBaseDistance = THREE.MathUtils.lerp(this.config.baseDistance, this.config.baseDistance + this.config.distanceVariance, easeOutCubic(cameraAdjustment));  
+    const lerpedBaseDistance = THREE.MathUtils.lerp(this.config.baseDistance, this.config.baseDistance + this.config.distanceVariance, easeOutCubic(cameraAdjustment));
 
     this.viewport.orbit.dollyTo(lerpedBaseDistance, true)
     // this.viewport.orbit.dollyTo(this.config.baseDistance - (this.config.distanceVariance / 2) + Math.random() * this.config.distanceVariance, true)
@@ -616,14 +707,9 @@ export default class PluginAddon extends SceneController {
     this.viewport.orbit.rotatePolarTo(this.viewport.orbit.minPolarAngle + Math.random() * THREE.MathUtils.degToRad(this.config.polarVariance), true);
     this.viewport.orbit.rotateAzimuthTo((-0.5 + Math.random()) * THREE.MathUtils.degToRad(this.config.azimuthVariance), true);
 
-    // this.followedUnits.set([maxScoreUnit])
-    // this.selectedUnits.set([maxScoreUnit])
-
-    this.followedUnits.set(quadrant.items)
-    this.selectedUnits.set(quadrant.items)
+    this.followedUnits.set([maxScoreUnit])
 
     this.#lastUpdateFrame = this.elapsed;
-    this.#heatmap.set(quadrant.x, quadrant.y, 1);
   }
 
   #groundTarget(viewport, t) {
@@ -643,22 +729,36 @@ export default class PluginAddon extends SceneController {
 
   onMinimapDragUpdate(pos, isDragStart, mouseButton) {
 
-    if (mouseButton === 0)  {
+    if (mouseButton === 0) {
       _c.set(pos.x, 0, pos.y);
 
       if (isDragStart) {
-         this.secondViewport.enabled = true;
+        this.secondViewport.enabled = true;
       }
 
       this.secondViewport.orbit.moveTo(pos.x, 0, pos.y, !isDragStart);
-      
+
     }
 
   }
 
+  #isArmyUnit(unit: UnitStruct): boolean {
+      return this.assets.bwDat.units[unit.typeId].supplyRequired > 0 && !this.#isWorker(unit.typeId);
+  }
+
+  #isWorker(unitTypeId) {
+      return workerTypes.includes(unitTypeId);
+  }
+
+  #targetGameSpeed = 1;
+
   onFrame(frame: number, commands: any[]): void {
 
+
+    this.openBW.setGameSpeed(THREE.MathUtils.damp(this.openBW.gameSpeed, THREE.MathUtils.clamp(this.#targetGameSpeed, 1, this.config.maxReplaySpeed), 0.8, this.delta / 1000));
     this.sendUIMessage({
+      speed: this.openBW.gameSpeed,
+
       state: {
         lastHeatMapUpdateFrame: this.#lastHeatMapUpdateFrame,
         lastUpdateFrame: this.#lastUpdateFrame,
@@ -673,51 +773,48 @@ export default class PluginAddon extends SceneController {
             y: q.y,
             score: this.#unitWorkerScore.getAverageScore(q.items),
             units: q.items.length,
-            heatmap: this.#heatmap.get(q.x, q.y),
+            heatmap: this.#adhd.get(q.x, q.y),
           }
         })
       }
     })
 
     if (this.elapsed - this.#lastHeatMapUpdateFrame > this.config.heatmapUpdateInterval) {
-      this.#heatmap.decayAll(this.config.heatmapDecay);
+      this.#adhd.decayAll();
       this.#lastHeatMapUpdateFrame = this.elapsed;
     }
 
     if (this.elapsed - this.#lastUpdateFrame > this.config.cameraMoveTime) {
 
-      let highScore = 0, score = 0;
-      let hottestQuadrant: Quadrant<UnitStruct> | undefined;
-      let secondHottestQuadrant: Quadrant<UnitStruct> | undefined;
+      let hottestScore = 0, score = 0;
+      let hottestQuadrant: Quadrant<Unit> | undefined;
+      let secondHottestQuadrant: Quadrant<Unit> | undefined;
 
-      let _scoreSum = 0;
+      let decayedScore = 0, decayedSecondScore = 0;
+
 
       //TODO; if a quadrants score doubles from last frame, it should be prioritized
       for (const quadrant of this.#units.quadrants) {
         score = this.#unitWorkerScore.getAverageScore(quadrant.items);
-        _scoreSum += score;
-        if (score > highScore) {
-          if (this.#heatmap.get(quadrant.x, quadrant.y) < 0.2) {
-            highScore = score;
+        decayedScore = score * (1 - this.#adhd.get(quadrant.x, quadrant.y));
+        this.#quadScores.set(quadrant.x, quadrant.y, score);
+        if (decayedScore > hottestScore) {
+            hottestScore = decayedScore;
             secondHottestQuadrant = hottestQuadrant;
             hottestQuadrant = quadrant;
-          } else {
-            this.simpleMessage(`Quadrant ${quadrant.x},${quadrant.y} with ${quadrant.items.length} -> still hot`)
-          }
         }
       }
-
-      
 
       if (hottestQuadrant && hottestQuadrant.items.length > 0) {
 
         this.#activateQuadrant(hottestQuadrant);
+        this.#adhd.set(hottestQuadrant.x, hottestQuadrant.y, 1);
 
-        const avgScore = _scoreSum / this.#units.quadrants.length;
-
+        let secondScore = 0;
         if (secondHottestQuadrant) {
-          const secondScore = this.#unitWorkerScore.getAverageScore(secondHottestQuadrant.items);
-          if (secondScore > avgScore) {
+          secondScore = this.#unitWorkerScore.getAverageScore(secondHottestQuadrant.items);
+          decayedSecondScore = secondScore * (1 - this.#adhd.get(secondHottestQuadrant.x, secondHottestQuadrant.y));
+          if (secondScore > hottestScore * distance(hottestQuadrant, secondHottestQuadrant)/8) {
             this.#activateSecondQuadrant(secondHottestQuadrant);
             this.secondViewport.enabled = true;
           } else {
@@ -727,15 +824,28 @@ export default class PluginAddon extends SceneController {
           this.secondViewport.enabled = false;
         }
 
-        const speedModifier = 1- easeOutQuint(THREE.MathUtils.clamp(highScore, 0, 1));
-        const speed = Math.max(1, 8 * speedModifier)
-        // this.openBW.setGameSpeed(THREE.MathUtils.damp(this.openBW.gameSpeed, speed, 0.1, this.delta / 1000 ));
+        const nearbyHeat = this.#quadScores.getNearby(hottestQuadrant.x, hottestQuadrant.y, 1);
+        let nearbySum = 0;
+        for (const h of nearbyHeat) {
+          nearbySum += h// * (1 -0 this.#adhd.get(h.x, h.y));
+        }
 
-        console.log("speed", highScore, speedModifier, speed);
+        let nearbyAttacking = 0, armyTotal = 1;
 
-        this.openBW.setGameSpeed(speed);
+        for (const unit of hottestQuadrant.items) {
+          if (this.#isArmyUnit(unit)) {
+            armyTotal++;
+            if (unit.isAttacking) {
+              nearbyAttacking++;
+            }
+          }
+        }
+        // v1- calculated speed on winning quadrant only, obv not great, lets try adding a nearby quadrant too
+        const speedLerpX =  easeOutCubic(nearbySum) + (nearbyAttacking / armyTotal);
+        this.#targetGameSpeed = THREE.MathUtils.lerp(this.config.maxReplaySpeed, 1, speedLerpX);
+        console.log("speedModifier", speedLerpX, nearbySum, hottestScore, this.#targetGameSpeed)
 
-        this.simpleMessage(`Quadrant ${hottestQuadrant.x},${hottestQuadrant.y} - score: ${highScore}`)
+        // this.simpleMessage(`Quadrant ${hottestQuadrant.x},${hottestQuadrant.y} - score: ${highScore}`)
 
       }
 
@@ -755,7 +865,7 @@ export default class PluginAddon extends SceneController {
 
     }
 
-    if  (this.#secondFollowedUnit) {
+    if (this.#secondFollowedUnit) {
       this.pxToWorld.xyz(this.#secondFollowedUnit.x, this.#secondFollowedUnit.y, _pos);
       this.secondViewport.orbit.moveTo(_pos.x, _pos.y, _pos.z, true);
     }
@@ -763,65 +873,25 @@ export default class PluginAddon extends SceneController {
     this.secondViewport.enabled = this.secondViewport.enabled && !this.#areProximateViewports(this.viewport, this.secondViewport);
   }
 
-  #isNearStartLocation(player: Player | undefined, pos: THREE.Vector3): boolean {
+  // #isNearStartLocation(player: Player | undefined, pos: THREE.Vector3): boolean {
 
-    const distance = 32;
-    for (const p of this.players) {
-      if (p.startLocation) {
-        if (!this.#isNearOwnStartLocation(player, p.startLocation) && p.startLocation.distanceTo(pos) <= distance) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
+  //   const distance = 32;
+  //   for (const p of this.players) {
+  //     if (p.startLocation) {
+  //       if (!this.#isNearOwnStartLocation(player, p.startLocation) && p.startLocation.distanceTo(pos) <= distance) {
+  //         return true;
+  //       }
+  //     }
+  //   }
+  //   return false;
+  // }
 
-  #isNearOwnStartLocation(player: Player | undefined, pos: THREE.Vector3): boolean {
-    if (player == undefined || player.startLocation === undefined) return false;
+  // #isNearOwnStartLocation(player: Player | undefined, pos: THREE.Vector3): boolean {
+  //   if (player == undefined || player.startLocation === undefined) return false;
 
-    const distance = 10 * 32
-    return (player.startLocation.distanceTo(pos) <= distance);
-  }
-
-  #isWorker(unitTypeId) {
-    return workerTypes.includes(unitTypeId);
-  }
-
-  #isArmyUnit(unit: UnitStruct): boolean {
-    return !!this.#getUnitPlayer(unit) && this.assets.bwDat.units[unit.typeId].supplyRequired > 0 && !this.#isWorker(unit.typeId);
-  }
-
-  #getUnitPlayer(unit: UnitStruct): Player | undefined {
-    return this.players.get(unit.owner);
-  }
-
-  #shouldMoveCamera(priority: number): boolean {
-    const delta = this.elapsed - this.lastMovedTime;
-    const isTimeToMove = delta >= this.config.cameraMoveTime;
-    const isTimeToMoveIfHigherPrio = delta >= this.config.cameraMoveTimeMin;
-    const isHigherPrio = this.lastMovedPriority < priority;
-    return isTimeToMove || (isHigherPrio && isTimeToMoveIfHigherPrio);
-  }
-
-
-  private updateVisionForPlayer(player: Player, priority: number): void {
-    if (!this.#shouldMoveCamera(priority)) return;
-
-    for (let _player of this.players) {
-      _player.vision = _player.id === player.id ? true : false;
-    }
-  }
-
-  public updateVision(): void {
-    if (this.#shouldMoveCamera(0)) {
-
-      for (let player of this.players) {
-        player.vision = true;
-      }
-    }
-
-  }
-
+  //   const distance = 10 * 32
+  //   return (player.startLocation.distanceTo(pos) <= distance);
+  // }
 
 
 }

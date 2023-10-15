@@ -24,7 +24,7 @@
         },
         "cameraMoveTime": {
             "label": "Camera Move Time",
-            "value": 4300,
+            "value": 2300,
             "min": 500,
             "max": 20000,
             "step": 100
@@ -41,11 +41,11 @@
             "min": 0,
             "max": 45,
             "step": 1,
-            "value": 44
+            "value": 0
         },
         "baseDistance": {
             "label": "Default Distance",
-            "value": 54,
+            "value": 70,
             "min": 40,
             "max": 200,
             "step": 1
@@ -54,43 +54,50 @@
             "label": "Distance Variance",
             "value": 30,
             "min": 0,
-            "max": 30,
+            "max": 100,
             "step": 1
         },
         "azimuthVariance": {
             "label": "Azimuth Variance",
-            "value": 25,
+            "value": 5,
             "min": 0,
             "max": 90,
             "step": 1
         },
         "polarVariance": {
             "label": "Polar Variance",
-            "value": 10,
+            "value": 42,
             "min": 0,
             "max": 45,
             "step": 1
         },
         "heatMapDecay": {
             "label": "Heat Map Decay",
-            "value": 0.9,
+            "value": 0.537,
             "min": 0.001,
             "max": 0.999,
             "step": 0.001
         },
         "heatmapUpdateInterval": {
             "label": "Heatmap Update Interval",
-            "value": 670,
+            "value": 1000,
             "min": 10,
             "max": 10000,
             "step": 10
         },
         "pipSize": {
             "label": "PIP Size",
-            "value": 600,
+            "value": 700,
             "min": 100,
             "max": 800,
             "step": 25
+        },
+        "maxReplaySpeed": {
+            "label": "Max Replay Speed",
+            "value": 12,
+            "min": 1,
+            "max": 64,
+            "step": 1
         }
     },
     "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5"
