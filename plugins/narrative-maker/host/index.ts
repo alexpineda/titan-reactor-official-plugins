@@ -176,7 +176,7 @@ class SimpleQuadtree<T> {
     this.#normalize(this.#normalized, x, y);
 
     if (radius === 0) {
-      return this.#items[`${this.#normalized.x},${this.#normalized.y}`];
+      return this.#items[`${this.#normalized.x},${this.#normalized.y}`];f
     } else {
       const items: T[] = [];
 
@@ -206,82 +206,76 @@ class SimpleQuadtree<T> {
   }
 }
 
+type HeatmapValue = { value: number, x: number, y: number };
 
 class SimpleHeatmap {
-  #heatmap: number[] = [];
+  #heatmap: HeatmapValue[] = [];
   #size: number;
-  defaultDecay = 0.9
+  defaultDecay = 0.9;
 
   constructor(size: number) {
     this.#size = size;
-    for (let i = 0; i < size * size; i++) {
-      this.#heatmap[i] = 0;
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        this.#heatmap.push({ value: 0, x, y });
+      }
     }
   }
 
+  getIndex(x: number, y: number) {
+    const idx = y * this.#size + x;
+    if (this.#heatmap[idx] === undefined) {
+      debugger
+    }
+    return idx;
+  }
+
   decayAll(decay = this.defaultDecay) {
-    for (let i = 0; i < this.#size * this.#size; i++) {
-      this.#heatmap[i] *= decay;
+    for (const quadrant of this.#heatmap) {
+      quadrant.value *= decay;
     }
   }
 
   decay(x: number, y: number, decay = this.defaultDecay) {
-    this.#heatmap[y * this.#size + x] *= decay;
+    const index = this.getIndex(x, y);
+    this.#heatmap[index].value *= decay;
   }
 
   get(x: number, y: number) {
-    return this.#heatmap[y * this.#size + x];
+    const index = this.getIndex(x, y);
+    return this.#heatmap[index].value;
   }
 
-  set(x: number, y: number, value = 1) {
-    this.#heatmap[y * this.#size + x] = value;
+  set(x: number, y: number, value: number | undefined = 1) {
+    const index = this.getIndex(x, y);
+    this.#heatmap[index].value = value;
   }
-
+  
   clear() {
-    for (let i = 0; i < this.#size * this.#size; i++) {
-      this.#heatmap[i] = 0;
+    for (const quadrant of this.#heatmap) {
+      quadrant.value = 0;
     }
-  }
-
-  toString() {
-    return arrToString(this.#heatmap, this.#size);
   }
 
   getNearby(x: number, y: number, radius = 0) {
+    const items: HeatmapValue[] = [];
 
-    if (radius === 0) {
-      return [this.#heatmap[y * this.#size + x]];
-    } else {
-      const items: number[] = [];
+    const minX = Math.floor(Math.max(0, x - radius));
+    const minY = Math.floor(Math.max(0, y - radius));
+    const maxX = Math.floor(Math.min(this.#size - 1, x + radius));
+    const maxY = Math.floor(Math.min(this.#size - 1, y + radius));
 
-      const minX = Math.floor(Math.max(0, x - radius));
-      const minY = Math.floor(Math.max(0, y - radius));
-      const maxX = Math.floor(Math.min(this.#size - 1, x + radius));
-      const maxY = Math.floor(Math.min(this.#size - 1, y + radius));
-
-      for (let y = minY; y <= maxY; y++) {
-        for (let x = minX; x <= maxX; x++) {
-          items.push(this.#heatmap[y * this.#size + x]);
-        }
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        const index = this.getIndex(x, y);
+        items.push(this.#heatmap[index]);
       }
-
-      return items;
     }
+
+    return items;
   }
 }
-
-
-
-const arrToString = (arr: any[], size: number) => {
-  let str = "";
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      str += arr[y * size + x].toFixed(2) + " ";
-    }
-    str += "\n";
-  }
-  return str;
-}
+ 
 
 const getAverage = (arr: number[]) => { 
   return arr.reduce((a, b) => a + b, 0) / arr.length;
@@ -514,8 +508,9 @@ export default class PluginAddon extends SceneController {
 
   #unitWorkerScore: UnitInterestScore;
   #units: SimpleQuadtree<Unit>;
-  #adhd: SimpleHeatmap;
-  #quadScores: SimpleHeatmap;
+  #adhd_uq8: SimpleHeatmap;
+  #scores_uq8: SimpleHeatmap;
+  #redBlueScore: SimpleHeatmap;
 
   #lastUpdateFrame = 0;
   #lastHeatMapUpdateFrame = 0;
@@ -523,13 +518,22 @@ export default class PluginAddon extends SceneController {
   #lastUnitAttackedFrame = 0;
   #defaultScoreCalculator: ScoreCalculator;
 
+  #quadPos: THREE.Vector2 = new THREE.Vector2();
+
+  #getUQ8(unit: Unit) {
+    // because we are using round we need to clamp to QUAD-1
+    this.#quadPos.x = THREE.MathUtils.clamp(Math.round(unit.x / (this.map.size[0] * 32) * QUAD_SIZE), 0, QUAD_SIZE - 1);
+    this.#quadPos.y =  THREE.MathUtils.clamp(Math.round(unit.y / (this.map.size[1] * 32) * QUAD_SIZE), 0, QUAD_SIZE - 1);
+    return this.#quadPos;
+  }
+
   init() {
 
     this.#unitWorkerScore = new UnitInterestScore(this.assets.bwDat);
 
     this.#units = new SimpleQuadtree<Unit>(QUAD_SIZE, new THREE.Vector2(this.map.size[0] * 32, this.map.size[1] * 32), new THREE.Vector2(0, 0));
-    this.#adhd = new SimpleHeatmap(QUAD_SIZE);
-    this.#quadScores = new SimpleHeatmap(QUAD_SIZE);
+    this.#adhd_uq8 = new SimpleHeatmap(QUAD_SIZE);
+    this.#scores_uq8 = new SimpleHeatmap(QUAD_SIZE);
 
     // this.events.on("pre-run:frame", () => {
     //     for (const u of this.openBW.iterators.units) {
@@ -550,7 +554,7 @@ export default class PluginAddon extends SceneController {
     });
 
     this.events.on("unit-killed", (unit) => {
-      this.#adhd.set(unit.x, unit.y, 0);
+      this.#adhd_uq8.set(this.#getUQ8(unit).x, this.#getUQ8(unit).y, 0);
       this.#lastUnitDestroyedFrame = this.frame;
       if (this.followedUnits.has(unit)) {
           // the unit we were following was killed
@@ -566,11 +570,13 @@ export default class PluginAddon extends SceneController {
     });
 
     this.events.on("unit-updated", (unit) => {
+      const { x: mX, y: mY } = this.#getUQ8(unit);
+
       if (this.#unitWorkerScore.unitOfInterestFilter(unit)) {
         this.#units.add(unit.x, unit.y, unit);
       }
       if (unit.extras.recievingDamage) {
-        this.#adhd.decay(unit.x, unit.y);
+        this.#adhd_uq8.decay(mX, mY);
         if (!canOnlySelectOne(unit)) {
           this.selectedUnits.add(unit);
         }
@@ -579,14 +585,14 @@ export default class PluginAddon extends SceneController {
       }
 
       if (unit.isAttacking) {
-        this.#adhd.decay(unit.x, unit.y);
+        this.#adhd_uq8.decay(mX, mY);
         this.#lastUnitAttackedFrame = this.frame;
       }
     });
 
     this.events.on("frame-reset", () => {
       this.#reset();
-      this.#adhd.clear();
+      this.#adhd_uq8.clear();
     })
 
     this.#defaultScoreCalculator = (unit: Unit, orderScore: number, unitScore: number) => {
@@ -652,14 +658,17 @@ export default class PluginAddon extends SceneController {
     this.viewport.orbit.dollySpeed = 0.01;
     this.viewport.orbit.truckSpeed = 0.01;
 
-    this.#adhd.defaultDecay = this.config.heatMapDecay;
+    this.#adhd_uq8.defaultDecay = this.config.heatMapDecay;
+
+    this.#polarTarget = POLAR_MAX;
+    this.#azimuthTarget = 0;
 
   }
 
   onConfigChanged(oldConfig: Record<string, unknown>): void {
     console.log(this.config)
     this.secondViewport.height = this.config.pipSize;
-    this.#adhd.defaultDecay = this.config.heatMapDecay;
+    this.#adhd_uq8.defaultDecay = this.config.heatMapDecay;
   }
 
   #secondFollowedUnit: Unit | undefined;
@@ -698,6 +707,9 @@ export default class PluginAddon extends SceneController {
 
   }
 
+  #polarTarget = 0;
+  #azimuthTarget = 0;
+
   #activateQuadrant(quadrant: Quadrant<Unit>) {
     this.followedUnits.clear();
 
@@ -734,8 +746,11 @@ export default class PluginAddon extends SceneController {
     // this.viewport.orbit.dollyTo(this.config.baseDistance - (this.config.distanceVariance / 2) + Math.random() * this.config.distanceVariance, true)
 
     console.log(this.viewport.orbit.minPolarAngle, THREE.MathUtils.degToRad(this.config.polarVariance));
-    this.viewport.orbit.rotatePolarTo(this.viewport.orbit.minPolarAngle + Math.random() * THREE.MathUtils.degToRad(this.config.polarVariance), true);
-    this.viewport.orbit.rotateAzimuthTo((-0.5 + Math.random()) * THREE.MathUtils.degToRad(this.config.azimuthVariance), true);
+
+    this.#polarTarget = this.viewport.orbit.minPolarAngle + Math.random() * THREE.MathUtils.degToRad(this.config.polarVariance);
+    this.#azimuthTarget = (-0.5 + Math.random()) * THREE.MathUtils.degToRad(this.config.azimuthVariance);
+
+   
 
     this.followedUnits.set([maxScoreUnit])
 
@@ -789,6 +804,9 @@ export default class PluginAddon extends SceneController {
     const dampSpeed = this.#targetGameSpeed > 1 ? 0.5 : 1;
     this.openBW.setGameSpeed(THREE.MathUtils.damp(this.openBW.gameSpeed, THREE.MathUtils.clamp(this.#targetGameSpeed, 1, this.config.maxReplaySpeed), dampSpeed, this.delta / 1000));
 
+    this.viewport.orbit.rotatePolarTo(THREE.MathUtils.damp(this.viewport.orbit.polarAngle, this.#polarTarget, 0.5, this.delta / 1000), true);
+    this.viewport.orbit.rotateAzimuthTo(THREE.MathUtils.damp(this.viewport.orbit.azimuthAngle, this.#azimuthTarget, 0.5, this.delta / 1000), true);
+
     for (const quadrant of this.#units.quadrants) {
       let sumScore = 0, avgScore = 0;
 
@@ -802,7 +820,7 @@ export default class PluginAddon extends SceneController {
       }
       avgScore = sumScore / (quadrant.items.length || 1);
       // todo remove avg since we already know
-      this.#quadScores.set(quadrant.x, quadrant.y, avgScore);
+      this.#scores_uq8.set(quadrant.x, quadrant.y, avgScore);
     }
     
     this.sendUIMessage({
@@ -821,16 +839,16 @@ export default class PluginAddon extends SceneController {
           return {
             x: q.x,
             y: q.y,
-            score: this.#quadScores.get(q.x, q.y),
+            score: this.#scores_uq8.get(q.x, q.y),
             units: q.items.length,
-            heatmap: this.#adhd.get(q.x, q.y),
+            heatmap: this.#adhd_uq8.get(q.x, q.y),
           }
         })
       }
     })
 
     if (this.elapsed - this.#lastHeatMapUpdateFrame > this.config.heatmapUpdateInterval) {
-      this.#adhd.decayAll();
+      this.#adhd_uq8.decayAll();
       this.#lastHeatMapUpdateFrame = this.elapsed;
     }
 
@@ -845,7 +863,7 @@ export default class PluginAddon extends SceneController {
 
       //TODO; if a quadrants score doubles from last frame, it should be prioritized
       for (const quadrant of this.#units.quadrants) {
-        decayedScore = this.#quadScores.get(quadrant.x, quadrant.y) * (1 - this.#adhd.get(quadrant.x, quadrant.y));
+        decayedScore = this.#scores_uq8.get(quadrant.x, quadrant.y) * (1 - this.#adhd_uq8.get(quadrant.x, quadrant.y));
         
         if (decayedScore > hottestScore) {
             hottestScore = decayedScore;
@@ -857,11 +875,11 @@ export default class PluginAddon extends SceneController {
       if (hottestQuadrant && hottestQuadrant.items.length > 0) {
 
         this.#activateQuadrant(hottestQuadrant);
-        this.#adhd.set(hottestQuadrant.x, hottestQuadrant.y, 1);
+        this.#adhd_uq8.set(hottestQuadrant.x, hottestQuadrant.y, 1);
         this.#lastSelectedQuadrant = hottestQuadrant;
 
         if (secondHottestQuadrant) {
-          decayedSecondScore =this.#quadScores.get(secondHottestQuadrant.x, secondHottestQuadrant.y) * (1 - this.#adhd.get(secondHottestQuadrant.x, secondHottestQuadrant.y));
+          decayedSecondScore =this.#scores_uq8.get(secondHottestQuadrant.x, secondHottestQuadrant.y) * (1 - this.#adhd_uq8.get(secondHottestQuadrant.x, secondHottestQuadrant.y));
           if (decayedSecondScore > hottestScore * distance(hottestQuadrant, secondHottestQuadrant)/8) {
             this.#activateSecondQuadrant(secondHottestQuadrant);
             this.secondViewport.enabled = true;
@@ -872,10 +890,10 @@ export default class PluginAddon extends SceneController {
           this.secondViewport.enabled = false;
         }
 
-        const nearbyHeat = this.#quadScores.getNearby(hottestQuadrant.x, hottestQuadrant.y, 1);
+        const nearbyHeat = this.#scores_uq8.getNearby(hottestQuadrant.x, hottestQuadrant.y, 1);
         let nearbySum = 0;
         for (const h of nearbyHeat) {
-          nearbySum += h// * (1 -0 this.#adhd.get(h.x, h.y));
+          nearbySum += h.value// * (1 -0 this.#adhd.get(h.x, h.y));
         }
 
         let nearbyAttacking = 0, armyTotal = 1;
