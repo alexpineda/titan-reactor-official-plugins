@@ -1,6 +1,6 @@
 
 import * as THREE from "three";
-import { BwDAT, GameViewPort, Player, Unit, UnitStruct } from "@titan-reactor-runtime/host";
+import { BwDAT, GameViewPort, Unit,  } from "@titan-reactor-runtime/host";
 
 
 const _pos = new THREE.Vector3(0, 0, 0);
@@ -29,17 +29,19 @@ const rankA = [
   unitTypes.covertOps, unitTypes.physicsLab, unitTypes.infestedCommandCenter, unitTypes.hive, unitTypes.nydusCanal, unitTypes.defilerMound,
   unitTypes.nuclearSilo, unitTypes.greaterSpire, unitTypes.queensNest, unitTypes.ultraliskCavern,
 
-  unitTypes.templarArchives, unitTypes.fleetBeacon, unitTypes.arbitalTribunal, unitTypes.scarab, unitTypes.scannerSweep
+  unitTypes.templarArchives, unitTypes.fleetBeacon, unitTypes.arbitalTribunal, unitTypes.scarab, unitTypes.scannerSweep,
+
+  unitTypes.commandCenter, unitTypes.nexus, unitTypes.hatchery,
 ];
 
 const rankB = [
   unitTypes.goliath, unitTypes.wraith, unitTypes.siegeTankSiegeMode, unitTypes.broodling, unitTypes.mutalisk, unitTypes.scourge, unitTypes.dropship, unitTypes.valkryie, unitTypes.corsair,
   unitTypes.highTemplar, unitTypes.archon, unitTypes.scout, unitTypes.reaver,
 
-  unitTypes.commandCenter, unitTypes.starport, unitTypes.scienceFacility, unitTypes.engineeringBay, unitTypes.armory,
+   unitTypes.starport, unitTypes.scienceFacility, unitTypes.engineeringBay, unitTypes.armory,
   unitTypes.bunker,
-  unitTypes.hatchery, unitTypes.lair, unitTypes.spire, unitTypes.darkSwarm,
-  unitTypes.nexus, unitTypes.cyberneticsCore, unitTypes.stargate, unitTypes.roboticsSupportBay,
+   unitTypes.lair, unitTypes.spire, unitTypes.darkSwarm,
+   unitTypes.cyberneticsCore, unitTypes.stargate, unitTypes.roboticsSupportBay,
 ];
 
 const rankC = [
@@ -86,7 +88,7 @@ function distance(point1: { x: number, y: number }, point2: { x: number, y: numb
   return Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
 }
 
-const unitIsCompleted = (unit: UnitStruct) => {
+const unitIsCompleted = (unit: Unit) => {
   return unit.statusFlags & UnitFlags.Completed;
 };
 
@@ -117,7 +119,7 @@ const _canOnlySelectOne = [
   unitTypes.lurkerEgg,
 ];
 
-const canOnlySelectOne = (unit: UnitStruct) =>
+const canOnlySelectOne = (unit: Unit) =>
   _canOnlySelectOne.includes(unit.typeId);
 
 type Quadrant<T> = { items: T[], x: number, y: number };
@@ -281,6 +283,16 @@ const arrToString = (arr: any[], size: number) => {
   return str;
 }
 
+const getAverage = (arr: number[]) => { 
+  return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
+const getMax = (arr: number[]) => {
+  return Math.max(...arr);
+}
+
+type ScoreCalculator = (unit: Unit, orderScore: number, unitScore: number) => number;
+
 /**
  * @public
  */
@@ -291,45 +303,33 @@ class UnitInterestScore {
     this.#bwDat = bwDat;
   }
 
-  getAverageScore(units: UnitStruct[]) {
-    const n = units.reduce((sum, unit) => {
-      return sum + this.unitScore(unit);
-    }, 0);
-
-    return n / (units.length + 1);
+  getAverageScore(units: Unit[], scoreModifier: ScoreCalculator) {
+    return getAverage(units.map(u => this.unitScore(u, scoreModifier)));
   }
 
-  getMaxScore(units: UnitStruct[]) {
+  getMaxScoreUnit(units: Unit[], scoreModifier: ScoreCalculator) {
     return units.reduce((max, unit) => {
-      const score = this.unitScore(unit);
-      if (score > max) max = score;
-      return max
-    }, 0);
-  }
-
-  getMaxScoreUnit(units: UnitStruct[]) {
-    return units.reduce((max, unit) => {
-      const score = this.unitScore(unit);
-      if (score > this.unitScore(max)) max = unit;
+      const score = this.unitScore(unit, scoreModifier);
+      if (score > this.unitScore(max, scoreModifier)) max = unit;
       return max
     }, units[0]);
   }
 
-  unitScore(unit: UnitStruct) {
-    return this.getOrderScore(unit.order!) * this.getUnitRankScore(unit);
+  unitScore(unit: Unit, scoreModifier: ScoreCalculator) {
+    return scoreModifier(unit, this.getOrderScore(unit.order!), this.getUnitRankScore(unit));
   }
 
-  getUnitRankScore(unit: UnitStruct): number {
+  getUnitRankScore(unit: Unit): number {
     if (rankA.includes(unit.typeId)) {
       return 1;
     } else if (rankB.includes(unit.typeId)) {
       return 0.8;
     } else if (rankC.includes(unit.typeId)) {
-      return 0.6;
+      return 0.7;
     } else if (rankD.includes(unit.typeId)) {
-      return 0.4;
+      return 0.5;
     } else if (rankE.includes(unit.typeId)) {
-      return 0.2;
+      return 0.3;
     }
     return 0.1;
   }
@@ -423,7 +423,7 @@ class UnitInterestScore {
     }
   }
 
-  unitOfInterestFilter(unit: UnitStruct) {
+  unitOfInterestFilter(unit: Unit) {
     const unitType = this.#bwDat.units[unit.typeId];
     return !unitType.isResourceContainer && unit.owner < 8 && canSelectUnit(unit);
   }
@@ -473,7 +473,7 @@ function maxTotalVariance(deltaX: number, deltaY: number): number {
   return maxVarianceX + maxVarianceY;;
 }
 
-const getCameraDistance = (units: UnitStruct[], mapSize: number[]) => {
+const getCameraDistance = (units: Unit[], mapSize: number[]) => {
   let meanX = 0;
   let meanY = 0;
   let n = units.length;
@@ -513,12 +513,15 @@ const QUAD_SIZE = 8;
 export default class PluginAddon extends SceneController {
 
   #unitWorkerScore: UnitInterestScore;
-  #units: SimpleQuadtree<UnitStruct>;
+  #units: SimpleQuadtree<Unit>;
   #adhd: SimpleHeatmap;
   #quadScores: SimpleHeatmap;
 
   #lastUpdateFrame = 0;
   #lastHeatMapUpdateFrame = 0;
+  #lastUnitDestroyedFrame = 0;
+  #lastUnitAttackedFrame = 0;
+  #defaultScoreCalculator: ScoreCalculator;
 
   init() {
 
@@ -548,13 +551,18 @@ export default class PluginAddon extends SceneController {
 
     this.events.on("unit-killed", (unit) => {
       this.#adhd.set(unit.x, unit.y, 0);
-    });
+      this.#lastUnitDestroyedFrame = this.frame;
+      if (this.followedUnits.has(unit)) {
+          // the unit we were following was killed
+          // we need to update the viewport
+          this.#lastUpdateFrame = 0;
+      }
+    }, -1);
 
     this.events.on("unit-destroyed", (unit) => {
       if (this.#secondFollowedUnit?.id === unit.id) {
         this.#secondFollowedUnit = undefined;
       }
-      this.selectedUnits.delete(unit);
     });
 
     this.events.on("unit-updated", (unit) => {
@@ -572,6 +580,7 @@ export default class PluginAddon extends SceneController {
 
       if (unit.isAttacking) {
         this.#adhd.decay(unit.x, unit.y);
+        this.#lastUnitAttackedFrame = this.frame;
       }
     });
 
@@ -579,6 +588,11 @@ export default class PluginAddon extends SceneController {
       this.#reset();
       this.#adhd.clear();
     })
+
+    this.#defaultScoreCalculator = (unit: Unit, orderScore: number, unitScore: number) => {
+      const result = this.#defaultScoreCalculatorUnbound(unit, orderScore, unitScore);
+      return result;
+    }
 
   }
 
@@ -635,20 +649,36 @@ export default class PluginAddon extends SceneController {
     this.viewport.cameraShake.maxShakeDistance = 100;
     this.viewport.orbit.dampingFactor = 0.000001;
 
-    console.log("CONFIG DECAY", this.config.heatmapDecay)
-    this.#adhd.defaultDecay = 0.5;
+    this.viewport.orbit.dollySpeed = 0.01;
+    this.viewport.orbit.truckSpeed = 0.01;
+
+    this.#adhd.defaultDecay = this.config.heatMapDecay;
 
   }
 
   onConfigChanged(oldConfig: Record<string, unknown>): void {
+    console.log(this.config)
     this.secondViewport.height = this.config.pipSize;
-    this.#adhd.defaultDecay = this.config.heatmapDecay;
+    this.#adhd.defaultDecay = this.config.heatMapDecay;
   }
 
-  #secondFollowedUnit: UnitStruct | undefined;
+  #secondFollowedUnit: Unit | undefined;
 
-  #activateSecondQuadrant(quadrant: Quadrant<UnitStruct>) {
-    let maxScoreUnit = this.#secondFollowedUnit = this.#unitWorkerScore.getMaxScoreUnit(quadrant.items);
+  #defaultScoreCalculatorUnbound: ScoreCalculator = (unit: Unit, orderScore: number, unitScore: number) => {
+    const unitType = this.assets.bwDat.units[unit.typeId];
+
+    if (unitType.isBuilding) {
+      if (Math.sin(this.elapsed / 20000 * Math.PI * 2) > 0) {
+        return orderScore * unitScore * 2;
+      }
+    }
+
+    return orderScore * unitScore;
+  }
+
+
+  #activateSecondQuadrant(quadrant: Quadrant<Unit>) {
+    let maxScoreUnit = this.#secondFollowedUnit = this.#unitWorkerScore.getMaxScoreUnit(quadrant.items, this.#defaultScoreCalculator);
 
     const nx = maxScoreUnit.x;// quadrant.x / this.#units.size * 32 * this.map.size[0] + 16 * 32;
     const ny = maxScoreUnit.y;//quadrant.y / this.#units.size * 32 * this.map.size[1] + 16 * 32;
@@ -668,12 +698,11 @@ export default class PluginAddon extends SceneController {
 
   }
 
-  #activateQuadrant(quadrant: Quadrant<UnitStruct>) {
+  #activateQuadrant(quadrant: Quadrant<Unit>) {
     this.followedUnits.clear();
 
     //todo change to top 3 units?
-    let maxScoreUnit = this.#unitWorkerScore.getMaxScoreUnit(quadrant.items);
-    let maxScore = this.#unitWorkerScore.unitScore(maxScoreUnit);
+    let maxScoreUnit = this.#unitWorkerScore.getMaxScoreUnit(quadrant.items, this.#defaultScoreCalculator);
 
     const nx = maxScoreUnit.x;// quadrant.x / this.#units.size * 32 * this.map.size[0] + 16 * 32;
     const ny = maxScoreUnit.y;//quadrant.y / this.#units.size * 32 * this.map.size[1] + 16 * 32;
@@ -704,6 +733,7 @@ export default class PluginAddon extends SceneController {
     this.viewport.orbit.dollyTo(lerpedBaseDistance, true)
     // this.viewport.orbit.dollyTo(this.config.baseDistance - (this.config.distanceVariance / 2) + Math.random() * this.config.distanceVariance, true)
 
+    console.log(this.viewport.orbit.minPolarAngle, THREE.MathUtils.degToRad(this.config.polarVariance));
     this.viewport.orbit.rotatePolarTo(this.viewport.orbit.minPolarAngle + Math.random() * THREE.MathUtils.degToRad(this.config.polarVariance), true);
     this.viewport.orbit.rotateAzimuthTo((-0.5 + Math.random()) * THREE.MathUtils.degToRad(this.config.azimuthVariance), true);
 
@@ -742,7 +772,7 @@ export default class PluginAddon extends SceneController {
 
   }
 
-  #isArmyUnit(unit: UnitStruct): boolean {
+  #isArmyUnit(unit: Unit): boolean {
       return this.assets.bwDat.units[unit.typeId].supplyRequired > 0 && !this.#isWorker(unit.typeId);
   }
 
@@ -751,13 +781,33 @@ export default class PluginAddon extends SceneController {
   }
 
   #targetGameSpeed = 1;
+  #lastSelectedQuadrant: Quadrant<Unit> | undefined;
 
   onFrame(frame: number, commands: any[]): void {
 
 
-    this.openBW.setGameSpeed(THREE.MathUtils.damp(this.openBW.gameSpeed, THREE.MathUtils.clamp(this.#targetGameSpeed, 1, this.config.maxReplaySpeed), 0.8, this.delta / 1000));
+    const dampSpeed = this.#targetGameSpeed > 1 ? 0.5 : 1;
+    this.openBW.setGameSpeed(THREE.MathUtils.damp(this.openBW.gameSpeed, THREE.MathUtils.clamp(this.#targetGameSpeed, 1, this.config.maxReplaySpeed), dampSpeed, this.delta / 1000));
+
+    for (const quadrant of this.#units.quadrants) {
+      let sumScore = 0, avgScore = 0;
+
+      //todo weighted positions
+      for (const unit of quadrant.items) {
+        const unitScore = this.#unitWorkerScore.unitScore(unit, this.#defaultScoreCalculator);
+        if (isNaN(unitScore)) {
+          debugger;
+        }
+        sumScore += unitScore;
+      }
+      avgScore = sumScore / (quadrant.items.length || 1);
+      // todo remove avg since we already know
+      this.#quadScores.set(quadrant.x, quadrant.y, avgScore);
+    }
+    
     this.sendUIMessage({
       speed: this.openBW.gameSpeed,
+      targetSpeed: this.#targetGameSpeed,
 
       state: {
         lastHeatMapUpdateFrame: this.#lastHeatMapUpdateFrame,
@@ -771,7 +821,7 @@ export default class PluginAddon extends SceneController {
           return {
             x: q.x,
             y: q.y,
-            score: this.#unitWorkerScore.getAverageScore(q.items),
+            score: this.#quadScores.get(q.x, q.y),
             units: q.items.length,
             heatmap: this.#adhd.get(q.x, q.y),
           }
@@ -786,7 +836,7 @@ export default class PluginAddon extends SceneController {
 
     if (this.elapsed - this.#lastUpdateFrame > this.config.cameraMoveTime) {
 
-      let hottestScore = 0, score = 0;
+      let hottestScore = 0;
       let hottestQuadrant: Quadrant<Unit> | undefined;
       let secondHottestQuadrant: Quadrant<Unit> | undefined;
 
@@ -795,9 +845,8 @@ export default class PluginAddon extends SceneController {
 
       //TODO; if a quadrants score doubles from last frame, it should be prioritized
       for (const quadrant of this.#units.quadrants) {
-        score = this.#unitWorkerScore.getAverageScore(quadrant.items);
-        decayedScore = score * (1 - this.#adhd.get(quadrant.x, quadrant.y));
-        this.#quadScores.set(quadrant.x, quadrant.y, score);
+        decayedScore = this.#quadScores.get(quadrant.x, quadrant.y) * (1 - this.#adhd.get(quadrant.x, quadrant.y));
+        
         if (decayedScore > hottestScore) {
             hottestScore = decayedScore;
             secondHottestQuadrant = hottestQuadrant;
@@ -809,12 +858,11 @@ export default class PluginAddon extends SceneController {
 
         this.#activateQuadrant(hottestQuadrant);
         this.#adhd.set(hottestQuadrant.x, hottestQuadrant.y, 1);
+        this.#lastSelectedQuadrant = hottestQuadrant;
 
-        let secondScore = 0;
         if (secondHottestQuadrant) {
-          secondScore = this.#unitWorkerScore.getAverageScore(secondHottestQuadrant.items);
-          decayedSecondScore = secondScore * (1 - this.#adhd.get(secondHottestQuadrant.x, secondHottestQuadrant.y));
-          if (secondScore > hottestScore * distance(hottestQuadrant, secondHottestQuadrant)/8) {
+          decayedSecondScore =this.#quadScores.get(secondHottestQuadrant.x, secondHottestQuadrant.y) * (1 - this.#adhd.get(secondHottestQuadrant.x, secondHottestQuadrant.y));
+          if (decayedSecondScore > hottestScore * distance(hottestQuadrant, secondHottestQuadrant)/8) {
             this.#activateSecondQuadrant(secondHottestQuadrant);
             this.secondViewport.enabled = true;
           } else {
@@ -841,14 +889,16 @@ export default class PluginAddon extends SceneController {
           }
         }
         // v1- calculated speed on winning quadrant only, obv not great, lets try adding a nearby quadrant too
-        const speedLerpX =  easeOutCubic(nearbySum) + (nearbyAttacking / armyTotal);
+        const speedLerpX =  easeOutCubic(nearbySum);
+        
         this.#targetGameSpeed = THREE.MathUtils.lerp(this.config.maxReplaySpeed, 1, speedLerpX);
-        console.log("speedModifier", speedLerpX, nearbySum, hottestScore, this.#targetGameSpeed)
-
-        // this.simpleMessage(`Quadrant ${hottestQuadrant.x},${hottestQuadrant.y} - score: ${highScore}`)
 
       }
 
+    }
+
+    if (this.frame < 30 * 24 || this.frame > this.#lastUnitAttackedFrame + 4 * 60 * 24 || this.frame > this.#lastUnitDestroyedFrame + 8 * 60 * 24) {
+          this.#targetGameSpeed = 1;
     }
 
     this.#units.clear();
