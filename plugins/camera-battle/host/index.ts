@@ -10,6 +10,8 @@ export default class PluginAddon extends SceneController {
   
     async onEnterScene(prevData) {
 
+        this.viewport.fullScreen();
+
         if (prevData?.target?.isVector3) {
             this.viewport.orbit.setTarget(prevData.target.x, 0, prevData.target.z, false);
         } else {
@@ -43,7 +45,7 @@ export default class PluginAddon extends SceneController {
 
         this.viewport.rotateSprites = true;
 
-        this.togglePointerLock(true);
+        this.surface.togglePointerLock(true);
 
         this.viewport.audioType = "3d";
 
@@ -85,8 +87,8 @@ export default class PluginAddon extends SceneController {
         const _delta = delta * this.config.sensitivity;
 
         if (clicked) {
-            if (this.isPointerLockLost()) {
-                this.togglePointerLock(true);
+            if (this.surface.isPointerLockLost()) {
+                this.surface.togglePointerLock(true);
             }
         }
 
@@ -143,9 +145,9 @@ export default class PluginAddon extends SceneController {
 
     onFrame() {
 
-        if (this.followedUnits.hasUnits()) {
+        if (this.followedUnits.size) {
       
-            const pos = this.followedUnits.getCentralPosition();
+            const pos = this.getFollowedUnitsCenterPosition();
       
             if (pos) {
       

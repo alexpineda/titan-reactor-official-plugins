@@ -1,0 +1,20 @@
+{
+    "name": "@titan-reactor-plugins/sandbox-tools",
+    "version": "0.0.1",
+    "description": "Sandbox Tools",
+    "author": "Dark Matter",
+    "keywords": [
+        "titan-reactor-plugin"
+    ],
+    "peerDependencies": {
+        "titan-reactor-api": "2.0.0"
+    },
+    "config": {
+        "_visible": {
+            "value": true,
+            "label": "UI Visible",
+            "folder": "System"
+        }
+    },
+    "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5"
+}

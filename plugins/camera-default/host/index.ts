@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { GameViewPort } from "@titan-reactor-runtime/host";
 
 const DEFAULT_FAR = 256;
 const POLAR_MAX = (10 * Math.PI) / 64;
@@ -13,15 +12,15 @@ const _b = new THREE.Vector3();
 const _c = new THREE.Vector3();
 
 export default class PluginAddon extends SceneController  {
-  #pip: GameViewPort;
+  // #pip: GameViewPort;
 
   gameOptions = {
     audio: "stereo" as const,
   }
 
-  #pipPovPlayerId = null
-
   async onEnterScene(prevData) {
+
+    this.viewport.fullScreen();
 
     const orbit = this.viewport.orbit;
 
@@ -51,10 +50,12 @@ export default class PluginAddon extends SceneController  {
     await orbit.zoomTo(1, false);
     await orbit.dollyTo(this.config.defaultDistance, false);
 
-    this.#pip = this.secondViewport;
-    this.#pip.height = this.config.pipSize;
-    this.#pip.right = 0.05;
-    this.#pip.bottom = 0.05;
+    // this.#pip = this.secondViewport;
+    // this.#pip.name = "pip";
+    // this.#pip.height = this.config.pipSize;
+    // this.#pip.right = 0.05;
+    // this.#pip.bottom = 0.05;
+    // this.#pip.orbit.setLookAt(0, 50, 0, 0, 0, 0, false);
 
   }
 
@@ -64,9 +65,9 @@ export default class PluginAddon extends SceneController  {
       this.viewport.orbit.dollyTo(this.config.defaultDistance, true);
     }
 
-    if (this.config.pipSize !== oldConfig.pipSize) {
-      this.#pip.height = this.config.pipSize;
-    }
+    // if (this.config.pipSize !== oldConfig.pipSize) {
+    //   this.#pip.height = this.config.pipSize;
+    // }
 
     if (this.config.tilt !== oldConfig.tilt) {
       this.viewport.orbit.minPolarAngle = POLAR_MIN + THREE.MathUtils.degToRad(this.config.tilt);
@@ -150,51 +151,51 @@ export default class PluginAddon extends SceneController  {
 
   onMinimapDragUpdate(pos, isDragStart, mouseButton) {
 
-    const viewportsAreProximate = this._areProximateViewports(
-      this.viewport,
-      this.#pip
-    );
+    // const viewportsAreProximate = this._areProximateViewports(
+    //   this.viewport,
+    //   this.#pip
+    // );
 
     if (mouseButton === 0) {
       this.viewport.orbit.moveTo(pos.x, 0, pos.y, !isDragStart);
-      if (this.#pip.enabled) {
-        this.#pip.enabled = !viewportsAreProximate;
-      } else {
-        this.#pip.orbit.moveTo(-10000, 0, 0, false);
-      }
+      // if (this.#pip.enabled) {
+      //   this.#pip.enabled = !viewportsAreProximate;
+      // } else {
+      //   this.#pip.orbit.moveTo(-10000, 0, 0, false);
+      // }
     } else if (mouseButton === 2) {
-      _c.set(pos.x, 0, pos.y);
-      this.#pipPovPlayerId = null;
+      // _c.set(pos.x, 0, pos.y);
+      // this.#pipPovPlayerId = null;
 
-      const isProximateToPrevious = this._areProximate(_c, _b);
+      // const isProximateToPrevious = this._areProximate(_c, _b);
 
-      if (isDragStart) {
-        if (this.#pip.enabled) {
-          this.#pip.enabled =
-            !viewportsAreProximate && isProximateToPrevious;
-        } else {
-          this.#pip.enabled = !viewportsAreProximate;
-        }
-      } else {
-        this.#pip.enabled =
-          !viewportsAreProximate &&
-          isProximateToPrevious;
-      }
+      // if (isDragStart) {
+      //   if (this.#pip.enabled) {
+      //     this.#pip.enabled =
+      //       !viewportsAreProximate && isProximateToPrevious;
+      //   } else {
+      //     this.#pip.enabled = !viewportsAreProximate;
+      //   }
+      // } else {
+      //   this.#pip.enabled =
+      //     !viewportsAreProximate &&
+      //     isProximateToPrevious;
+      // }
 
-      if (this.#pip.enabled) {
-        this.#pip.orbit.moveTo(pos.x, 0, pos.y, !isDragStart);
-      } else {
-        this.#pip.orbit.moveTo(-10000, 0, 0, false);
-      }
+      // if (this.#pip.enabled) {
+      //   this.#pip.orbit.moveTo(pos.x, 0, pos.y, !isDragStart);
+      // } else {
+      //   this.#pip.orbit.moveTo(-10000, 0, 0, false);
+      // }
     }
 
   }
 
   onFrame() {
     
-    if (this.followedUnits.hasUnits()) {
+    if (this.followedUnits.size) {
       
-      const pos = this.followedUnits.getCentralPosition();
+      const pos = this.getFollowedUnitsCenterPosition();
 
       if (pos) {
 
@@ -207,16 +208,16 @@ export default class PluginAddon extends SceneController  {
   }
 
   onCustomPlayerBarClicked({ playerId, button }) {
-    if (button === 2) {
-      if (this.#pipPovPlayerId === playerId) {
-        this.#pipPovPlayerId = null;
-        this.#pip.enabled = false;
-      } else {
-        this.#pip.enabled = true;
-        this.#pipPovPlayerId = playerId;
-      }
-      return true;
-    }
+    // if (button === 2) {
+    //   if (this.#pipPovPlayerId === playerId) {
+    //     this.#pipPovPlayerId = null;
+    //     this.#pip.enabled = false;
+    //   } else {
+    //     this.#pip.enabled = true;
+    //     this.#pipPovPlayerId = playerId;
+    //   }
+    //   return true;
+    // }
   }
 
 };

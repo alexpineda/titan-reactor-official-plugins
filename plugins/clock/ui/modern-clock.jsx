@@ -19,7 +19,7 @@ export default ({ time, pct, styles }) => {
           width: "100%",
         }}
       >
-        <span style={{ display: "inline" }}>{showPct ? pct : time}</span>
+        <span style={{ display: "inline" }}>{time} - {pct}</span>
       </div>
 
       <span style={{ display: "flex" }}>

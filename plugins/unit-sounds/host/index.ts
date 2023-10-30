@@ -7,6 +7,7 @@ function sample(array) {
 export default class Plugin extends PluginBase {
     _lastUnitId = -1;
     _clickCount = 0;
+    _lastPlayedTime = 0;
 
     _getSound(unit) {
         if (this._lastUnitId === unit.id) {
@@ -29,6 +30,8 @@ export default class Plugin extends PluginBase {
 
     _playSelected(units) {
         if (units.length === 0) return;
+        if (this._lastPlayedTime + 1000 > this.elapsed) return;
+        this._lastPlayedTime = this.elapsed;
 
         const unitTypes = new Set();
         for (const unit of units) {

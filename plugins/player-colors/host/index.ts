@@ -20,9 +20,9 @@ export default class Plugin extends PluginBase {
     }
 
     if (this.config.enabled) {
-      this.setPlayerColors(colors);
+      this.players.setColors(colors);
     } else {
-      this.setPlayerColors(this.getOriginalColors());
+      this.players.resetColors();
     }
   }
 

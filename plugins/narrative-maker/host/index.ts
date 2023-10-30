@@ -12,8 +12,8 @@ const UnitFlags = enums.UnitFlags;
 const workerTypes = [enums.unitTypes.scv, enums.unitTypes.drone, enums.unitTypes.probe];
 
 const DEFAULT_FAR = 256;
-const POLAR_MAX = (10 * Math.PI) / 64;
-const POLAR_MIN = (2 * Math.PI) / 64;
+const POLAR_MAX = THREE.MathUtils.degToRad(75);
+const POLAR_MIN = THREE.MathUtils.degToRad(5);
 
 const PIP_PROXIMITY = 32;
 
@@ -359,7 +359,6 @@ class UnitInterestScore {
         return 0.1;
       case orders.holdPosition:
       case orders.trainFighter:
-      case orders.repair:
       case orders.move:
       case orders.researchTech:
       case orders.upgrade:
@@ -400,6 +399,7 @@ class UnitInterestScore {
       case orders.castSpawnBroodlings:
       case orders.castStasisField:
 
+      case orders.repair:
       case orders.scarabAttack:
       case orders.die:
       case orders.interceptorAttack:
@@ -622,11 +622,11 @@ export default class PluginAddon extends SceneController {
     orbit.minDistance = 20;
 
     orbit.maxPolarAngle = POLAR_MAX;
-    orbit.minPolarAngle = POLAR_MIN + THREE.MathUtils.degToRad(this.config.tilt);
+    orbit.minPolarAngle = POLAR_MIN;
     orbit.maxAzimuthAngle = THREE.MathUtils.degToRad(45);
     orbit.minAzimuthAngle = -THREE.MathUtils.degToRad(45);
 
-    await orbit.rotatePolarTo(POLAR_MAX, false);
+    await orbit.rotatePolarTo(POLAR_MIN, false);
     await orbit.rotateAzimuthTo(0, false);
     await orbit.zoomTo(1, false);
     await orbit.dollyTo(55, false);
@@ -643,10 +643,11 @@ export default class PluginAddon extends SceneController {
     await this.#setupCamera(this.viewport);
     await this.#setupCamera(this.secondViewport);
 
-    this.secondViewport.name = "pip";
     this.secondViewport.height = this.config.pipSize;
     this.secondViewport.right = 0.05;
     this.secondViewport.bottom = 0.05;
+    this.secondViewport.orbit.rotatePolarTo(THREE.MathUtils.degToRad(45), false);
+    this.secondViewport.orbit.dollyTo(45, false);
 
     this.settings.input.unitSelection.set(false);
     this.settings.input.cursorVisible.set(false);
@@ -666,9 +667,9 @@ export default class PluginAddon extends SceneController {
   }
 
   onConfigChanged(oldConfig: Record<string, unknown>): void {
-    console.log(this.config)
     this.secondViewport.height = this.config.pipSize;
     this.#adhd_uq8.defaultDecay = this.config.heatMapDecay;
+    this.viewport.orbit.minPolarAngle = POLAR_MIN + THREE.MathUtils.degToRad(this.config.tilt);
   }
 
   #secondFollowedUnit: Unit | undefined;
@@ -709,6 +710,7 @@ export default class PluginAddon extends SceneController {
 
   #polarTarget = 0;
   #azimuthTarget = 0;
+  #dollyTarget = 55;
 
   #activateQuadrant(quadrant: Quadrant<Unit>) {
     this.followedUnits.clear();
@@ -739,17 +741,24 @@ export default class PluginAddon extends SceneController {
     const cameraAdjustment = getCameraDistance(quadrant.items, this.map.size);
     // const spread = spreadFactorVariance(quadrant.items) / this.#maxTotalSpreadVariance;
     // console.log("SPREAD", cameraAdjustment, easeOutCubic(cameraAdjustment));
-    // 1 is zoom all the way out
-    const lerpedBaseDistance = THREE.MathUtils.lerp(this.config.baseDistance, this.config.baseDistance + this.config.distanceVariance, easeOutCubic(cameraAdjustment));
+    // 1 is zoom all the way out]
 
-    this.viewport.orbit.dollyTo(lerpedBaseDistance, true)
-    // this.viewport.orbit.dollyTo(this.config.baseDistance - (this.config.distanceVariance / 2) + Math.random() * this.config.distanceVariance, true)
+    this.#dollyTarget= THREE.MathUtils.lerp(this.config.baseDistance, this.config.baseDistance + this.config.distanceVariance, easeOutCubic(cameraAdjustment));
 
-    console.log(this.viewport.orbit.minPolarAngle, THREE.MathUtils.degToRad(this.config.polarVariance));
+    console.log(this.viewport.orbit.azimuthAngle, this.#azimuthTarget);
+    console.log(this.viewport.orbit.polarAngle, this.#polarTarget);
 
-    this.#polarTarget = this.viewport.orbit.minPolarAngle + Math.random() * THREE.MathUtils.degToRad(this.config.polarVariance);
-    this.#azimuthTarget = (-0.5 + Math.random()) * THREE.MathUtils.degToRad(this.config.azimuthVariance);
+    if (Math.abs(this.viewport.orbit.azimuthAngle - this.#azimuthTarget) < 0.1  ) {
 
+      this.#azimuthTarget = (-0.5 + Math.random()) * THREE.MathUtils.degToRad(this.config.azimuthVariance);
+
+    }
+
+    if (Math.abs(this.viewport.orbit.polarAngle - this.#polarTarget) < 0.1  ) {
+
+      this.#polarTarget = this.viewport.orbit.minPolarAngle + Math.random() * THREE.MathUtils.degToRad(this.config.polarVariance);
+
+    }
    
 
     this.followedUnits.set([maxScoreUnit])
@@ -804,8 +813,11 @@ export default class PluginAddon extends SceneController {
     const dampSpeed = this.#targetGameSpeed > 1 ? 0.5 : 1;
     this.openBW.setGameSpeed(THREE.MathUtils.damp(this.openBW.gameSpeed, THREE.MathUtils.clamp(this.#targetGameSpeed, 1, this.config.maxReplaySpeed), dampSpeed, this.delta / 1000));
 
-    this.viewport.orbit.rotatePolarTo(THREE.MathUtils.damp(this.viewport.orbit.polarAngle, this.#polarTarget, 0.5, this.delta / 1000), true);
-    this.viewport.orbit.rotateAzimuthTo(THREE.MathUtils.damp(this.viewport.orbit.azimuthAngle, this.#azimuthTarget, 0.5, this.delta / 1000), true);
+    this.viewport.orbit.rotateAzimuthTo(THREE.MathUtils.damp(this.viewport.orbit.azimuthAngle, this.#azimuthTarget, 1, this.delta / 1000), true);
+    this.viewport.orbit.rotatePolarTo(THREE.MathUtils.damp(this.viewport.orbit.polarAngle, this.#polarTarget, 1, this.delta / 1000), true);
+
+    this.viewport.orbit.dollyTo(THREE.MathUtils.damp(this.viewport.orbit.distance, this.#dollyTarget, 0.5, this.delta / 1000), true)
+
 
     for (const quadrant of this.#units.quadrants) {
       let sumScore = 0, avgScore = 0;
