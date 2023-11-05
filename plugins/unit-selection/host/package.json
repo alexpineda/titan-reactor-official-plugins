@@ -1,7 +1,0 @@
-{
-  "name": "host",
-  "version": "1.0.0",
-  "devDependencies": {
-    "@titan-reactor-runtime/host": "^2.0.0"
-  }
-}
