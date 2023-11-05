@@ -1,5 +1,5 @@
 
-import * as THREE from "three";
+
 import { GameViewPort } from "@titan-reactor-runtime/host";
 
 const BATTLE_FAR = 128;
@@ -24,9 +24,9 @@ export default class PluginAddon extends SceneController {
         this.viewport.orbit.rotateAzimuthTo((this.config.rotateAzimuthStart - 1) * (Math.PI / 4), true);
         this.viewport.orbit.rotatePolarTo((this.config.rotatePolarStart - 1) * (Math.PI / 4), true);
 
-        this.viewport.orbit.camera.far = BATTLE_FAR;
-        this.viewport.orbit.camera.fov = this.config.fov;
-        this.viewport.orbit.camera.updateProjectionMatrix();
+        this.viewport.camera.far = BATTLE_FAR;
+        this.viewport.camera.fov = this.config.fov;
+        this.viewport.camera.updateProjectionMatrix();
 
         Object.assign(this.viewport.orbit, {
             dollyToCursor: false,

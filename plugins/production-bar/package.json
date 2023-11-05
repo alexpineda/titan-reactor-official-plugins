@@ -18,7 +18,7 @@
         "orientation": {
             "folder": "Style",
             "label": "Orientation",
-            "value": "vertical",
+            "value": "horizontal",
             "options": [
                 "horizontal",
                 "vertical"
@@ -32,7 +32,7 @@
         "iconSize": {
             "folder": "Style",
             "label": "Icon Size",
-            "value": 40,
+            "value": 51,
             "min": 16,
             "max": 64,
             "step": 1
@@ -71,7 +71,7 @@
         "showCompletedUpgrades": {
             "folder": "Upgrades",
             "label": "Display Completed Upgrades",
-            "value": true
+            "value": false
         },
         "showResearch": {
             "folder": "Research",
@@ -81,7 +81,7 @@
         "showCompletedResearch": {
             "folder": "Research",
             "label": "Display Completed Research",
-            "value": true
+            "value": false
         },
         "hideInitialResearch": {
             "folder": "Research",

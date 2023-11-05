@@ -12,7 +12,7 @@
     "config": {
         "showWorkers": {
             "label": "Show Workers",
-            "value": false
+            "value": true
         },
         "showApm": {
             "label": "Show APM",
@@ -20,7 +20,7 @@
         },
         "showSupply": {
             "label": "Show Supply",
-            "value": false
+            "value": true
         },
         "textColor": {
             "folder": "Color",
@@ -29,7 +29,7 @@
         },
         "fontSize": {
             "label": "Font Size",
-            "value": "16px"
+            "value": "20px"
         },
         "backgroundColor": {
             "folder": "Color",

@@ -11,7 +11,7 @@
     },
     "config": {
         "_visible": {
-            "value": true,
+            "value": false,
             "label": "UI Visible",
             "folder": "System"
         },
@@ -41,7 +41,7 @@
             "min": 0,
             "max": 45,
             "step": 1,
-            "value": 0
+            "value": 5
         },
         "baseDistance": {
             "label": "Default Distance",
@@ -52,23 +52,23 @@
         },
         "distanceVariance": {
             "label": "Distance Variance",
-            "value": 30,
+            "value": 100,
             "min": 0,
             "max": 100,
             "step": 1
         },
         "azimuthVariance": {
             "label": "Azimuth Variance",
-            "value": 5,
+            "value": 30,
             "min": 0,
             "max": 90,
             "step": 1
         },
         "polarVariance": {
             "label": "Polar Variance",
-            "value": 42,
+            "value": 55,
             "min": 0,
-            "max": 45,
+            "max": 70,
             "step": 1
         },
         "heatMapDecay": {
@@ -94,7 +94,7 @@
         },
         "maxReplaySpeed": {
             "label": "Max Replay Speed",
-            "value": 12,
+            "value": 4,
             "min": 1,
             "max": 64,
             "step": 1

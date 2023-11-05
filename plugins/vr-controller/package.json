@@ -1,0 +1,43 @@
+{
+    "name": "@titan-reactor-plugins/vr-controller",
+    "version": "0.0.3",
+    "description": "VR Controller Camera Plugin for Titan Reactor",
+    "author": "DM",
+    "keywords": [
+        "titan-reactor-plugin"
+    ],
+    "peerDependencies": {
+        "titan-reactor-api": "2.0.0"
+    },
+    "config": {
+        "sensitivity": {
+            "label": "Input Sensitivity",
+            "value": 20,
+            "min": 1,
+            "max": 25
+        },
+        "defaultDistance": {
+            "label": "Default Distance",
+            "value": 55,
+            "min": 40,
+            "max": 80,
+            "step": 1
+        },
+        "dollyAmount": {
+            "label": "Dolly",
+            "folder": "Middle Mouse Scroll",
+            "value": 12,
+            "min": 1,
+            "max": 30,
+            "step": 1
+        },
+        "rotateAmount": {
+            "label": "Rotate",
+            "folder": "Middle Mouse Scroll",
+            "value": 1,
+            "min": 0,
+            "max": 2,
+            "step": 0.1
+        }
+    }
+}

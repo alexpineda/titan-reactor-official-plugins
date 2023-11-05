@@ -1,5 +1,4 @@
 
-import * as THREE from "three";
 import { BwDAT, GameViewPort, Unit,  } from "@titan-reactor-runtime/host";
 
 
@@ -505,7 +504,8 @@ const QUAD_SIZE = 8;
 
 
 export default class PluginAddon extends SceneController {
-
+  viewportsCount = 2;
+  
   #unitWorkerScore: UnitInterestScore;
   #units: SimpleQuadtree<Unit>;
   #adhd_uq8: SimpleHeatmap;
