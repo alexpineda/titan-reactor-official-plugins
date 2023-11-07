@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { easePolyOut } from 'https://cdn.skypack.dev/d3-ease';
 import { assets, usePluginConfig } from "@titan-reactor-runtime/ui";
+import { ProductionImage } from "./production-image";
 
 const poly = easePolyOut.exponent(0.5);
 
@@ -9,7 +10,6 @@ const ProductionItem = ({ item, color }) => {
   const config = usePluginConfig();
 
   const wrapperRef = useRef(null);
-  const imgRef = useRef(null);
   const progressRef = useRef(null);
   const outlineRef = useRef(null);
   const countRef = useRef(null);
@@ -17,7 +17,6 @@ const ProductionItem = ({ item, color }) => {
   useEffect(() => {
     if (
         !wrapperRef.current ||
-        !imgRef.current ||
         !countRef.current ||
         !progressRef.current ||
         !outlineRef.current
@@ -34,7 +33,6 @@ const ProductionItem = ({ item, color }) => {
           countRef.current.style.display = "none";
         }
   
-        imgRef.current.src = assets.imagesUrl + `cmdicons.${item.icon}.png`;
         const pct = poly(1 - item.progress) * 100;
         progressRef.current.style.backgroundImage = `linear-gradient(90deg, ${color}ee 0%, ${color}aa ${pct}%, rgba(0,0,0,0.5) ${pct}%)`;
   
@@ -62,12 +60,7 @@ const ProductionItem = ({ item, color }) => {
       width: `${config.iconSize}px`,
       height: `${config.iconSize}px`
     }}>
-      <img
-        ref={imgRef}
-        style={{
-          filter: "hue-rotate(64deg) brightness(1.5) contrast(0.8) grayscale(1)",
-        }}
-      />
+      <ProductionImage icon={item?.icon} />
       <div
         ref={progressRef}
         style={{

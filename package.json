@@ -1,10 +1,12 @@
 {
   "name": "titan-reactor-community",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "node ./node_modules/titan-plugin-cli/dist/index.js ./plugins ./dist",
+    "serve": "http-server .\\dist -a localhost -p 8091 --cors"
   },
   "author": "Alex Pineda <alexpineda@fastmail.com>",
   "license": "MIT",
@@ -17,5 +19,9 @@
     "rimraf": "^3.0.2",
     "semver": "^7.3.7",
     "three-janitor": "^1.0.4"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "titan-plugin-cli": "^1.0.0"
   }
 }

@@ -1,0 +1,43 @@
+name: Build & Deploy Titan Reactor
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Checkout 🛎
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: Setup node env 🏗
+        uses: actions/setup-node@v3
+        with:
+          node-version: lts/gallium
+          cache: 'npm'
+
+      - name: Install dependencies 👨🏻‍💻
+        run: npm install
+
+      - name: Run build
+        run: npm run build
+
+      - name: Publish Plugins
+        uses: cloudflare/pages-action@1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: plugins
+          directory: ./dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

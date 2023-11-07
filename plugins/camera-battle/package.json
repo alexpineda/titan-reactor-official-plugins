@@ -7,9 +7,8 @@
         "titan-reactor-plugin"
     ],
     "peerDependencies": {
-        "titan-reactor-api": "2.0.0",
-        "titan-reactor-runtime": "^2.0.0",
-        "titan-reactor-host": "^2.0.0"
+        "@titan-reactor-runtime/host": "^2.0.0",
+        "@titan-reactor-runtime/ui": "^2.0.0"
     },
     "config": {
         "sensitivity": {
