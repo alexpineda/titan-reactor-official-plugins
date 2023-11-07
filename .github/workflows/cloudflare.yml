@@ -1,4 +1,4 @@
-name: Build & Deploy Titan Reactor
+name: Build & Deploy Plugins
 
 on:
   workflow_dispatch:

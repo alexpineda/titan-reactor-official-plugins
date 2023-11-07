@@ -1,5 +1,6 @@
 # Official Titan Reactor Plugins
 
+This documentation is currently out of date. Please standby!
 Your plugin is **NOT** required to be in this repository. You are free to publish your plugin to `npm` without prior approval. However if you feel your plugin would qualify as an official plugin and would like to publish it under the **@titan-reactor-plugins** namespace you may create a PR for it here. Plugins must match an acceptable level of quality in order to be accepted into this repository.
 
 ## Adding your plugin
