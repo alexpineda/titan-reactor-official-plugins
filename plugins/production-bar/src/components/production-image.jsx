@@ -3,7 +3,7 @@ import React, { memo } from "react";
 import { assets } from "@titan-reactor-runtime/ui";
 
 export const ProductionImage = memo(({ icon }) => {
-    if (!icon) return null;
+    if (icon === undefined) return null;
     return <img
         src={assets.imagesUrl + `cmdicons.${icon}.png`}
         style={{
