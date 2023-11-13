@@ -7,16 +7,11 @@
     "titan-reactor-plugin"
   ],
   "peerDependencies": {
-    "titan-reactor-api": "2.0.0"
+    "@titan-reactor-runtime/host": "^2.0.0",
+    "@titan-reactor-runtime/ui": "^2.0.0"
+
   },
   "config": {
-    "style": {
-      "value": "modern",
-      "options": [
-        "classic",
-        "modern"
-      ]
-    },
     "fontSize": {
       "label": "Font Size",
       "value": "12px"
@@ -40,6 +35,14 @@
       "folder": "Color",
       "label": "Background 2",
       "value": "#4a556870"
+    },
+    "showPct": {
+      "label": "Show Percentage",
+      "value": true
+    },
+    "showSpeed": {
+      "label": "Show Game Speed",
+      "value": true
     },
     "_visible": {
       "value": true,

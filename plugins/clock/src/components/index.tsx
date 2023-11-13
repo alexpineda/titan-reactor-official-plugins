@@ -1,8 +1,6 @@
-import React from "react";
-import { useFrame, usePluginConfig, useReplay, getFriendlyTime } from "@titan-reactor-runtime/ui";
+import React, { useState } from "react";
+import { useFrame, usePluginConfig, useReplay, getFriendlyTime, useMessage } from "@titan-reactor-runtime/ui";
 import ModernClock from "./modern-clock.jsx";
-import ClassicClock from "./classic-clock.jsx";
-
 
 registerComponent(
   { screen: "@replay", snap: "left", order: -100 },
@@ -10,9 +8,15 @@ registerComponent(
     // we can use the plugin config to determine which clock to show as well as colors and other settings
     const config = usePluginConfig();
     // frame will be updated every game second with useful info like time and frame #.
-    const frame = useFrame();
+    const frame = useFrame() ?? 0;
 
     const replay = useReplay();
+
+    const [speed, setSpeed] = useState(1);
+
+    useMessage(cb => {
+      setSpeed(cb);
+    })
 
     if (!replay) {
       return null;
@@ -32,10 +36,6 @@ registerComponent(
         `linear-gradient(45deg, ${config.bgLight} 0%, ${config.bgLight} 50%, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0) 100%)`,
     };
 
-    return config.style === "modern" ? (
-      <ModernClock time={time} pct={pct} styles={styles} />
-    ) : (
-      <ClassicClock time={time} pct={pct} styles={styles} />
-    );
+    return  <ModernClock time={time} pct={pct} speed={speed} styles={styles} />
   }
 );

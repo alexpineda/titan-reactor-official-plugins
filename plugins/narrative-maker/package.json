@@ -1,19 +1,23 @@
 {
-    "name": "@titan-reactor-plugins/narrative-maker",
+    "name": "@titan-reactor-plugins/auto-observer",
     "version": "0.0.1",
-    "description": "Narrative Maker",
+    "description": "Auto Observer",
     "author": "Dark Matter",
     "keywords": [
         "titan-reactor-plugin"
     ],
     "peerDependencies": {
-        "titan-reactor-api": "2.0.0"
+        "@titan-reactor-runtime/host": "^2.0.0"
     },
     "config": {
         "_visible": {
             "value": false,
             "label": "UI Visible",
             "folder": "System"
+        },
+        "showDebug": {
+            "label": "Show Debug Info",
+            "value": false
         },
         "speedScale": {
             "label": "Speed Scale",
@@ -59,14 +63,14 @@
         },
         "azimuthVariance": {
             "label": "Azimuth Variance",
-            "value": 30,
+            "value": 20,
             "min": 0,
             "max": 90,
             "step": 1
         },
         "polarVariance": {
             "label": "Polar Variance",
-            "value": 55,
+            "value": 35,
             "min": 0,
             "max": 70,
             "step": 1
@@ -87,7 +91,7 @@
         },
         "pipSize": {
             "label": "PIP Size",
-            "value": 700,
+            "value": 400,
             "min": 100,
             "max": 800,
             "step": 25
@@ -98,6 +102,30 @@
             "min": 1,
             "max": 64,
             "step": 1
+        },
+        "weightsADHD": {
+            "folder": "Weights",
+            "label": "ADHD",
+            "value": 1,
+            "min": 0,
+            "max": 100,
+            "step": 0.1
+        },
+        "weightsTension": {
+            "folder": "Weights",
+            "label": "Tension",
+            "value": 1,
+            "min": 0,
+            "max": 100,
+            "step": 0.1
+        },
+        "weightsStrategy": {
+            "folder": "Weights",
+            "label": "Strategy",
+            "value": 1,
+            "min": 0,
+            "max": 100,
+            "step": 0.1
         }
     },
     "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5"
