@@ -66,6 +66,10 @@ const rankE: number[] = [
   unitTypes.mutaliskCocoon,
   unitTypes.observer,
   unitTypes.disruptionWeb,
+  unitTypes.overlord,
+  unitTypes.scv,
+  unitTypes.drone,
+  unitTypes.probe,
 ];
 
 export const regularUnitRanks: number[][] = [rankA, rankB, rankC, rankD, rankE];

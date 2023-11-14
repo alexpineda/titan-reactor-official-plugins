@@ -81,11 +81,15 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
         display: "flex",
         flexDirection: "column",
         color: "white",
-        backgroundColor: "black",
+        backgroundColor: "rgba(0,0,0,0.3)",
+        opacity: 0.5
       }}
     >
       <div>lastHeatMapUpdateFrame: {state.lastHeatMapUpdateFrame}</div>
       <div>lastUpdateFrame: {state.lastUpdateFrame}</div>
+      <div>lastUnitDestroyedFrame: {state.lastUnitDestroyedFrame}</div>
+      <div>lastUnitAttackedFrame: {state.lastUnitAttackedFrame}</div>
+      <div>cameraFatigue: {state.cameraFatigue}</div>
       <div>elapsed: {state.elapsed}</div>
       <div>frame: {state.frame}</div>
       <div>units, score, adhd, tension, strategy</div>
