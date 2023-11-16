@@ -3,46 +3,6 @@ import { useMessage, usePluginConfig } from "@titan-reactor-runtime/ui";
 
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7.8.5/+esm";
  
-// speed
-registerComponent({ screen: "@replay", snap: "right" }, () => {
-  const [speed, setSpeed] = React.useState(1);
-  const [targetSpeed, setTargetSpeed] = React.useState(1);
-
-  useMessage((message) => {
-    setSpeed(message.speed);
-    setTargetSpeed(message.targetSpeed);
-  });
-
-  return (
-    <div
-      style={{
-        fontSize: "24px",
-        color: "white",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "end",
-      }}
-    >
-      {speed.toFixed(1)}{" "}
-      <svg
-        style={{ display: "inline-block", width: "24px" }}
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={1.5}
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
-        />
-      </svg>
-      <p>{targetSpeed}</p>
-    </div>
-  );
-});
-
 // heat map - debug
 registerComponent({ screen: "@replay", snap: "right" }, () => {
   const [state, setState] = React.useState({});

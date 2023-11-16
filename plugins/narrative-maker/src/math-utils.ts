@@ -78,16 +78,27 @@ export function standardDeviation(values: number[]): number {
   return Math.sqrt(avgSquareDiff);
 }
 
-export function calculateMultiplayerClosenessFactor(values : number[]) {
-  let sumOfDifferences = 0;
-  for (let i = 0; i < values.length; i++) {
-      for (let j = i + 1; j < values.length; j++) {
-          sumOfDifferences += Math.abs(values[i] - values[j]);
-      }
+export function calcCoeff( values: number[] ) {
+  let avg = 0;
+  for (const val of values) {
+      avg += val /values.length;
   }
-
-  return (sumOfDifferences !== 0 ? 1 / sumOfDifferences : 0) / values.length; // Assign a high score for balanced distribution, adjust as needed
+  const std = standardDeviation(values);
+  // coefficient of variation
+  const coeff = std / avg;
+  return 1 - coeff;
 }
+
+  export function calculateMultiplayerClosenessFactor(values : number[]) {
+    let sumOfDifferences = 0;
+    for (let i = 0; i < values.length; i++) {
+        for (let j = i + 1; j < values.length; j++) {
+            sumOfDifferences += Math.abs(values[i] - values[j]);
+        }
+    }
+
+    return (sumOfDifferences !== 0 ? 1 / sumOfDifferences : 0) / values.length; // Assign a high score for balanced distribution, adjust as needed
+  }
 
 export function spreadFactorVariance(units: THREE.Vector2[]): number {
   let meanX = 0;

@@ -17,58 +17,43 @@
         },
         "showDebug": {
             "label": "Show Debug Info",
-            "value": false
-        },
-        "speedScale": {
-            "label": "Speed Scale",
-            "value": 0.5,
-            "min": 0.5,
-            "max": 2,
-            "step": 0.1
-        },
-        "cameraMoveTime": {
-            "label": "Camera Move Time",
-            "value": 2300,
-            "min": 500,
-            "max": 20000,
-            "step": 100
-        },
-        "urgentCameraMoveTime": {
-            "label": "Camera Move Time ( Urgent Events )",
-            "value": 1000,
-            "min": 500,
-            "max": 20000,
-            "step": 100
+            "value": false,
+            "debug": true
         },
         "tilt": {
-            "label": "Tilt",
+            "folder": "Camera",
+            "label": "Default Polar",
             "min": 0,
             "max": 45,
             "step": 1,
             "value": 5
         },
         "baseDistance": {
+            "folder": "Camera",
             "label": "Default Distance",
-            "value": 70,
-            "min": 40,
-            "max": 200,
+            "value": 50,
+            "min": 30,
+            "max": 100,
             "step": 1
         },
         "distanceVariance": {
+            "folder": "Camera",
             "label": "Distance Variance",
-            "value": 100,
+            "value": 70,
             "min": 0,
             "max": 100,
             "step": 1
         },
         "azimuthVariance": {
+            "folder": "Camera",
             "label": "Azimuth Variance",
             "value": 20,
             "min": 0,
-            "max": 90,
+            "max": 45,
             "step": 1
         },
         "polarVariance": {
+            "folder": "Camera",
             "label": "Polar Variance",
             "value": 35,
             "min": 0,
@@ -77,19 +62,22 @@
         },
         "heatMapDecay": {
             "label": "Heat Map Decay",
-            "value": 0.537,
+            "value": 0.93,
             "min": 0.001,
             "max": 0.999,
-            "step": 0.001
+            "step": 0.001,
+            "debug": true
         },
         "heatmapUpdateInterval": {
             "label": "Heatmap Update Interval",
             "value": 1000,
             "min": 10,
             "max": 10000,
-            "step": 10
+            "step": 10,
+            "debug": true
         },
         "pipSize": {
+            "folder": "PIP",
             "label": "PIP Size",
             "value": 400,
             "min": 100,
@@ -100,7 +88,7 @@
             "label": "Max Replay Speed",
             "value": 4,
             "min": 1,
-            "max": 64,
+            "max": 32,
             "step": 1
         },
         "weightsADHD": {
@@ -114,7 +102,7 @@
         "weightsTension": {
             "folder": "Weights",
             "label": "Tension",
-            "value": 1,
+            "value": 0,
             "min": 0,
             "max": 100,
             "step": 0.1
@@ -122,11 +110,21 @@
         "weightsStrategy": {
             "folder": "Weights",
             "label": "Strategy",
-            "value": 1,
+            "value": 0,
             "min": 0,
             "max": 100,
             "step": 0.1
+        },
+        "autoSelectUnits": {
+            "label": "Auto Select Units",
+            "value": true
         }
     },
-    "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5"
+    "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5",
+    "devDependencies": {
+        "@types/three": "^0.158.2"
+    },
+    "dependencies": {
+        "simplex-noise": "^4.0.1"
+    }
 }

@@ -41,6 +41,7 @@ export const setupViewports = async (plugin: PluginAddon) => {
     false
   );
   plugin.secondViewport.orbit.dollyTo(45, false);
+  plugin.secondViewport.autoUpdateSmoothTime = false;
 
   // plugin.settings.input.unitSelection.set(false);
   // plugin.settings.input.cursorVisible.set(false);
@@ -54,8 +55,10 @@ export const setupViewports = async (plugin: PluginAddon) => {
 
   plugin.adhd_uq8.defaultDecay = plugin.config.heatMapDecay;
 
-  plugin.targets.polarTarget = POLAR_MAX;
+  plugin.viewport.orbit.minPolarAngle = POLAR_MIN + THREE.MathUtils.degToRad(plugin.config.tilt);
+  plugin.targets.polarTarget = plugin.viewport.orbit.minPolarAngle + THREE.MathUtils.degToRad(plugin.config.polarVariance) / 2;
   plugin.targets.azimuthTarget = 0;
+  await plugin.viewport.orbit.rotatePolarTo(plugin.targets.polarTarget, false);
 };
 
 export const groundTarget = (viewport: GameViewPort, t: THREE.Vector3) => {
@@ -65,7 +68,7 @@ export const groundTarget = (viewport: GameViewPort, t: THREE.Vector3) => {
 export const areProximate = (
   a: THREE.Vector3,
   b: THREE.Vector3,
-  distance = PIP_PROXIMITY
+  distance: number
 ) => {
   return a.distanceTo(b) < distance;
 };
@@ -74,5 +77,5 @@ const _a = new THREE.Vector3();
 const _b = new THREE.Vector3();
 
 export const areProximateViewports = (a: GameViewPort, b: GameViewPort) => {
-  return areProximate(groundTarget(a, _a), groundTarget(b, _b));
+  return areProximate(groundTarget(a, _a), groundTarget(b, _b), PIP_PROXIMITY);
 };

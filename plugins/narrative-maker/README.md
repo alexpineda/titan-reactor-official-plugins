@@ -1,3 +1,1 @@
-Shows player names and resource information.
-
-* Click on the player name to toggle fog of war
+ This plugin automatically tracks and displays key moments in your games! It focuses on important engagements, expansions, and strategic moves, ensuring viewers catch all critical actions without manual input. Suitable for streaming and replay analysis.

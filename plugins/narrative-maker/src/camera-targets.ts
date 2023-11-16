@@ -33,6 +33,8 @@ export class CameraTargets {
 
   #plugin: PluginAddon;
 
+  #zoomEnabledMS: null | number = null;
+
   constructor(plugin: PluginAddon) {
     this.#plugin = plugin;
     this.#maxDistance = Math.sqrt(
@@ -56,27 +58,12 @@ export class CameraTargets {
     plugin.settings.input.dampingFactor.$set(_damping ?? damping);
 
     if (areProximate(this.moveTarget, _a, CUT_TRANSITION_PROXIMITY) || forceSmooth) {
-      // const x = THREE.MathUtils.damp(
-      //   _a.x,
-      //   this.moveTarget.x,
-      //   this.#moveDamping,
-      //   plugin.delta / 1000
-      // );
-
-      // const z = THREE.MathUtils.damp(
-      //   _a.z,
-      //   this.moveTarget.z,
-      //   this.#moveDamping,
-      //   plugin.delta / 1000
-      // );
-
       plugin.viewport.orbit.moveTo(
         this.moveTarget.x,
         this.moveTarget.y,
         this.moveTarget.z,
         true
       );
-      // plugin.viewport.orbit.moveTo(x, _a.y, z, true);
     } else {
       plugin.viewport.orbit.moveTo(
         this.moveTarget.x,
@@ -86,6 +73,7 @@ export class CameraTargets {
     }
   }
 
+  // todo calc once
   get moveTarget() {
     if (this.#moveTargets.length > 1) {
       const a = this.#moveTargets[0];
@@ -100,9 +88,10 @@ export class CameraTargets {
     return this.#moveTargets[0];
   }
 
-  adjustToUnits(units: Unit[]) {
+  adjustDollyToUnitSpread(units: Unit[]) {
     const plugin = this.#plugin;
-    const cameraAdjustment = getCameraDistance(units, plugin.map.size);
+    // multiply by 2 as its barely getting past 0.5 otherwise
+    const cameraAdjustment = getCameraDistance(units, plugin.map.size) * 1.2;
 
     //todo: this doesnt capture surrounding areas
     this.dollyTarget = THREE.MathUtils.lerp(
@@ -111,38 +100,21 @@ export class CameraTargets {
       easeOutCubic(cameraAdjustment)
     );
 
-    // if (
-    //   Math.abs(plugin.viewport.orbit.azimuthAngle - this.azimuthTarget) < 0.1
-    // ) {
-    //   this.azimuthTarget =
-    //     (-0.5 + Math.random()) *
-    //     THREE.MathUtils.degToRad(plugin.config!.azimuthVariance);
-    // }
-
-    if (Math.abs(plugin.viewport.orbit.polarAngle - this.polarTarget) < 0.1) {
-      this.polarTarget =
-        plugin.viewport.orbit.minPolarAngle +
-        Math.random() * THREE.MathUtils.degToRad(plugin.config!.polarVariance);
-
-      console.log(
-        plugin.viewport.orbit.minPolarAngle +
-          THREE.MathUtils.degToRad(plugin.config!.polarVariance),
-        POLAR_MAX
-      );
-
-      const maxPolarAngle =
-        plugin.viewport.orbit.minPolarAngle +
-        THREE.MathUtils.degToRad(plugin.config!.polarVariance);
-
-      this.azimuthTarget =
-        (-0.5 + Math.random()) *
-        (this.polarTarget / maxPolarAngle) *
-        THREE.MathUtils.degToRad(plugin.config!.azimuthVariance);
+    if (this.#zoomEnabledMS === null && Math.random() < 0.1) {
+      console.log("snapping to zoom");
+      this.#zoomEnabledMS = plugin.elapsed;
+      plugin.viewport.orbit.zoomTo(2, false);
     }
+
   }
 
   update() {
     const plugin = this.#plugin;
+
+    if (this.#zoomEnabledMS !== null && plugin.elapsed - this.#zoomEnabledMS > 2000) {
+      this.#zoomEnabledMS = null;
+      plugin.viewport.orbit.zoomTo(1, false);
+    }
 
     const dampSpeed = plugin.targetGameSpeed > 1 ? 0.5 : 1;
     plugin.openBW.setGameSpeed(
@@ -162,7 +134,7 @@ export class CameraTargets {
       THREE.MathUtils.damp(
         plugin.viewport.orbit.azimuthAngle,
         this.azimuthTarget,
-        1,
+        10,
         plugin.delta / 1000
       ),
       true
@@ -171,7 +143,7 @@ export class CameraTargets {
       THREE.MathUtils.damp(
         plugin.viewport.orbit.polarAngle,
         this.polarTarget,
-        1,
+        20,
         plugin.delta / 1000
       ),
       true
@@ -181,19 +153,21 @@ export class CameraTargets {
       THREE.MathUtils.damp(
         plugin.viewport.orbit.distance,
         this.dollyTarget,
-        0.5,
+        1,
         plugin.delta / 1000
       ),
       true
     );
 
-    
+    if (Math.abs(plugin.viewport.orbit.polarAngle - this.polarTarget) < 0.1 ) {
+      this.polarTarget =
+        plugin.viewport.orbit.minPolarAngle +
+        Math.random() * THREE.MathUtils.degToRad(plugin.config!.polarVariance);
 
-    // if (this.#moveTargets.length > 1) {
-    //   plugin.viewport.orbit.getTarget(_a);
-    //   if (areProximate(this.moveTarget, _a, PIP_PROXIMITY / 2)) {
-    //     this.#moveTargets.shift();
-    //   }
-    // }
+      this.azimuthTarget =
+        [-1, 0, 1][Math.floor(Math.random() * 3)] *
+        easeInQuad((this.polarTarget - plugin.viewport.orbit.minPolarAngle) / THREE.MathUtils.degToRad(plugin.config!.polarVariance)) *
+        THREE.MathUtils.degToRad(plugin.config!.azimuthVariance);
+    }
   }
 }

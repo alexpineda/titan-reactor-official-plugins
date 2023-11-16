@@ -15,7 +15,7 @@ registerComponent(
     const [speed, setSpeed] = useState(1);
 
     useMessage(cb => {
-      setSpeed(cb);
+      setSpeed(cb ?? 1);
     })
 
     if (!replay) {
