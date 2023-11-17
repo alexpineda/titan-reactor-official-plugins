@@ -2,6 +2,7 @@ import React from "react";
 import { useMessage, usePluginConfig } from "@titan-reactor-runtime/ui";
 
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7.8.5/+esm";
+
  
 // heat map - debug
 registerComponent({ screen: "@replay", snap: "right" }, () => {
@@ -22,7 +23,10 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
     const adhdWeight = (1 - q.adhd) * config.weightsADHD;
     const tensionWeight = q.tension * config.weightsTension;
     const strategyWeight = q.strategy * config.weightsStrategy;
-    const weightedScore = q.score * adhdWeight + tensionWeight + strategyWeight;
+    
+    const tensionVsStrategyWeight = tensionVsStrategy > 0 ? tensionVsStrategy * tensionWeight : -tensionVsStrategy * strategyWeight;
+
+    const weightedScore = (score + tensionVsStrategyWeight) * adhdWeight;
 
     q.adhdWeight = adhdWeight;
     q.tensionWeight = tensionWeight;
@@ -45,13 +49,9 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
         opacity: 0.5
       }}
     >
-      <div>lastHeatMapUpdateFrame: {state.lastHeatMapUpdateFrame}</div>
-      <div>lastUpdateFrame: {state.lastUpdateFrame}</div>
-      <div>lastUnitDestroyedFrame: {state.lastUnitDestroyedFrame}</div>
-      <div>lastUnitAttackedFrame: {state.lastUnitAttackedFrame}</div>
       <div>cameraFatigue: {state.cameraFatigue}</div>
-      <div>elapsed: {state.elapsed}</div>
-      <div>frame: {state.frame}</div>
+      <div>cameraFatigue2: {state.cameraFatigue2}</div>
+      <div>tensionVsStrategy: {state.tensionVsStrategy}</div>
       <div>units, score, adhd, tension, strategy</div>
       <div
         style={{

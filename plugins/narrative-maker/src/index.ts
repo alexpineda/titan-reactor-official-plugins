@@ -2,22 +2,22 @@ import { Unit } from "@titan-reactor-runtime/host";
 import { Quadrant, SimpleQuadtree } from "./simple-quadtree";
 import { SimpleHeatmap } from "./heatmap/heatmap";
 import { ScoreModifier, UnitAndOrderScoreCalculator } from "./unit-interest/unit-interest-score";
-import { areProximateViewports, setupViewports } from "./camera-utils";
-import { canOnlySelectOne } from "./unit-helpers";
-import { POLAR_MIN, QUAD_SIZE } from "./constants";
+import { areProximate, areProximateViewports, groundTarget, setupViewports } from "./camera-utils";
+import { canOnlySelectOne  } from "./unit-helpers";
+import { PIP_PROXIMITY, POLAR_MIN, QUAD_SIZE } from "./constants";
 import { CameraTargets } from "./camera-targets";
-import { calculateWeightedCenter, calcCoeff } from "./math-utils";
+import {   calcCoeff  } from "./math-utils";
 import { SecondView } from "./second-view";
 import { DecayMap } from "./heatmap/decay-map";
 import { buildingUnitRanks, regularUnitRanks } from "./unit-interest/unit-ranks";
 
 import { createNoise2D } from "simplex-noise"
+import alea from 'alea';
 
 const _pos = new THREE.Vector3(0, 0, 0);
 const _pos2 = new THREE.Vector3(0, 0, 0);
 const _pos3 = new THREE.Vector3(0, 0, 0);
-const _a2 = new THREE.Vector2(0, 0 );
-const _b2 = new THREE.Vector2(0, 0 );
+
 
 export default class PluginAddon extends SceneController {
   viewportsCount = 2;
@@ -31,7 +31,7 @@ export default class PluginAddon extends SceneController {
    * score calculator for units
    */
   strategyBuildingCalculator: UnitAndOrderScoreCalculator;
-  strategyFocusNoise2D = createNoise2D();
+  strategyFocusNoise2D = createNoise2D(alea("strategy-focus"));
 
   /**
    * Default score modifier (unit x order score)
@@ -75,23 +75,21 @@ export default class PluginAddon extends SceneController {
   #quadPos: THREE.Vector2 = new THREE.Vector2();
 
   targetGameSpeed = 1;
+  gameIsLulled = true;
   activeQuadrant: Quadrant<Unit> | undefined;
   cameraFatigue = 0;
   cameraFatigue2 = 0;
+  #targetObject = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0xffffff })
+  )
+  #targetObject2 = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+  )
 
   getUQ8(unit: Unit) {
     this.units8.normalize(this.#quadPos, unit.x, unit.y);
-    // because we are using round we need to clamp to QUAD-1
-    // this.#quadPos.x = THREE.MathUtils.clamp(
-    //   Math.round((unit.x / (this.map.size[0] * 32)) * QUAD_SIZE),
-    //   0,
-    //   QUAD_SIZE - 1
-    // );
-    // this.#quadPos.y = THREE.MathUtils.clamp(
-    //   Math.round((unit.y / (this.map.size[1] * 32)) * QUAD_SIZE),
-    //   0,
-    //   QUAD_SIZE - 1
-    // );
     return this.#quadPos;
   }
 
@@ -121,6 +119,9 @@ export default class PluginAddon extends SceneController {
     this.targets = new CameraTargets(this);
 
     this.targets.setMoveTargets([prevData.target]);
+
+    this.parent.add(this.#targetObject);
+    this.parent.add(this.#targetObject2);
 
     this.defaultScoreModifier = (
       unit: Unit,
@@ -172,8 +173,21 @@ export default class PluginAddon extends SceneController {
     this.events.on(
       "unit-killed",
       (unit) => {
-        this.adhd_uq8.set(this.getUQ8(unit).x, this.getUQ8(unit).y, 0);
+        const pos8 = this.getUQ8(unit);
+        this.adhd_uq8.set(pos8.x, pos8.y, 0);
         this.lastUnitDestroyedMS = this.elapsed;
+        
+        // if action is happening across the map, decrease camera fatigue
+        this.pxToWorld.xyz(unit.x, unit.y, _pos);
+        const dist = _pos.distanceTo(this.viewport.orbit.getTarget(_pos2));
+        let adjustment = -dist * 2;
+        // todo: grade this by how much action is NOT happening at camera
+        const delta = this.scores_uq8.get(pos8.x, pos8.y) - this.scores_uq8.get(this.activeQuadrant?.x || 0, this.activeQuadrant?.y || 0)
+        // we tweak the magnitude by how much there is a score difference
+        if (delta > 0 ) {
+          adjustment = -dist * (4 + delta * 5);
+        }
+        this.cameraFatigue += adjustment;
       },
       -1
     );
@@ -198,6 +212,20 @@ export default class PluginAddon extends SceneController {
         if (!canOnlySelectOne(unit) && this.config.autoSelectUnits) {
           this.selectedUnits.add(unit);
         }
+
+        // if action is happening across the map, decrease camera fatigue
+        // todo: grade this by how much action is NOT happening at camera
+        this.pxToWorld.xyz(unit.x, unit.y, _pos);
+        const dist = _pos.distanceTo(this.viewport.orbit.getTarget(_pos2));
+        let adjustment = -dist * 2;
+        // todo: grade this by how much action is NOT happening at camera
+        const delta = this.scores_uq8.get(mX, mY) - this.scores_uq8.get(this.activeQuadrant?.x || 0, this.activeQuadrant?.y || 0)
+        // we tweak the magnitude by how much there is a score difference
+        if (delta > 0 ) {
+          adjustment = -dist * (2 + delta * 5);
+        }
+        this.cameraFatigue += adjustment;
+        // this.cameraFatigue -= dist;
       } else if (this.config.autoSelectUnits) {
         this.selectedUnits.delete(unit);
       }
@@ -212,6 +240,14 @@ export default class PluginAddon extends SceneController {
       this.#reset();
       this.adhd_uq8.clear();
     });
+
+    this.events.on("selected-units-changed", (units) => {
+      if (this.config.autoSelectUnits && units.length) {
+        this.cameraFatigue += 3000;
+        this.cameraFatigue2 += 500;
+      }
+    })
+
   }
 
   onExitScene() {
@@ -222,6 +258,13 @@ export default class PluginAddon extends SceneController {
 
     if (this.config.autoSelectUnits) {
       this.selectedUnits.clear();
+    }
+
+    this.openBW.setGameSpeed(1);
+
+    return {
+      target: this.targets.moveTarget.clone(),
+      position: this.viewport.orbit.getPosition(_pos).clone(),
     }
   }
 
@@ -244,6 +287,7 @@ export default class PluginAddon extends SceneController {
       this.elapsed < this.lastUnitDestroyedMS + 2_000
     ) {
       this.targetGameSpeed = 1;
+      this.gameIsLulled = true;
     } else {
 
       this.targetGameSpeed = THREE.MathUtils.damp(
@@ -252,6 +296,7 @@ export default class PluginAddon extends SceneController {
         0.1,
         delta / 1000
       )
+      this.gameIsLulled = true;
     }
 
     this.secondViewport.enabled =
@@ -267,41 +312,25 @@ export default class PluginAddon extends SceneController {
     }
   }
 
-  #generateMoveTargets(quadrant: Quadrant<Unit>) {
-    const center = calculateWeightedCenter(
-      _a2,
-      this.units8.getNearby(quadrant.x, quadrant.y, 1, false),
-      "x",
-      "y",
-      this.scoreCalculator.unitScore.bind(this.scoreCalculator)
-    );
-    const moveCenter = calculateWeightedCenter(
-      _b2,
-      this.units8.getNearby(quadrant.x, quadrant.y, 1, false),
-      "nextMovementWaypointX",
-      "nextMovementWaypointY",
-      this.scoreCalculator.unitScore.bind(this.scoreCalculator)
-    );
-    this.pxToWorld.xyz(center.x, center.y, _pos);
-    this.pxToWorld.xyz(moveCenter.x, moveCenter.y, _pos2);
-
-    return [ _pos.clone(), _pos2.clone() ];
-  }
 
   onFrame(frame: number): void {
+
+    if (Number.isNaN(this.cameraFatigue)) {
+      this.cameraFatigue = 0;
+    }
+
+    const tensionVsStrategy = this.strategyFocusNoise2D(this.frame / 1000, 0);
 
     this.sendUIMessage({
       speed: this.openBW.gameSpeed,
       targetSpeed: this.targetGameSpeed,
 
       state: {
-        lastHeatMapUpdateFrame: this.lastDecayUpdateMS,
-        lastUpdateFrame: this.lastActiveQuadrantUpdateMS,
-        lastUnitDestroyedFrame: this.lastUnitDestroyedMS,
-        lastUnitAttackedFrame: this.lastUnitAttackedMS,
         cameraFatigue: this.cameraFatigue,
+        cameraFatigue2: this.cameraFatigue2,
         elapsed: this.elapsed,
         frame,
+        tensionVsStrategy
       },
       data: {
         size: this.units8.size,
@@ -322,8 +351,7 @@ export default class PluginAddon extends SceneController {
 
     // update scores
     for (const quadrant of this.units8.quadrants) {
-      let sumScore = 0,
-        avgScore = 0, sumBuildingScore = 0, avgBuildingScore =0;
+      let sumScore = 0, sumBuildingScore = 0;
 
       // use surrounding quadrants to calculate score
       const _teams = new Array(8).fill(0);
@@ -331,40 +359,37 @@ export default class PluginAddon extends SceneController {
       for (const unit of this.units8.getNearby( quadrant.x, quadrant.y, 1, false )) {
         const unitScore = this.scoreCalculator.unitScore(unit);
         sumScore += unitScore;
-        avgScore = sumScore / (quadrant.items.length || 1);
 
         const buildingScore = this.strategyBuildingCalculator.unitScore(unit);
         sumBuildingScore += buildingScore;
-        avgBuildingScore = sumBuildingScore / (quadrant.items.length || 1);
 
         if (!this.assets.bwDat.units[unit.typeId].isBuilding) {
           _teams[unit.owner]++;
         }
       }
-      ;
+
       const tension = calcCoeff(_teams.filter((_,i) => this.players.get(i)));
       this.scores_uq8.set(quadrant.x, quadrant.y, sumScore);
-      this.tension_uq8.set(quadrant.x, quadrant.y, tension / (quadrant.items.length || 1));
+      this.tension_uq8.set(quadrant.x, quadrant.y, tension);
       this.strategy_uq8.set(quadrant.x, quadrant.y, sumBuildingScore);
       
     }
     
     // calculate hottest quadrant
-
     let hottestScore = 0;
     let hottestQuadrant: Quadrant<Unit> | undefined;
     let secondHottestQuadrant: Quadrant<Unit> | undefined;
-
-    let weightedScore = 0;
 
     for (const quadrant of this.units8.quadrants) {
 
       const score = this.scores_uq8.get(quadrant.x, quadrant.y);
       const adhdWeight = (1 - this.adhd_uq8.get(quadrant.x, quadrant.y)) * this.config.weightsADHD;
       const tensionWeight = (this.tension_uq8.get(quadrant.x, quadrant.y) * this.config.weightsTension);
-      const strategyWeight = (this.strategy_uq8.get(quadrant.x, quadrant.y) * this.config.weightsStrategy) + this.strategyFocusNoise2D(this.elapsed, 0);
+      const strategyWeight = (this.strategy_uq8.get(quadrant.x, quadrant.y) * this.config.weightsStrategy);
 
-      weightedScore = (score + tensionWeight) * adhdWeight + strategyWeight;
+      const tensionVsStrategyWeight = tensionVsStrategy > 0 ? tensionVsStrategy * tensionWeight : -tensionVsStrategy * strategyWeight;
+
+      const weightedScore = (score + tensionVsStrategyWeight) * adhdWeight;
 
       if (weightedScore > hottestScore) {
         hottestScore = weightedScore;
@@ -384,38 +409,21 @@ export default class PluginAddon extends SceneController {
         this.lastSecondaryActiveQuadrantUpdateMS = this.elapsed;
       }
 
-      const nearbyHeat = this.scores_uq8.getNearby(
-        hottestQuadrant.x,
-        hottestQuadrant.y,
-        1
-      );
-      let nearbySum = 0;
-      for (const h of nearbyHeat) {
-        nearbySum += h.value; // * (1 -0 this.#adhd.get(h.x, h.y));
-        // this.adhd_uq8.decay(h.x, h.y, 1 - h.value);
-      }
- 
-      // let nearbyAttacking = 0,
-      //   armyTotal = 1;
-
-      // for (const unit of hottestQuadrant.items) {
-      //   if (this.#isArmyUnit(unit)) {
-      //     armyTotal++;
-      //     if (unit.isAttacking) {
-      //       nearbyAttacking++;
-      //     }
-      //   }
-      // }
-
       this.viewport.orbit.getTarget(_pos3);
 
       // activate quadrant
-      this.targets.setMoveTargets(this.#generateMoveTargets(hottestQuadrant));
+      const t = this.targets.setTargetsFromQuadrant(hottestQuadrant);
 
-      
+      this.#targetObject.position.copy(t[0]);
+      this.#targetObject2.position.copy(t[1]);
+      this.#targetObject.updateMatrix();
+      this.#targetObject.updateMatrixWorld();
+      this.#targetObject2.updateMatrix();
+      this.#targetObject2.updateMatrixWorld();
+
       //todo: bias this by game speed a little?
-      this.cameraFatigue = 2000 + this.targets.moveTarget.distanceTo(_pos3) * 100 + (10_000 *  (1 - Math.min(1,(frame/5000))));
-      this.cameraFatigue2 = 500;
+      this.cameraFatigue = 2000 / this.openBW.gameSpeed + this.targets.moveTarget.distanceTo(_pos3) * 100 + (5_000 *  (1 - Math.min(1,(frame/5000))));
+      this.cameraFatigue2 = 500 / this.openBW.gameSpeed;
 
       this.targets.adjustDollyToUnitSpread(hottestQuadrant.items);
 
@@ -433,9 +441,16 @@ export default class PluginAddon extends SceneController {
         this.viewport.orbit.getTarget(_pos3);
 
         // activate quadrant
-        this.targets.setMoveTargets(this.#generateMoveTargets(hottestQuadrant), 5, true);
+        const t = this.targets.setTargetsFromQuadrant(hottestQuadrant, 5, "smooth");
 
-        this.cameraFatigue2 = 200 + this.targets.moveTarget.distanceTo(_pos3) * 50;
+        this.#targetObject.position.copy(t[0]);
+        this.#targetObject2.position.copy(t[1]);
+        this.#targetObject.updateMatrix();
+        this.#targetObject.updateMatrixWorld();
+        this.#targetObject2.updateMatrix();
+        this.#targetObject2.updateMatrixWorld();
+
+        this.cameraFatigue2 = 200 / this.openBW.gameSpeed + this.targets.moveTarget.distanceTo(_pos3) * 50;
       }
     }
 
@@ -446,5 +461,73 @@ export default class PluginAddon extends SceneController {
     }
 
     this.units8.clear();
+  }
+
+  onMinimapDragUpdate(pos, isDragStart, mouseButton) {
+
+    const viewportsAreProximate = areProximateViewports(
+      this.viewport,
+      this.secondViewport
+    );
+
+    if (mouseButton === 0) {
+      this.viewport.orbit.getTarget(_pos3);
+      const target = _pos.set(pos.x, 0, pos.y).clone();
+      this.targets.setMoveTargets([ target, target ], undefined, isDragStart ? "cut" : "smooth");
+      this.cameraFatigue = 5000;
+      this.cameraFatigue2 = 200;
+
+      this.units8.normalize(this.#quadPos,Math.floor((pos.x + this.map.size[0] / 2) * 32)  , Math.floor((pos.y + this.map.size[1] / 2) * 32));
+      this.activeQuadrant = this.units8.getQuadrant(this.#quadPos.x, this.#quadPos.y);
+
+      if (this.secondViewport.enabled) {
+        this.secondViewport.enabled = !viewportsAreProximate;
+      } else {
+        this.secondViewport.orbit.moveTo(-10000, 0, 0, false);
+      }
+    }
+    else if (mouseButton === 2) {
+        _pos.set(pos.x, 0, pos.y);
+  
+        const isProximateToPrevious = areProximate(_pos, groundTarget(this.secondViewport, _pos2), PIP_PROXIMITY);
+  
+        if (isDragStart) {
+          if (this.secondViewport.enabled) {
+            this.secondViewport.enabled =
+              !viewportsAreProximate && isProximateToPrevious;
+          } else {
+            this.secondViewport.enabled = !viewportsAreProximate;
+          }
+        } else {
+          this.secondViewport.enabled =
+            !viewportsAreProximate &&
+            isProximateToPrevious;
+        }
+  
+        if (this.secondViewport.enabled) {
+          this.secondViewport.orbit.moveTo(pos.x, 0, pos.y, !isDragStart);
+        } else {
+          this.secondViewport.orbit.moveTo(-10000, 0, 0, false);
+        }
+      }
+  
+
+  }
+
+  onCameraMouseUpdate(
+    _,
+    __,
+    scrollY,
+  ) {
+    if (scrollY) {
+      if (scrollY < 0) {
+        this.targets.dollyTarget -= 20;
+        this.viewport.orbit.dolly(-20, true);
+      } else {
+        this.targets.dollyTarget += 20;
+        this.viewport.orbit.dolly(20, true);
+      }
+    }
+
   }
 }

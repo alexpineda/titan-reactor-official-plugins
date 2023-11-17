@@ -9,21 +9,19 @@ export const getMax = (arr: number[]) => {
   return Math.max(...arr);
 };
 
-export function easeOutCubic(x: number): number {
-  return 1 - Math.pow(1 - x, 3);
+export function easeOut(x: number, e: number): number {
+  return 1 - Math.pow(1 - x, e);
 }
 
-export function easeInQuad(x: number): number {
-  return x * x;
+export function easeIn(x: number, e: number): number {
+  return Math.pow(x, e);
 }
 
-export function easeInCubic(x: number): number {
-  return x * x * x;
-}
-
-export function easeInQuart(x: number): number {
-  return x * x * x * x;
-}
+export const getAngle = ( direction: number ) => {
+  direction -= 64;
+  if ( direction < 0 ) direction += 256;
+  return -( ( direction * Math.PI ) / 128.0 ) + Math.PI / 2.0;
+};
 
 export function distance(
   point1: { x: number; y: number },
@@ -79,9 +77,15 @@ export function standardDeviation(values: number[]): number {
 }
 
 export function calcCoeff( values: number[] ) {
+  if (values.length === 0) {
+      return 0;
+  }
   let avg = 0;
   for (const val of values) {
-      avg += val /values.length;
+      avg += val / values.length;
+  }
+  if (avg === 0) {
+    return 0;
   }
   const std = standardDeviation(values);
   // coefficient of variation
@@ -143,8 +147,9 @@ export function maxTotalVariance(deltaX: number, deltaY: number): number {
   return maxVarianceX + maxVarianceY;
 }
 
+type GetUnitXY = (unit: Unit) => {x: number, y: number};
 
-export const calculateWeightedCenter = (out: THREE.Vector2, units: Unit[], xKey: keyof Unit, yKey: keyof Unit, scoreFn: (unit: Unit) => number) => {
+export const calculateWeightedCenter = (getUnitXY: GetUnitXY) => (out: THREE.Vector2, units: Unit[], scoreFn: (unit: Unit) => number) => {
   let weightedSumX = 0;
   let weightedSumY = 0;
   let totalWeight = 0;
@@ -159,11 +164,55 @@ export const calculateWeightedCenter = (out: THREE.Vector2, units: Unit[], xKey:
 
   for (const unit of units) {
     const unitScore = scoreFn(unit);
-    weightedSumX += ((unit[xKey] as number) * unitScore) / maxScore;
-    weightedSumY += ((unit[yKey] as number) * unitScore) / maxScore;
+    const pos = getUnitXY(unit);
+    weightedSumX += (pos.x * unitScore) / maxScore;
+    weightedSumY += (pos.y * unitScore) / maxScore;
     totalWeight += unitScore / maxScore;
   }
 
   return out.set(weightedSumX / totalWeight, weightedSumY / totalWeight);
 
+}
+
+export const calculateMeanCenter = (getUnitXY: GetUnitXY) => (out: THREE.Vector2, units: Unit[], filterFn: (unit: Unit) => boolean) => {
+  let sumX = 0;
+  let sumY = 0;
+  let count = 0;
+
+  for (const unit of units) {
+    if (!filterFn(unit)) {
+      continue;
+    }
+    const pos = getUnitXY(unit);
+    sumX += pos.x;
+    sumY += pos.y;
+    count ++;
+  }
+
+  // Avoid division by zero in case there are no units
+  if (count === 0) {
+    return out.set(0, 0);
+  }
+
+  return out.set(sumX / count, sumY / count);
+}
+
+export const calculateMedianCenter = (getUnitXY: GetUnitXY) => (out: THREE.Vector2, units: Unit[]) => {
+  const xValues = units.map(unit => getUnitXY(unit).x).sort((a, b) => a - b);
+  const yValues = units.map(unit => getUnitXY(unit).y).sort((a, b) => a - b);
+
+  const medianX = calculateMedian(xValues);
+  const medianY = calculateMedian(yValues);
+
+  return out.set(medianX, medianY);
+};
+
+function calculateMedian(values) {
+  if (values.length === 0) return 0;
+  const middleIndex = Math.floor(values.length / 2);
+  if (values.length % 2 === 0) {
+    return (values[middleIndex - 1] + values[middleIndex]) / 2;
+  } else {
+    return values[middleIndex];
+  }
 }

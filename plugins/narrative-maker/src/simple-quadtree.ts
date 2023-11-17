@@ -39,6 +39,10 @@ export class SimpleQuadtree<T> {
 
   }
 
+  getQuadrant(x: number, y: number) {
+    return this.#quadrants[y * this.#size + x];
+  }
+
   normalize(out: THREE.Vector2, x: number, y: number, useOffset = true) {
     out.set(
       Math.floor(((x + (useOffset ? this.#offset.x : 0)) / this.#scale.x) * this.size), Math.floor(((y + (useOffset ? this.#offset.y : 0)) / this.#scale.y) * this.size));

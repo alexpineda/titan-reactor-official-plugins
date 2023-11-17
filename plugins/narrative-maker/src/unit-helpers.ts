@@ -24,3 +24,22 @@ _canOnlySelectOne.includes(unit.typeId);
 
 export const isArmyUnit = (unit: Unit, bwDat: BwDAT) => bwDat.units[unit.typeId].supplyRequired > 0 &&
 !workerTypes.includes(unit.typeId)
+
+export const isWorkerUnit = (unit: Unit) => workerTypes.includes(unit.typeId)
+
+const harvestOrders = [
+  enums.orders.harvest1,
+  enums.orders.harvest2,
+  enums.orders.moveToGas,
+  enums.orders.waitForGas,
+  enums.orders.harvestGas,
+  enums.orders.returnGas,
+  enums.orders.moveToMinerals,
+  enums.orders.waitForMinerals,
+  enums.orders.miningMinerals,
+  enums.orders.harvest3,
+  enums.orders.harvest4,
+  enums.orders.returnMinerals,
+]
+
+export const isHarvesting = (unit: Unit) => harvestOrders.includes(unit.order)

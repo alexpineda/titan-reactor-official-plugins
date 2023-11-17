@@ -1,7 +1,7 @@
 {
     "name": "@titan-reactor-plugins/auto-observer",
     "version": "0.0.1",
-    "description": "Auto Observer",
+    "description": "Auto-Observe Camera Controller",
     "author": "Dark Matter",
     "keywords": [
         "titan-reactor-plugin"
@@ -116,8 +116,8 @@
             "step": 0.1
         },
         "autoSelectUnits": {
-            "label": "Auto Select Units",
-            "value": true
+            "label": "Auto Select Units Taking Damage",
+            "value": false
         }
     },
     "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5",
@@ -125,6 +125,7 @@
         "@types/three": "^0.158.2"
     },
     "dependencies": {
+        "alea": "^1.0.1",
         "simplex-noise": "^4.0.1"
     }
 }
