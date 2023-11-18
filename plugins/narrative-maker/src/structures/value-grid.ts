@@ -1,7 +1,7 @@
 
 export type HeatmapValue = { value: number, x: number, y: number };
 
-export class SimpleHeatmap {
+export class ValueGrid {
   protected heatmap: HeatmapValue[] = [];
   protected size: number;
 

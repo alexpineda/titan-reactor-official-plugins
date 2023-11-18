@@ -1,6 +1,6 @@
 import { PrevSceneData, Unit } from "@titan-reactor-runtime/host";
-import { Quadrant, SimpleQuadtree } from "./structures/simple-quadtree";
-import { SimpleHeatmap } from "./structures/heatmap";
+import { Quadrant, ArrayGrid } from "./structures/array-grid";
+import { ValueGrid } from "./structures/value-grid";
 import { ScoreModifier, UnitAndOrderScoreCalculator } from "./unit-interest/unit-interest-score";
 import { areProximate, areProximateViewports, groundTarget, setupViewports } from "./camera-utils";
 import { canOnlySelectOne, isHarvesting, isWorkerUnit, unitIsRelevant  } from "./unit-helpers";
@@ -47,6 +47,8 @@ export default class PluginAddon extends SceneController {
   activeQuadrant: Quadrant<Unit> | undefined;
   cameraFatigue = 0;
   cameraFatigue2 = 0;
+  cameraFatigueAdjustmentTimeoutMS = 0;
+
   #targetObject = new THREE.Mesh(
     new THREE.SphereGeometry(1, 8, 8),
     new THREE.MeshBasicMaterial({ color: 0xffffff })
@@ -119,18 +121,8 @@ export default class PluginAddon extends SceneController {
 
         this.lastUnitDestroyedMS = this.elapsed;
         
-        // if action is happening across the map, decrease camera fatigue
-        this.pxToWorld.xyz(unit.x, unit.y, _a3);
-        const dist = _a3.distanceTo(this.viewport.orbit.getTarget(_b3));
-        let adjustment = -dist * 2;
-        // todo: grade this by how much action is NOT happening at camera
-        
-        const delta = this.u8.action.get(pos8.x, pos8.y) - this.u8.action.get(this.activeQuadrant?.x || 0, this.activeQuadrant?.y || 0)
-        // we tweak the magnitude by how much there is a score difference
-        if (delta > 0 ) {
-          adjustment = -dist * (4 + delta * 5);
-        }
-        this.cameraFatigue += adjustment;
+        this.adjustCameraFatigueBasedOnRecentAction(unit, 2, 3);
+
       },
       -1
     );
@@ -145,35 +137,27 @@ export default class PluginAddon extends SceneController {
      * decay adhd if attacking or taking damage
      */
     this.events.on("unit-updated", (unit: Unit) => {
-      const pos8 = this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
 
       if (unitIsRelevant(unit, this.assets.bwDat)) {
-        this.u8.units.add(unit.x, unit.y, unit);
+        const pos8 = this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
+        this.u8.units.add(pos8.x, pos8.y, unit);
       }
       if (unit.extras.recievingDamage) {
+        const pos8 = this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
         this.u8.adhd.decay(pos8.x, pos8.y);
         if (!canOnlySelectOne(unit) && this.config.autoSelectUnits) {
           this.selectedUnits.add(unit);
         }
 
-        // if action is happening across the map, decrease camera fatigue
-        // todo: grade this by how much action is NOT happening at camera
-        this.pxToWorld.xyz(unit.x, unit.y, _a3);
-        const dist = _a3.distanceTo(this.viewport.orbit.getTarget(_b3));
-        let adjustment = -dist * 2;
-        // todo: grade this by how much action is NOT happening at camera
-        const delta = this.u8.action.get(pos8.x, pos8.y) - this.u8.action.get(this.activeQuadrant?.x || 0, this.activeQuadrant?.y || 0)
-        // we tweak the magnitude by how much there is a score difference
-        if (delta > 0 ) {
-          adjustment = -dist * (2 + delta * 3);
-        }
-        this.cameraFatigue += adjustment;
+        this.adjustCameraFatigueBasedOnRecentAction(unit, 2, 3);
+
         // this.cameraFatigue -= dist;
       } else if (this.config.autoSelectUnits) {
         this.selectedUnits.delete(unit);
       }
 
       if (unit.isAttacking) {
+        const pos8 = this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
         this.u8.adhd.decay(pos8.x, pos8.y);
         this.lastUnitAttackedMS = this.elapsed;
       }
@@ -185,12 +169,31 @@ export default class PluginAddon extends SceneController {
     });
 
     this.events.on("selected-units-changed", (units) => {
-      if (this.config.autoSelectUnits && units.length) {
+      if (!this.config.autoSelectUnits && units.length) {
         this.cameraFatigue += 3000;
         this.cameraFatigue2 += 500;
       }
     })
 
+  }
+
+  adjustCameraFatigueBasedOnRecentAction(unit: Unit, f1: number, f2: number) {
+    if (this.elapsed > this.cameraFatigueAdjustmentTimeoutMS + 500) {
+      // if action is happening across the map, decrease camera fatigue
+      const pos8 = this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
+      this.pxToWorld.xyz(unit.x, unit.y, _a3);
+      const dist = _a3.distanceTo(this.viewport.orbit.getTarget(_b3));
+      let adjustment = -dist * 2;
+      // todo: grade this by how much action is NOT happening at camera
+
+      const delta = this.u8.action.get(pos8.x, pos8.y) - this.u8.action.get(this.activeQuadrant?.x || 0, this.activeQuadrant?.y || 0)
+      // we tweak the magnitude by how much there is a score difference
+      if (delta > 0 ) {
+        adjustment = -dist * (f1 + delta * f2);
+      }
+      this.cameraFatigue += adjustment;
+      this.cameraFatigueAdjustmentTimeoutMS = this.elapsed;
+    }
   }
 
   onExitScene() {
@@ -300,7 +303,7 @@ export default class PluginAddon extends SceneController {
       // use surrounding quadrants to calculate score
       const _teams = new Array(8).fill(0);
       // for (const unit of quadrant.items) {
-      for (const unit of this.u8.units.getNearby( quadrant.x, quadrant.y, 1, false )) {
+      for (const unit of this.u8.units.getNearby( quadrant.x, quadrant.y, 1 )) {
         const unitScore = this.scoreCalculator.unitScore(unit);
         sumScore += unitScore;
 
@@ -363,7 +366,8 @@ export default class PluginAddon extends SceneController {
 
       // activate quadrant
       const moveToUnits = hottestQuadrant.items.filter(selectionWeight === "strategy" ? this.uf_Building : this.uf_NonHarvesting);
-      const t = this.targets.moveToUnits( moveToUnits );
+      // sometimes in strategy moveToUnits is empty, figure out why bruh
+      const t = this.targets.moveToUnits( moveToUnits.length > 0 ? moveToUnits : hottestQuadrant.items );
       // this.units8.getNearby(quadrant.x, quadrant.y, 1, false),
 
       this.lastSelectionWeight = selectionWeight;
@@ -396,7 +400,7 @@ export default class PluginAddon extends SceneController {
 
         // activate quadrant
         const moveToUnits = hottestQuadrant.items.filter(selectionWeight === "strategy" ? this.uf_Building : this.uf_NonHarvesting);
-        const t = this.targets.moveToUnits( moveToUnits, 5, "smooth" );
+        const t = this.targets.moveToUnits( moveToUnits.length > 0 ? moveToUnits : hottestQuadrant.items, 5, "smooth" );
 
         this.#targetObject.position.copy(t[0]);
         this.#targetObject2.position.copy(t[1]);
@@ -431,7 +435,6 @@ export default class PluginAddon extends SceneController {
       this.targets.setMoveTargets([ target, target ], undefined, isDragStart ? "cut" : "smooth");
       this.cameraFatigue = 5000;
       this.cameraFatigue2 = 200;
-
 
       this.u8.worldGrid.fromWorldToGrid(_a2, pos.x, pos.y);
       this.activeQuadrant = this.u8.units.getQuadrant(_a2.x, _a2.y);

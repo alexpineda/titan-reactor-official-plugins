@@ -1,6 +1,6 @@
 import type { Unit } from "@titan-reactor-runtime/host";
 import type PluginAddon from "./index";
-import { Quadrant } from "./structures/simple-quadtree";
+import { Quadrant } from "./structures/array-grid";
 import { distance } from "./math-utils";
 
 const _pos = new THREE.Vector3();

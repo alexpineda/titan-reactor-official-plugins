@@ -10,7 +10,7 @@ import {
 } from "./math-utils";
 import type PluginAddon from "./index";
 import { CUT_TRANSITION_PROXIMITY_MIN  } from "./constants";
-import { Quadrant } from "./structures/simple-quadtree";
+import { Quadrant } from "./structures/array-grid";
 import { isHarvesting, isWorkerUnit } from "./unit-helpers";
 
 const _a = new THREE.Vector3(), _b = new THREE.Vector3() ;

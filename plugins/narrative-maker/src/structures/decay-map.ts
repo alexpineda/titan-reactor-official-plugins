@@ -1,6 +1,6 @@
-import { SimpleHeatmap } from "./heatmap";
+import { ValueGrid } from "./value-grid";
 
-export class DecayMap extends SimpleHeatmap {
+export class DecayMap extends ValueGrid {
   defaultDecay = 0.9;
 
   decayAll(decay = this.defaultDecay) {
