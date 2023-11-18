@@ -53,7 +53,7 @@ export const setupViewports = async (plugin: PluginAddon) => {
   plugin.viewport.orbit.dollySpeed = 0.01;
   plugin.viewport.orbit.truckSpeed = 0.01;
 
-  plugin.adhd_uq8.defaultDecay = plugin.config.heatMapDecay;
+  plugin.scores8.adhd.defaultDecay = plugin.config.heatMapDecay;
 
   plugin.viewport.orbit.minPolarAngle = POLAR_MIN + THREE.MathUtils.degToRad(plugin.config.tilt);
   plugin.targets.polarTarget = plugin.viewport.orbit.minPolarAngle + THREE.MathUtils.degToRad(plugin.config.polarVariance) / 2;

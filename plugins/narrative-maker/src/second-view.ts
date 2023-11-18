@@ -13,7 +13,7 @@ export class SecondView {
     this.#plugin = plugin;
   }
 
-  #activate(quadrant) {
+  #activate(quadrant: Quadrant<Unit>) {
     const plugin = this.#plugin;
 
     let maxScoreUnit = (this.followedUnit =
@@ -41,12 +41,12 @@ export class SecondView {
 
     if (secondHottestQuadrant) {
       decayedSecondScore =
-        plugin.scores_uq8.get(
+        plugin.scores8.action.get(
           secondHottestQuadrant.x,
           secondHottestQuadrant.y
         ) *
         (1 -
-          plugin.adhd_uq8.get(
+          plugin.scores8.adhd.get(
             secondHottestQuadrant.x,
             secondHottestQuadrant.y
           ));

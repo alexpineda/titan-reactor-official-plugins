@@ -66,7 +66,7 @@ export class SimpleQuadtree<T> {
     }
 
     if (radius === 0) {
-      return this.#items[`${this.#normalized.x},${this.#normalized.y}`];f
+      return this.#items[`${this.#normalized.x},${this.#normalized.y}`];
     } else {
 
       this.normalize(this.#radius, radius, radius, false);

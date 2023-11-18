@@ -218,7 +218,7 @@ export const calculateMedianCenter = (getUnitXY: GetUnitXY) => (out: THREE.Vecto
   return out.set(medianX, medianY);
 };
 
-function calculateMedian(values) {
+function calculateMedian(values: number[]) {
   if (values.length === 0) return 0;
   const middleIndex = Math.floor(values.length / 2);
   if (values.length % 2 === 0) {
