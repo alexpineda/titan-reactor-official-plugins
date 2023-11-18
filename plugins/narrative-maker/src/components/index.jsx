@@ -24,9 +24,10 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
     const tensionWeight = q.tension * config.weightsTension;
     const strategyWeight = q.strategy * config.weightsStrategy;
     
-    const tensionVsStrategyWeight = tensionVsStrategy > 0 ? tensionVsStrategy * tensionWeight : -tensionVsStrategy * strategyWeight;
 
-    const weightedScore = (score + tensionVsStrategyWeight) * adhdWeight;
+    const unitScore = state.gameIsLulled > 0 ? strategyWeight : q.score;
+
+    const weightedScore = (unitScore + tensionWeight) * adhdWeight;
 
     q.adhdWeight = adhdWeight;
     q.tensionWeight = tensionWeight;
@@ -52,6 +53,7 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
       <div>cameraFatigue: {state.cameraFatigue}</div>
       <div>cameraFatigue2: {state.cameraFatigue2}</div>
       <div>tensionVsStrategy: {state.tensionVsStrategy}</div>
+      <div>gameIsLulled: {state.gameIsLulled ? "true" : "false"}</div>
       <div>units, score, adhd, tension, strategy</div>
       <div
         style={{

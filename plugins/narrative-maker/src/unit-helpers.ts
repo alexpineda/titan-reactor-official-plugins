@@ -1,6 +1,8 @@
 import { BwDAT, Unit } from "@titan-reactor-runtime/host";
 
 export const unitTypes = enums.unitTypes;
+const UnitFlags = enums.UnitFlags;
+const orders = enums.orders;
 
 export const workerTypes = [
     enums.unitTypes.scv,
@@ -42,4 +44,31 @@ const harvestOrders = [
   enums.orders.returnMinerals,
 ]
 
-export const isHarvesting = (unit: Unit) => harvestOrders.includes(unit.order)
+export const isHarvesting = (unit: Unit) => harvestOrders.includes(unit.order);
+
+const unitIsCompleted = (unit: Unit) => {
+  return unit.statusFlags & UnitFlags.Completed;
+};
+
+const canSelectUnit = (unit: Unit | undefined) => {
+if (!unit) return null;
+
+return unit.typeId !== unitTypes.darkSwarm &&
+  unit.typeId !== unitTypes.disruptionWeb &&
+  unit.order !== orders.die &&
+  !unit.extras.dat.isTurret &&
+  (unit.statusFlags & UnitFlags.Loaded) === 0 &&
+  (unit.statusFlags & UnitFlags.InBunker) === 0 &&
+  unit.order !== orders.harvestGas &&
+  unit.typeId !== unitTypes.spiderMine &&
+  (unitIsCompleted(unit) || unit.extras.dat.isZerg || unit.extras.dat.isBuilding)
+  ? unit
+  : null;
+};
+
+export const unitIsRelevant = (unit: Unit, bwDat: BwDAT) => {
+  const unitType = bwDat.units[unit.typeId];
+  return (
+    !unitType.isResourceContainer && unit.owner < 8 && canSelectUnit(unit)
+  );
+}

@@ -10,7 +10,7 @@ import {
 } from "./math-utils";
 import type PluginAddon from "./index";
 import { CUT_TRANSITION_PROXIMITY_MIN  } from "./constants";
-import { Quadrant } from "./simple-quadtree";
+import { Quadrant } from "./structures/simple-quadtree";
 import { isHarvesting, isWorkerUnit } from "./unit-helpers";
 
 const _a = new THREE.Vector3(), _b = new THREE.Vector3() ;
@@ -92,35 +92,25 @@ export class CameraTargets {
   }
   #calculateUnitPosWeightedCenter = calculateMedianCenter(unit => unit)
   #calculateUnitHeadingWeightedCenter = calculateMedianCenter(unit => {
+    const plugin = this.#plugin;
+    if (plugin.assets.bwDat.units[unit.typeId].isBuilding) { 
+      return unit;
+    }
     const angle = getAngle(unit.currentVelocityDirection);
     _a2.x = unit.x + Math.cos(angle) * unit.currentSpeed * 64;
     _a2.y = unit.y + Math.sin(angle) * unit.currentSpeed * 64;
     return _a2;
   })
 
-  #noopScore = (unit: Unit) => {
-    if (this.#plugin.assets.bwDat.units[unit.typeId].isBuilding) {
-      return false;
-    }
-    if (isWorkerUnit(unit) && isHarvesting(unit)) {
-      return false;
-    }
-    return true;
-  }
-  
-  setTargetsFromQuadrant(quadrant: Quadrant<Unit>, damping?: number, force?: "smooth" | "cut") {
+  moveToUnits(units: Unit[], damping?: number, force?: "smooth" | "cut") {
     const plugin = this.#plugin;
     const center = this.#calculateUnitPosWeightedCenter(
       _a2,
-      quadrant.items,
-      // this.units8.getNearby(quadrant.x, quadrant.y, 1, false),
-      this.#noopScore
+      units,
     );
     const moveCenter = this.#calculateUnitHeadingWeightedCenter(
       _b2,
-      quadrant.items,
-      // this.units8.getNearby(quadrant.x, quadrant.y, 1, false),
-      this.#noopScore
+      units,
     );
 
     plugin.pxToWorld.xyz(center.x, center.y, _ma);

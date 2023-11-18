@@ -58,7 +58,7 @@ export class SimpleQuadtree<T> {
     this.#items[`${this.#normalized.x},${this.#normalized.y}`].push(item);
   }
 
-  getNearby(x: number, y: number, radius = 0, normalize = true) {
+  *getNearby(x: number, y: number, radius = 0, normalize = true) {
     if (normalize) {
       this.normalize(this.#normalized, x, y);
     } else {
@@ -68,7 +68,6 @@ export class SimpleQuadtree<T> {
     if (radius === 0) {
       return this.#items[`${this.#normalized.x},${this.#normalized.y}`];f
     } else {
-      const items: T[] = [];
 
       this.normalize(this.#radius, radius, radius, false);
 
@@ -79,11 +78,11 @@ export class SimpleQuadtree<T> {
 
       for (let y = minY; y <= maxY; y++) {
         for (let x = minX; x <= maxX; x++) {
-          items.push(...this.#items[`${x},${y}`]);
+          for (const item of this.#items[`${x},${y}`]) {
+            yield item;
+          }
         }
       }
-
-      return items;
     }
   }
 

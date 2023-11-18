@@ -2,28 +2,9 @@ import { getAverage } from "../math-utils";
 import { BwDAT, Unit } from "@titan-reactor-runtime/host";
 
 const orders = enums.orders;
-const unitTypes = enums.unitTypes;
-const UnitFlags = enums.UnitFlags;
 
-const unitIsCompleted = (unit: Unit) => {
-    return unit.statusFlags & UnitFlags.Completed;
-  };
-  
-const canSelectUnit = (unit: Unit | undefined) => {
-if (!unit) return null;
 
-return unit.typeId !== unitTypes.darkSwarm &&
-    unit.typeId !== unitTypes.disruptionWeb &&
-    unit.order !== orders.die &&
-    !unit.extras.dat.isTurret &&
-    (unit.statusFlags & UnitFlags.Loaded) === 0 &&
-    (unit.statusFlags & UnitFlags.InBunker) === 0 &&
-    unit.order !== orders.harvestGas &&
-    unit.typeId !== unitTypes.spiderMine &&
-    (unitIsCompleted(unit) || unit.extras.dat.isZerg || unit.extras.dat.isBuilding)
-    ? unit
-    : null;
-};
+
 
 export type ScoreModifier = (
   unit: Unit,
@@ -35,14 +16,12 @@ export type ScoreModifier = (
  * @public
  */
 export class UnitAndOrderScoreCalculator {
-  #bwDat: BwDAT;
   scoreModifier: ScoreModifier = (_, orderScore, unitScore) => {
     return orderScore * unitScore;
   }
   #ranks: number[][];
 
-  constructor(bwDat: BwDAT, ranks: number[][], scoreModifier?: ScoreModifier) {
-    this.#bwDat = bwDat;
+  constructor(ranks: number[][], scoreModifier?: ScoreModifier) {
     if (scoreModifier) this.scoreModifier = scoreModifier;
     this.#ranks = ranks;
   }
@@ -79,7 +58,7 @@ export class UnitAndOrderScoreCalculator {
     } else if (this.#ranks[4].includes(unit.typeId)) {
       return 0.3;
     }
-    return 0.1;
+    return 0;
   }
 
   getOrderScore(order: number) {
@@ -162,14 +141,8 @@ export class UnitAndOrderScoreCalculator {
         return 1;
 
       default:
-        return 0.01;
+        return 0.1;
     }
   }
 
-  unitOfInterestFilter(unit: Unit) {
-    const unitType = this.#bwDat.units[unit.typeId];
-    return (
-      !unitType.isResourceContainer && unit.owner < 8 && canSelectUnit(unit)
-    );
-  }
 }

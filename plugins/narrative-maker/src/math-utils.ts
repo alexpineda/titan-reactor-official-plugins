@@ -69,10 +69,24 @@ export const getCameraDistance = (units: Unit[], mapSize: number[]) => {
   return cameraDistance;
 };
 
+const _vals: number[] = [];
+
 export function standardDeviation(values: number[]): number {
-  const mean = values.reduce((a, b) => a + b) / values.length;
-  const squareDiffs = values.map(value => Math.pow(value - mean, 2));
-  const avgSquareDiff = squareDiffs.reduce((a, b) => a + b) / squareDiffs.length;
+  let mean = 0;
+  for (const val of values) {
+      mean += val / values.length;
+  }
+
+  //square diff
+  _vals.length = values.length;
+  for (let i = 0; i < values.length; i++) {
+    _vals[i] = Math.pow(values[i] - mean, 2);
+  }
+
+  let avgSquareDiff = 0;
+  for (const val of _vals) {
+    avgSquareDiff += val / _vals.length;
+  }
   return Math.sqrt(avgSquareDiff);
 }
 
@@ -174,15 +188,12 @@ export const calculateWeightedCenter = (getUnitXY: GetUnitXY) => (out: THREE.Vec
 
 }
 
-export const calculateMeanCenter = (getUnitXY: GetUnitXY) => (out: THREE.Vector2, units: Unit[], filterFn: (unit: Unit) => boolean) => {
+export const calculateMeanCenter = (getUnitXY: GetUnitXY) => (out: THREE.Vector2, units: Unit[]) => {
   let sumX = 0;
   let sumY = 0;
   let count = 0;
 
   for (const unit of units) {
-    if (!filterFn(unit)) {
-      continue;
-    }
     const pos = getUnitXY(unit);
     sumX += pos.x;
     sumY += pos.y;

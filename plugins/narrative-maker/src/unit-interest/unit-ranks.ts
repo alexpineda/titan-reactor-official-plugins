@@ -22,6 +22,8 @@ const rankA: number[] = [
 
   unitTypes.scarab,
   unitTypes.scannerSweep,
+  unitTypes.darkSwarm,
+
 
 ];
 
@@ -79,10 +81,6 @@ const buildingRankA: number[] = [
   unitTypes.fleetBeacon,
   unitTypes.arbitalTribunal,
   unitTypes.scannerSweep,
-
-  unitTypes.commandCenter,
-  unitTypes.nexus,
-  unitTypes.hatchery,
 ];
 
 export const buildingRankB: number[] = [
@@ -93,7 +91,6 @@ export const buildingRankB: number[] = [
   unitTypes.bunker,
   unitTypes.lair,
   unitTypes.spire,
-  unitTypes.darkSwarm,
   unitTypes.cyberneticsCore,
   unitTypes.stargate,
   unitTypes.roboticsSupportBay,
@@ -122,15 +119,18 @@ export const buildingRankD: number[] = [
   unitTypes.pylon,
   unitTypes.forge,
   unitTypes.shieldBattery,
+  unitTypes.sporeColony,
+  unitTypes.sunkenColony,
 ];
 
 export const buildingRankE: number[] = [
   unitTypes.comsatStation,
   unitTypes.creepColony,
-  unitTypes.sporeColony,
-  unitTypes.sunkenColony,
   unitTypes.extractor,
   unitTypes.assimilator,
+  unitTypes.commandCenter,
+  unitTypes.nexus,
+  unitTypes.hatchery,
 ];
 
 export const buildingUnitRanks: number[][] = [

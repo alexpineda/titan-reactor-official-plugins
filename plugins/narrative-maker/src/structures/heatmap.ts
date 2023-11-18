@@ -38,8 +38,7 @@ export class SimpleHeatmap {
     }
   }
 
-  getNearby(x: number, y: number, radius = 0) {
-    const items: HeatmapValue[] = [];
+  *getNearby(x: number, y: number, radius = 0) {
 
     const minX = Math.floor(Math.max(0, x - radius));
     const minY = Math.floor(Math.max(0, y - radius));
@@ -49,10 +48,8 @@ export class SimpleHeatmap {
     for (let y = minY; y <= maxY; y++) {
       for (let x = minX; x <= maxX; x++) {
         const index = this.getIndex(x, y);
-        items.push(this.heatmap[index]);
+        yield this.heatmap[index];
       }
     }
-
-    return items;
   }
 }
