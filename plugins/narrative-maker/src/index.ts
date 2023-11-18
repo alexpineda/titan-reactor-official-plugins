@@ -1,7 +1,7 @@
 import { PrevSceneData, Unit } from "@titan-reactor-runtime/host";
 import { Quadrant, ArrayGrid } from "./structures/array-grid";
 import { areProximate, areProximateViewports, groundTarget, setupViewports } from "./camera-utils";
-import { canOnlySelectOne, canSelectUnit, isHarvesting, isWorkerUnit, unitIsCompleted } from "./unit-helpers";
+import { canOnlySelectOne, canSelectUnit, isHarvesting, isTownCenter, isWorkerUnit, unitIsCompleted } from "./unit-helpers";
 import { PIP_PROXIMITY, POLAR_MIN, QUAD_SIZE } from "./constants";
 import { CameraTargets } from "./camera-targets";
 import {   calcCoeff  } from "./math-utils";
@@ -36,6 +36,7 @@ export default class PluginAddon extends SceneController {
   });
   strategyFocusNoise2D = createNoise2D(alea("strategy-focus"));
   strategyQueue: Unit[] = []
+  lastSelectedStrategyOwner = -1;
 
   lastActiveQuadrantUpdateMS = 0;
   lastSecondaryActiveQuadrantUpdateMS = 0;
@@ -47,6 +48,7 @@ export default class PluginAddon extends SceneController {
 
   targetGameSpeed = 1;
   gameIsLulled = true;
+  lastTimeGameWasLulledMS = 0;
   activeQuadrant: Quadrant<Unit> | undefined;
   cameraFatigue = 0;
   cameraFatigue2 = 0;
@@ -111,8 +113,7 @@ export default class PluginAddon extends SceneController {
     this.events.on(
       "unit-killed",
       (unit) => {
-        const pos8 = this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
-        this.u8.adhd.set(pos8.x, pos8.y, 0);
+        this.u8.adhd.set(this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y), 0);
 
         this.lastUnitDestroyedMS = this.elapsed;
         
@@ -145,15 +146,13 @@ export default class PluginAddon extends SceneController {
       const unitType = this.assets.bwDat.units[unit.typeId];
 
       // add selectable player owned non-building units to quadtree
-      if ( !unitType.isResourceContainer && unit.owner < 8 && canSelectUnit(unit) && !unitType.isBuilding) {
- 
-          const pos8 = this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
-          this.u8.units.add(pos8.x, pos8.y, unit);
-  
+      if ( !unitType.isResourceContainer && unit.owner < 8 && canSelectUnit(unit)) {
+          this.u8.units.add(this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y), unit);
       }
       if (unit.extras.recievingDamage) {
-        const pos8 = this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
-        this.u8.adhd.decay(pos8.x, pos8.y);
+        this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
+        this.u8.adhd.decay(_a2.x, _a2.y);
+
         if (!canOnlySelectOne(unit) && this.config.autoSelectUnits) {
           this.selectedUnits.add(unit);
         }
@@ -166,8 +165,8 @@ export default class PluginAddon extends SceneController {
       }
 
       if (unit.isAttacking) {
-        const pos8 = this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
-        this.u8.adhd.decay(pos8.x, pos8.y);
+        this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
+        this.u8.adhd.decay(_a2.x, _a2.y);
         this.lastUnitAttackedMS = this.elapsed;
       }
     });
@@ -187,15 +186,12 @@ export default class PluginAddon extends SceneController {
   }
 
   adjustCameraFatigueBasedOnRecentAction(unit: Unit, f1: number, f2: number) {
-    if (this.elapsed > this.cameraFatigueAdjustmentTimeoutMS + 500) {
+    if (this.elapsed > this.cameraFatigueAdjustmentTimeoutMS + 100 && this.activeQuadrant) {
       // if action is happening across the map, decrease camera fatigue
-      const pos8 = this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
-      this.pxToWorld.xyz(unit.x, unit.y, _a3);
-      const dist = _a3.distanceTo(this.viewport.orbit.getTarget(_b3));
+      const dist = this.pxToWorld.xyz(unit.x, unit.y, _a3).distanceTo(this.viewport.orbit.getTarget(_b3));
       let adjustment = -dist * 2;
-      // todo: grade this by how much action is NOT happening at camera
 
-      const delta = this.u8.action.get(pos8.x, pos8.y) - this.u8.action.get(this.activeQuadrant?.x || 0, this.activeQuadrant?.y || 0)
+      const delta = this.u8.action.get(this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y)) - this.u8.action.get(this.activeQuadrant)
       // we tweak the magnitude by how much there is a score difference
       if (delta > 0 ) {
         adjustment = -dist * (f1 + delta * f2);
@@ -243,6 +239,7 @@ export default class PluginAddon extends SceneController {
     ) {
       this.targetGameSpeed = 1;
       this.gameIsLulled = false;
+      this.lastTimeGameWasLulledMS = this.elapsed;
     } else {
 
       this.targetGameSpeed = THREE.MathUtils.damp(
@@ -295,11 +292,10 @@ export default class PluginAddon extends SceneController {
             active: q === this.activeQuadrant,
             x: q.x,
             y: q.y,
-            score: this.u8.action.get(q.x, q.y),
+            score: this.u8.action.get(q),
             units: q.items.length,
-            adhd: this.u8.adhd.get(q.x, q.y),
-            tension: this.u8.tension.get(q.x, q.y),
-            strategy: this.u8.strategy.get(q.x, q.y),
+            adhd: this.u8.adhd.get(q),
+            tension: this.u8.tension.get(q),
           };
         }),
       },
@@ -307,24 +303,14 @@ export default class PluginAddon extends SceneController {
 
     if (this.cameraFatigue < 0 || this.cameraFatigue2 < 0) {
 
-      this.strategyQueue.sort((a, b) => {
-        // incomplete buildings take precedence
-        // buildings just started or nearing completion
-        // just starting or just nearing research completion
-        // many buildings that are training (macro)
-        // nexus that has tension
-        if (!unitIsCompleted(a) && unitIsCompleted(b)) return - 1;
-        if (unitIsCompleted(a) && !unitIsCompleted(b)) return 1;
-      });
-
       // update scores
       for (const quadrant of this.u8.units.quadrants) {
-        let sumScore = 0, sumBuildingScore = 0;
+        let sumScore = 0;
 
         // use surrounding quadrants to calculate score
         const _teams = new Array(8).fill(0);
         // for (const unit of quadrant.items) {
-        for (const unit of this.u8.units.getNearby( quadrant.x, quadrant.y, 1 )) {
+        for (const unit of this.u8.units.getNearby( quadrant, 1 )) {
           const unitScore = this.scoreCalculator(unit);
           sumScore += unitScore;
 
@@ -334,35 +320,88 @@ export default class PluginAddon extends SceneController {
         }
 
         const tension = calcCoeff(_teams.filter((_,i) => this.players.get(i)));
-        this.u8.action.set(quadrant.x, quadrant.y, sumScore);
-        this.u8.tension.set(quadrant.x, quadrant.y, tension);
-        this.u8.strategy.set(quadrant.x, quadrant.y, sumBuildingScore);
+        this.u8.action.set(quadrant, sumScore);
+        this.u8.tension.set(quadrant, tension);
         
       }
 
-      // calculate hottest quadrant
-      for (const quadrant of this.u8.units.quadrants) {
-
-        const score = this.u8.action.get(quadrant.x, quadrant.y);
-        const adhdWeight = (1 - this.u8.adhd.get(quadrant.x, quadrant.y)) * this.config.weightsADHD;
-        const tensionWeight = (this.u8.tension.get(quadrant.x, quadrant.y) * this.config.weightsTension);
-        const strategyWeight = (this.u8.strategy.get(quadrant.x, quadrant.y) * this.config.weightsStrategy);
-
-        const unitScore = this.gameIsLulled ? strategyWeight : score;
-
-        const weightedScore = score * adhdWeight//(unitScore + tensionWeight) * adhdWeight;
-
-        // the or is a special case early game where base strategy scores are even
-        // typically however interesting quadrants will be quite varying in score ( not even )
-        if (weightedScore > hottestScore) {
-          hottestScore = weightedScore;
-          secondHottestQuadrant = hottestQuadrant;
-          hottestQuadrant = quadrant;
-          // todo: base off the above criteria
-          selectionWeight = "unit";
-          // selectionWeight = this.gameIsLulled ? "strategy" : "unit";
+      if (this.strategyQueue.length === 0) {
+        for (const unit of this.units) {
+          if (unit.extras.dat.isBuilding) {
+            this.strategyQueue.push(unit);
+          }
         }
       }
+
+      const hasMultipleOwners = this.strategyQueue.some((u) => u.owner !== this.strategyQueue[0].owner);
+
+      this.strategyQueue.sort((a, b) => {
+        // we want to alternate owners
+        if (hasMultipleOwners) {
+          if (a.owner !== this.lastSelectedStrategyOwner) {
+            return -1;
+          }
+          if (b.owner !== this.lastSelectedStrategyOwner) {
+            return 1;
+          }
+        }
+        
+        // nexus that has tension
+        const tensionA = this.u8.tension.get(this.u8.pxGrid.fromWorldToGrid(_a2, a.x, a.y));
+        const tensionB = this.u8.tension.get(this.u8.pxGrid.fromWorldToGrid(_a2, b.x, b.y));
+
+        if (isTownCenter(a) && isTownCenter(b) && tensionA && tensionB) {
+          return tensionB - tensionA;
+        }
+        if (isTownCenter(a) && tensionA > 0) return -1;
+        if (isTownCenter(b) && tensionB > 0) return 1;
+
+        // incomplete buildings take precedence
+        if (!unitIsCompleted(a) && unitIsCompleted(b)) return - 1;
+        if (unitIsCompleted(a) && !unitIsCompleted(b)) return 1;
+
+        // buildings just started or nearing completion
+        if (!unitIsCompleted(a) && !unitIsCompleted(b)) {
+          // if one near completion, and the other just starting, pick near completion
+          if (a.remainingBuildTime / a.extras.dat.buildTime < 0.5 && b.remainingBuildTime / b.extras.dat.buildTime > 0.5) return -1;
+          if (b.remainingBuildTime / b.extras.dat.buildTime < 0.5 && a.remainingBuildTime / a.extras.dat.buildTime > 0.5) return 1;
+
+        }
+
+        // todo:many buildings that are training (macro)
+        return this.scoreCalculator(b) - this.scoreCalculator(a);
+
+      });
+
+      // calculate hottest quadrant
+      if (this.gameIsLulled && this.elapsed > this.lastTimeGameWasLulledMS + 5_000 / this.openBW.gameSpeed) {
+        const building = this.strategyQueue[0];
+        if (building) {
+          hottestQuadrant = this.u8.units.getQuadrant(this.u8.pxGrid.fromWorldToGrid(_a2, building.x, building.y));
+          selectionWeight = "strategy";
+        }
+      } else {
+        for (const quadrant of this.u8.units.quadrants) {
+
+          const score = this.u8.action.get(quadrant);
+          const adhdWeight = (1 - this.u8.adhd.get(quadrant)) * this.config.weightsADHD;
+          const tensionWeight = (this.u8.tension.get(quadrant) * this.config.weightsTension);
+
+          const weightedScore = (score + tensionWeight) * adhdWeight//(unitScore + tensionWeight) * adhdWeight;
+
+          // the or is a special case early game where base strategy scores are even
+          // typically however interesting quadrants will be quite varying in score ( not even )
+          if (weightedScore > hottestScore) {
+            hottestScore = weightedScore;
+            secondHottestQuadrant = hottestQuadrant;
+            hottestQuadrant = quadrant;
+            // todo: base off the above criteria
+            selectionWeight = "unit";
+            // selectionWeight = this.gameIsLulled ? "strategy" : "unit";
+          }
+        }
+      }
+      
     }
 
     if (
@@ -375,6 +414,11 @@ export default class PluginAddon extends SceneController {
       if (this.frame > 10_000 && this.elapsed - this.lastSecondaryActiveQuadrantUpdateMS > 10_000 ) {
         this.secondView.activateIfExists(secondHottestQuadrant, hottestQuadrant, hottestScore);
         this.lastSecondaryActiveQuadrantUpdateMS = this.elapsed;
+      }
+
+      if (selectionWeight === "strategy") {
+        const building = this.strategyQueue.shift();
+        this.lastSelectedStrategyOwner = building?.owner ?? -1;
       }
 
       this.viewport.orbit.getTarget(_c3);
@@ -395,14 +439,14 @@ export default class PluginAddon extends SceneController {
       this.#targetObject2.updateMatrixWorld();
 
       //todo: bias this by game speed a little?
-      this.cameraFatigue = 2000 / this.openBW.gameSpeed + this.targets.moveTarget.distanceTo(_c3) * 80 + (4_000 *  (1 - Math.min(1,(frame/4000))));
+      this.cameraFatigue = 2000 / this.openBW.gameSpeed + this.targets.moveTarget.distanceTo(_c3) * 60 + (4_000 *  (1 - Math.min(1,(frame/4000))));
       this.cameraFatigue2 = 500 / this.openBW.gameSpeed;
 
       this.targets.adjustDollyToUnitSpread(hottestQuadrant.items);
 
       this.lastActiveQuadrantUpdateMS = this.elapsed;
 
-      this.u8.adhd.set(hottestQuadrant.x, hottestQuadrant.y, 1);
+      this.u8.adhd.set(hottestQuadrant, 1);
       this.activeQuadrant = hottestQuadrant;
 
      
@@ -414,7 +458,7 @@ export default class PluginAddon extends SceneController {
         this.viewport.orbit.getTarget(_c3);
 
         // activate quadrant
-        const moveToUnits = hottestQuadrant.items.filter(selectionWeight === "strategy" ? this.uf_Building : this.uf_NonHarvesting);
+        const moveToUnits = hottestQuadrant.items.filter(this.lastSelectionWeight === "strategy" ? this.uf_Building : this.uf_NonHarvesting);
         const t = this.targets.moveToUnits( moveToUnits.length > 0 ? moveToUnits : hottestQuadrant.items, 5, "smooth" );
 
         this.#targetObject.position.copy(t[0]);
@@ -424,7 +468,7 @@ export default class PluginAddon extends SceneController {
         this.#targetObject2.updateMatrix();
         this.#targetObject2.updateMatrixWorld();
 
-        this.cameraFatigue2 = 200 / this.openBW.gameSpeed + this.targets.moveTarget.distanceTo(_c3) * 50;
+        this.cameraFatigue2 = 300 / this.openBW.gameSpeed + this.targets.moveTarget.distanceTo(_c3) * 40;
       }
     }
 
@@ -451,8 +495,7 @@ export default class PluginAddon extends SceneController {
       this.cameraFatigue = 8000;
       this.cameraFatigue2 = 200;
 
-      this.u8.worldGrid.fromWorldToGrid(_a2, pos.x, pos.y);
-      this.activeQuadrant = this.u8.units.getQuadrant(_a2.x, _a2.y);
+      this.activeQuadrant = this.u8.units.getQuadrant( this.u8.worldGrid.fromWorldToGrid(_a2, pos.x, pos.y) );
       this.lastSelectionWeight = "unit";
 
       if (this.secondViewport.enabled) {
@@ -465,6 +508,7 @@ export default class PluginAddon extends SceneController {
         _a3.set(pos.x, 0, pos.y);
   
         const isProximateToPrevious = areProximate(_a3, groundTarget(this.secondViewport, _b3), PIP_PROXIMITY);
+        this.secondView.followedUnit = null;
   
         if (isDragStart) {
           if (this.secondViewport.enabled) {

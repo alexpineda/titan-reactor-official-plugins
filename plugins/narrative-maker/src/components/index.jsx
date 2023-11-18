@@ -22,16 +22,10 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
   quadrants.quadrants.forEach((q, i) => {
     const adhdWeight = (1 - q.adhd) * config.weightsADHD;
     const tensionWeight = q.tension * config.weightsTension;
-    const strategyWeight = q.strategy * config.weightsStrategy;
-    
-
-    const unitScore = state.gameIsLulled > 0 ? strategyWeight : q.score;
-
-    const weightedScore = (unitScore + tensionWeight) * adhdWeight;
+    const weightedScore = (q.score + tensionWeight) * adhdWeight;
 
     q.adhdWeight = adhdWeight;
     q.tensionWeight = tensionWeight;
-    q.strategyWeight = strategyWeight;
     q.weightedScore = weightedScore;
   });
 
@@ -54,7 +48,7 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
       <div>cameraFatigue2: {state.cameraFatigue2}</div>
       <div>tensionVsStrategy: {state.tensionVsStrategy}</div>
       <div>gameIsLulled: {state.gameIsLulled ? "true" : "false"}</div>
-      <div>units, score, adhd, tension, strategy</div>
+      <div>units, score, adhd, tension</div>
       <div
         style={{
           display: "grid",
@@ -73,10 +67,10 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
               }}
             >
               <div>
-              {q.units}, {q.score.toFixed(3)}, {q.adhd.toFixed(2)}, {q.tension.toFixed(2)}, {q.strategy.toFixed(2)}
+              {q.units}, {q.score.toFixed(3)}, {q.adhd.toFixed(2)}, {q.tension.toFixed(2)}
               </div>
               <div>
-              {q.units}, {q.weightedScore.toFixed(3)}, {q.adhdWeight.toFixed(2)}, {q.tensionWeight.toFixed(2)}, {q.strategyWeight.toFixed(2)}
+              {q.units}, {q.weightedScore.toFixed(3)}, {q.adhdWeight.toFixed(2)}, {q.tensionWeight.toFixed(2)}
               </div>
               <div>
 

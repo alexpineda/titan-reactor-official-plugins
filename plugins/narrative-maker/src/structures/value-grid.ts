@@ -22,13 +22,13 @@ export class ValueGrid {
     return idx;
   }
   
-  get(x: number, y: number) {
-    const index = this.getIndex(x, y);
+  get(xy: {x: number, y: number}) {
+    const index = this.getIndex(xy.x, xy.y);
     return this.heatmap[index].value;
   }
 
-  set(x: number, y: number, value: number | undefined = 1) {
-    const index = this.getIndex(x, y);
+  set(xy: {x: number, y: number}, value: number | undefined = 1) {
+    const index = this.getIndex(xy.x, xy.y);
     this.heatmap[index].value = value;
   }
   
@@ -38,12 +38,12 @@ export class ValueGrid {
     }
   }
 
-  *getNearby(x: number, y: number, radius = 0) {
+  *getNearby(xy: {x: number, y: number}, radius = 0) {
 
-    const minX = Math.floor(Math.max(0, x - radius));
-    const minY = Math.floor(Math.max(0, y - radius));
-    const maxX = Math.floor(Math.min(this.size - 1, x + radius));
-    const maxY = Math.floor(Math.min(this.size - 1, y + radius));
+    const minX = Math.floor(Math.max(0, xy.x - radius));
+    const minY = Math.floor(Math.max(0, xy.y - radius));
+    const maxX = Math.floor(Math.min(this.size - 1, xy.x + radius));
+    const maxY = Math.floor(Math.min(this.size - 1, xy.y + radius));
 
     for (let y = minY; y <= maxY; y++) {
       for (let x = minX; x <= maxX; x++) {

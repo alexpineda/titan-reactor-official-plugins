@@ -27,11 +27,6 @@ export class ScoreManager {
    */
   tension: ValueGrid;
 
-  /**
-   * Strategic buildings score
-   */
-  strategy: ValueGrid;
-
   worldGrid: GridTransform;
   pxGrid: GridTransform;
 
@@ -41,7 +36,6 @@ export class ScoreManager {
     this.adhd = new DecayMap(size);
     this.action = new ValueGrid(size);
     this.tension = new ValueGrid(size);
-    this.strategy = new ValueGrid(size);
 
     this.worldGrid = new GridTransform(
         new THREE.Vector2(size, size),
@@ -61,7 +55,6 @@ export class ScoreManager {
     this.adhd.clear();
     this.action.clear();
     this.tension.clear();
-    this.strategy.clear();
   }
   
 }

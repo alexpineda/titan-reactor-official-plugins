@@ -65,3 +65,9 @@ return unit.typeId !== unitTypes.darkSwarm &&
   ? unit
   : null;
 };
+
+export const isTownCenter = (unit: Unit) => {
+  return unit.typeId === unitTypes.commandCenter ||
+    unit.typeId === unitTypes.nexus ||
+    unit.typeId === unitTypes.hatchery;
+}

@@ -30,22 +30,22 @@ export class ArrayGrid<T> {
 
   }
 
-  getQuadrant(x: number, y: number) {
-    return this.#quadrants[y * this.#size + x];
+  getQuadrant(xy: {x: number, y: number}) {
+    return this.#quadrants[xy.y * this.#size + xy.x];
   }
 
-  add(x: number, y: number, item: T) {
-    this.#items[`${x},${y}`].push(item);
+  add(xy: {x: number, y: number}, item: T) {
+    this.#items[`${xy.x},${xy.y}`].push(item);
   }
 
-  *getNearby(x: number, y: number, radius = 0) {
+  *getNearby(xy: {x: number, y: number}, radius = 0) {
     if (radius === 0) {
-      return this.#items[`${x},${y}`];
+      return this.#items[`${xy.x},${xy.y}`];
     } else {
-      const minX = Math.floor(Math.max(0, x - radius));
-      const minY = Math.floor(Math.max(0, y - radius));
-      const maxX = Math.floor(Math.min(this.#size - 1, x + radius));
-      const maxY = Math.floor(Math.min(this.#size - 1, y + radius));
+      const minX = Math.floor(Math.max(0, xy.x - radius));
+      const minY = Math.floor(Math.max(0, xy.y - radius));
+      const maxX = Math.floor(Math.min(this.#size - 1, xy.x + radius));
+      const maxY = Math.floor(Math.min(this.#size - 1, xy.y + radius));
 
       for (let y = minY; y <= maxY; y++) {
         for (let x = minX; x <= maxX; x++) {

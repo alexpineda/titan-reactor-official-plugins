@@ -43,15 +43,7 @@ export class SecondView {
 
     if (secondHottestQuadrant && secondHottestQuadrant.items.length > 0) {
       decayedSecondScore =
-        plugin.u8.action.get(
-          secondHottestQuadrant.x,
-          secondHottestQuadrant.y
-        ) *
-        (1 -
-          plugin.u8.adhd.get(
-            secondHottestQuadrant.x,
-            secondHottestQuadrant.y
-          ));
+        plugin.u8.action.get(secondHottestQuadrant) * (1 - plugin.u8.adhd.get(secondHottestQuadrant));
       if (
         decayedSecondScore >
         (hottestScore * distance(hottestQuadrant, secondHottestQuadrant)) / 8
