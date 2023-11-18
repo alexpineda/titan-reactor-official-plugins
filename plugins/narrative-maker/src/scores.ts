@@ -15,12 +15,12 @@ class GridTransform {
     }
 
     fromWorldToGrid(out: THREE.Vector2, x: number, y: number) {
-        out.set(
+        return out.set(
             Math.floor(((x + this.offset.x) / this.scale.x) * this.size.x), Math.floor(((y + this.offset.y) / this.scale.y) * this.size.y));
     }
     
     fromGridToWorld( out: THREE.Vector2, gridX: number, gridY: number ) {
-        out.set(
+        return out.set(
             ((gridX / this.size.x) * this.scale.x) - this.offset.x, ((gridY / this.size.y) * this.scale.y) - this.offset.y);
     }
 }

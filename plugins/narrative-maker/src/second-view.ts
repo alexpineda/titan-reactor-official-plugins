@@ -41,12 +41,12 @@ export class SecondView {
 
     if (secondHottestQuadrant) {
       decayedSecondScore =
-        plugin.scores8.action.get(
+        plugin.u8.action.get(
           secondHottestQuadrant.x,
           secondHottestQuadrant.y
         ) *
         (1 -
-          plugin.scores8.adhd.get(
+          plugin.u8.adhd.get(
             secondHottestQuadrant.x,
             secondHottestQuadrant.y
           ));

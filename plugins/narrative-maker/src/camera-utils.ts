@@ -1,12 +1,13 @@
 import { GameViewPort } from "@titan-reactor-runtime/host";
 import { DEFAULT_FAR, PIP_PROXIMITY, POLAR_MAX, POLAR_MIN } from "./constants";
 import type PluginAddon from "./index";
+import type { PerspectiveCamera } from "three";
 
 const setupCamera = async (plugin: PluginAddon, viewport: GameViewPort) => {
   const orbit = viewport.orbit;
 
   orbit.camera.far = DEFAULT_FAR;
-  orbit.camera.fov = 15;
+  (orbit.camera as PerspectiveCamera).fov = 15;
   orbit.camera.updateProjectionMatrix();
 
   orbit.dollyToCursor = true;
@@ -53,7 +54,7 @@ export const setupViewports = async (plugin: PluginAddon) => {
   plugin.viewport.orbit.dollySpeed = 0.01;
   plugin.viewport.orbit.truckSpeed = 0.01;
 
-  plugin.scores8.adhd.defaultDecay = plugin.config.heatMapDecay;
+  plugin.u8.adhd.defaultDecay = plugin.config.heatMapDecay;
 
   plugin.viewport.orbit.minPolarAngle = POLAR_MIN + THREE.MathUtils.degToRad(plugin.config.tilt);
   plugin.targets.polarTarget = plugin.viewport.orbit.minPolarAngle + THREE.MathUtils.degToRad(plugin.config.polarVariance) / 2;
