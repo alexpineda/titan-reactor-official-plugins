@@ -1,19 +1,17 @@
 import { PrevSceneData, Unit } from "@titan-reactor-runtime/host";
 import { Quadrant, ArrayGrid } from "./structures/array-grid";
-import { ValueGrid } from "./structures/value-grid";
-import { ScoreModifier, UnitAndOrderScoreCalculator } from "./unit-interest/unit-interest-score";
 import { areProximate, areProximateViewports, groundTarget, setupViewports } from "./camera-utils";
-import { canOnlySelectOne, isHarvesting, isWorkerUnit, unitIsRelevant  } from "./unit-helpers";
+import { canOnlySelectOne, canSelectUnit, isHarvesting, isWorkerUnit, unitIsCompleted } from "./unit-helpers";
 import { PIP_PROXIMITY, POLAR_MIN, QUAD_SIZE } from "./constants";
 import { CameraTargets } from "./camera-targets";
 import {   calcCoeff  } from "./math-utils";
 import { SecondView } from "./second-view";
-import { DecayMap } from "./structures/decay-map";
-import { buildingUnitRanks, regularUnitRanks } from "./unit-interest/unit-ranks";
+import { buildingUnitRanks, regularOrderRanks, regularUnitRanks } from "./unit-interest/rankings";
 
 import { createNoise2D } from "simplex-noise"
 import alea from 'alea';
 import { ScoreManager } from "./scores";
+import { createUnitScoreCalculator } from "./unit-interest/unit-score-calculator";
 
 const _a3 = new THREE.Vector3(0, 0, 0);
 const _b3 = new THREE.Vector3(0, 0, 0);
@@ -30,9 +28,14 @@ export default class PluginAddon extends SceneController {
   u8!: ScoreManager;
   targets!: CameraTargets;
   secondView!: SecondView;
-  scoreCalculator!: UnitAndOrderScoreCalculator;
-  strategyBuildingCalculator!: UnitAndOrderScoreCalculator;
+  scoreCalculator = createUnitScoreCalculator({
+    unitRanks: regularUnitRanks,
+    unitRankCurve: (t) => t,
+    orderRanks: regularOrderRanks,
+    orderRankCurve: (t) => t,
+  });
   strategyFocusNoise2D = createNoise2D(alea("strategy-focus"));
+  strategyQueue: Unit[] = []
 
   lastActiveQuadrantUpdateMS = 0;
   lastSecondaryActiveQuadrantUpdateMS = 0;
@@ -68,11 +71,22 @@ export default class PluginAddon extends SceneController {
   #reset() {
     this.secondView.reset();
     this.u8.clear();
+    this.strategyQueue.length = 0;
 
     this.lastActiveQuadrantUpdateMS = 0;
+    this.lastSecondaryActiveQuadrantUpdateMS = 0;
     this.lastDecayUpdateMS = 0;
     this.lastUnitDestroyedMS = 0;
     this.lastUnitAttackedMS = 0;
+
+    this.cameraFatigue = 0;
+    this.cameraFatigue2 = 0;
+
+    this.activeQuadrant = undefined;
+    this.gameIsLulled = true;
+    this.targetGameSpeed = 1;
+
+    this.lastSelectionWeight = "unit";
  
   }
 
@@ -84,25 +98,6 @@ export default class PluginAddon extends SceneController {
 
     this.parent.add(this.#targetObject);
     this.parent.add(this.#targetObject2);
-
-
-    // this.buildingScoreModifier = (
-    //   unit: Unit,
-    //   orderScore: number,
-    //   unitScore: number
-    // ) => {
-    //   if (unit.remainingBuildTime) {
-    //     return unitScore * (1 - unit.remainingBuildTime);
-    //   }
-    //   return orderScore * unitScore;
-    // };
-    this.scoreCalculator = new UnitAndOrderScoreCalculator(
-      regularUnitRanks,
-    );
-
-    this.strategyBuildingCalculator = new UnitAndOrderScoreCalculator(
-      buildingUnitRanks,
-    );
 
     this.u8 = new ScoreManager(QUAD_SIZE, this.map.size);
 
@@ -129,6 +124,15 @@ export default class PluginAddon extends SceneController {
 
     this.events.on("unit-destroyed", (unit) => {
       this.secondView.onUnitDestroyed(unit);
+      this.strategyQueue = this.strategyQueue.filter((u) => u.id !== unit.id);
+    });
+
+    this.events.on("unit-created", (unit) => {
+      const unitType = this.assets.bwDat.units[unit.typeId];
+
+      if ( !unitType.isResourceContainer && unit.owner < 8 && unitType.isBuilding ) {
+          this.strategyQueue.push(unit);
+      }
     });
 
     /**
@@ -138,9 +142,14 @@ export default class PluginAddon extends SceneController {
      */
     this.events.on("unit-updated", (unit: Unit) => {
 
-      if (unitIsRelevant(unit, this.assets.bwDat)) {
-        const pos8 = this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
-        this.u8.units.add(pos8.x, pos8.y, unit);
+      const unitType = this.assets.bwDat.units[unit.typeId];
+
+      // add selectable player owned non-building units to quadtree
+      if ( !unitType.isResourceContainer && unit.owner < 8 && canSelectUnit(unit) && !unitType.isBuilding) {
+ 
+          const pos8 = this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
+          this.u8.units.add(pos8.x, pos8.y, unit);
+  
       }
       if (unit.extras.recievingDamage) {
         const pos8 = this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
@@ -261,11 +270,11 @@ export default class PluginAddon extends SceneController {
 
   onFrame(frame: number): void {
 
-    if (Number.isNaN(this.cameraFatigue)) {
-      this.cameraFatigue = 0;
-    }
-
     const tensionVsStrategy = this.strategyFocusNoise2D(this.frame / 1000, 0);
+    let hottestScore = 0;
+    let hottestQuadrant: Quadrant<Unit> | undefined;
+    let secondHottestQuadrant: Quadrant<Unit> | undefined;
+    let selectionWeight = this.lastSelectionWeight;
 
     this.sendUIMessage({
       speed: this.openBW.gameSpeed,
@@ -296,57 +305,63 @@ export default class PluginAddon extends SceneController {
       },
     });
 
-    // update scores
-    for (const quadrant of this.u8.units.quadrants) {
-      let sumScore = 0, sumBuildingScore = 0;
+    if (this.cameraFatigue < 0 || this.cameraFatigue2 < 0) {
 
-      // use surrounding quadrants to calculate score
-      const _teams = new Array(8).fill(0);
-      // for (const unit of quadrant.items) {
-      for (const unit of this.u8.units.getNearby( quadrant.x, quadrant.y, 1 )) {
-        const unitScore = this.scoreCalculator.unitScore(unit);
-        sumScore += unitScore;
+      this.strategyQueue.sort((a, b) => {
+        // incomplete buildings take precedence
+        // buildings just started or nearing completion
+        // just starting or just nearing research completion
+        // many buildings that are training (macro)
+        // nexus that has tension
+        if (!unitIsCompleted(a) && unitIsCompleted(b)) return - 1;
+        if (unitIsCompleted(a) && !unitIsCompleted(b)) return 1;
+      });
 
-        const buildingScore = this.strategyBuildingCalculator.unitScore(unit);
-        sumBuildingScore += buildingScore;
+      // update scores
+      for (const quadrant of this.u8.units.quadrants) {
+        let sumScore = 0, sumBuildingScore = 0;
 
-        if (!this.assets.bwDat.units[unit.typeId].isBuilding) {
-          _teams[unit.owner]++;
+        // use surrounding quadrants to calculate score
+        const _teams = new Array(8).fill(0);
+        // for (const unit of quadrant.items) {
+        for (const unit of this.u8.units.getNearby( quadrant.x, quadrant.y, 1 )) {
+          const unitScore = this.scoreCalculator(unit);
+          sumScore += unitScore;
+
+          if (!this.assets.bwDat.units[unit.typeId].isBuilding) {
+            _teams[unit.owner]++;
+          }
         }
+
+        const tension = calcCoeff(_teams.filter((_,i) => this.players.get(i)));
+        this.u8.action.set(quadrant.x, quadrant.y, sumScore);
+        this.u8.tension.set(quadrant.x, quadrant.y, tension);
+        this.u8.strategy.set(quadrant.x, quadrant.y, sumBuildingScore);
+        
       }
 
-      const tension = calcCoeff(_teams.filter((_,i) => this.players.get(i)));
-      this.u8.action.set(quadrant.x, quadrant.y, sumScore);
-      this.u8.tension.set(quadrant.x, quadrant.y, tension);
-      this.u8.strategy.set(quadrant.x, quadrant.y, sumBuildingScore);
-      
-    }
-    
-    // calculate hottest quadrant
-    let hottestScore = 0;
-    let hottestQuadrant: Quadrant<Unit> | undefined;
-    let secondHottestQuadrant: Quadrant<Unit> | undefined;
-    let selectionWeight = this.lastSelectionWeight;
+      // calculate hottest quadrant
+      for (const quadrant of this.u8.units.quadrants) {
 
-    for (const quadrant of this.u8.units.quadrants) {
+        const score = this.u8.action.get(quadrant.x, quadrant.y);
+        const adhdWeight = (1 - this.u8.adhd.get(quadrant.x, quadrant.y)) * this.config.weightsADHD;
+        const tensionWeight = (this.u8.tension.get(quadrant.x, quadrant.y) * this.config.weightsTension);
+        const strategyWeight = (this.u8.strategy.get(quadrant.x, quadrant.y) * this.config.weightsStrategy);
 
-      const score = this.u8.action.get(quadrant.x, quadrant.y);
-      const adhdWeight = (1 - this.u8.adhd.get(quadrant.x, quadrant.y)) * this.config.weightsADHD;
-      const tensionWeight = (this.u8.tension.get(quadrant.x, quadrant.y) * this.config.weightsTension);
-      const strategyWeight = (this.u8.strategy.get(quadrant.x, quadrant.y) * this.config.weightsStrategy);
+        const unitScore = this.gameIsLulled ? strategyWeight : score;
 
-      const unitScore = this.gameIsLulled ? strategyWeight : score;
+        const weightedScore = score * adhdWeight//(unitScore + tensionWeight) * adhdWeight;
 
-      const weightedScore = unitScore * adhdWeight//(unitScore + tensionWeight) * adhdWeight;
-
-      // the or is a special case early game where base strategy scores are even
-      // typically however interesting quadrants will be quite varying in score ( not even )
-      if (weightedScore > hottestScore) {
-        hottestScore = weightedScore;
-        secondHottestQuadrant = hottestQuadrant;
-        hottestQuadrant = quadrant;
-        // todo: base off the above criteria
-        selectionWeight = this.gameIsLulled ? "strategy" : "unit";
+        // the or is a special case early game where base strategy scores are even
+        // typically however interesting quadrants will be quite varying in score ( not even )
+        if (weightedScore > hottestScore) {
+          hottestScore = weightedScore;
+          secondHottestQuadrant = hottestQuadrant;
+          hottestQuadrant = quadrant;
+          // todo: base off the above criteria
+          selectionWeight = "unit";
+          // selectionWeight = this.gameIsLulled ? "strategy" : "unit";
+        }
       }
     }
 
@@ -357,7 +372,7 @@ export default class PluginAddon extends SceneController {
     ) {
       //todo: change selection to next hottest quadrant
       //with factor such as distance and tension
-      if (this.frame > 10_000 && this.elapsed - this.lastSecondaryActiveQuadrantUpdateMS > 20_000) {
+      if (this.frame > 10_000 && this.elapsed - this.lastSecondaryActiveQuadrantUpdateMS > 10_000 ) {
         this.secondView.activateIfExists(secondHottestQuadrant, hottestQuadrant, hottestScore);
         this.lastSecondaryActiveQuadrantUpdateMS = this.elapsed;
       }
@@ -433,7 +448,7 @@ export default class PluginAddon extends SceneController {
       this.viewport.orbit.getTarget(_c3);
       const target = _a3.set(pos.x, 0, pos.y).clone();
       this.targets.setMoveTargets([ target, target ], undefined, isDragStart ? "cut" : "smooth");
-      this.cameraFatigue = 5000;
+      this.cameraFatigue = 8000;
       this.cameraFatigue2 = 200;
 
       this.u8.worldGrid.fromWorldToGrid(_a2, pos.x, pos.y);

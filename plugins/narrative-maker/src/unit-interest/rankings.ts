@@ -1,4 +1,5 @@
 const unitTypes = enums.unitTypes;
+const orders = enums.orders;
 
 /*
  unitTypes.overlord,
@@ -74,7 +75,7 @@ const rankE: number[] = [
   unitTypes.probe,
 ];
 
-export const regularUnitRanks: number[][] = [rankA, rankB, rankC, rankD, rankE];
+export const regularUnitRanks: number[][] = [rankE, rankD, rankC, rankB, rankA];
 
 const buildingRankA: number[] = [
   unitTypes.templarArchives,
@@ -134,9 +135,81 @@ export const buildingRankE: number[] = [
 ];
 
 export const buildingUnitRanks: number[][] = [
-  buildingRankA,
-  buildingRankB,
-  buildingRankC,
-  buildingRankD,
   buildingRankE,
+  buildingRankD,
+  buildingRankC,
+  buildingRankB,
+  buildingRankA,
 ];
+
+const ordersE = [
+   orders.gaurd,
+   orders.playerGaurd,
+   orders.turretGaurd,
+   orders.bunkerGaurd,
+   orders.placeBuilding,
+   orders.placeProtossBuilding,
+   orders.createProtossBuilding,
+   orders.constructingBuilding,
+   orders.buildingLand,
+   orders.buildingLiftOff,
+]
+
+const ordersD = [
+   orders.holdPosition,
+   orders.trainFighter,
+   orders.move,
+   orders.researchTech,
+   orders.upgrade,
+   orders.attackMove,
+   orders.attackFixedRange,
+]
+
+
+const ordersC = [
+   orders.unburrowing,
+   orders.medicHeal,
+   orders.train,
+   orders.placeAddOn,
+   orders.buildAddOn,
+]
+const ordersB = [
+   orders.attackUnit
+]
+const ordersA = [
+   orders.castConsume,
+   orders.castDarkSwarm,
+   orders.castDefensiveMatrix,
+   orders.castDisruptionWeb,
+   orders.castEmpShockwave,
+   orders.castEnsnare,
+   orders.castFeedback,
+   orders.castHallucination,
+   orders.castInfestation,
+   orders.castIrradiate,
+   orders.castLockdown,
+   orders.castMaelstrom,
+   orders.castMindControl,
+   orders.castNuclearStrike,
+   orders.castOpticalFlare,
+   orders.castParasite,
+   orders.castPlague,
+   orders.castPsionicStorm,
+   orders.castRecall,
+   orders.castRestoration,
+   orders.castSpawnBroodlings,
+   orders.castStasisField,
+
+   orders.repair,
+   orders.scarabAttack,
+   orders.die,
+   orders.interceptorAttack,
+   orders.unload,
+   orders.moveUnload,
+   orders.enterTransport,
+   orders.sieging,
+   orders.castScannerSweep,
+   orders.burrowing,
+]
+
+export const regularOrderRanks: number[][] = [ordersE, ordersD, ordersC, ordersB, ordersA];

@@ -46,12 +46,12 @@ const harvestOrders = [
 
 export const isHarvesting = (unit: Unit) => harvestOrders.includes(unit.order);
 
-const unitIsCompleted = (unit: Unit) => {
+export const unitIsCompleted = (unit: Unit) => {
   return unit.statusFlags & UnitFlags.Completed;
 };
 
-const canSelectUnit = (unit: Unit | undefined) => {
-if (!unit) return null;
+export const canSelectUnit = (unit: Unit | undefined) => {
+  if (!unit) return null;
 
 return unit.typeId !== unitTypes.darkSwarm &&
   unit.typeId !== unitTypes.disruptionWeb &&
@@ -65,10 +65,3 @@ return unit.typeId !== unitTypes.darkSwarm &&
   ? unit
   : null;
 };
-
-export const unitIsRelevant = (unit: Unit, bwDat: BwDAT) => {
-  const unitType = bwDat.units[unit.typeId];
-  return (
-    !unitType.isResourceContainer && unit.owner < 8 && canSelectUnit(unit)
-  );
-}

@@ -2,6 +2,7 @@ import type { Unit } from "@titan-reactor-runtime/host";
 import type PluginAddon from "./index";
 import { Quadrant } from "./structures/array-grid";
 import { distance } from "./math-utils";
+import { maxScoreUnit } from "./unit-interest/unit-score-calculator";
 
 const _pos = new THREE.Vector3();
 
@@ -13,14 +14,15 @@ export class SecondView {
     this.#plugin = plugin;
   }
 
+  
   #activate(quadrant: Quadrant<Unit>) {
     const plugin = this.#plugin;
 
-    let maxScoreUnit = (this.followedUnit =
-      plugin.scoreCalculator.getMaxScoreUnit(quadrant.items));
+    let _maxScoreUnit = (this.followedUnit =
+      maxScoreUnit(quadrant.items, plugin.scoreCalculator));
 
-    const nx = maxScoreUnit.x;
-    const ny = maxScoreUnit.y;
+    const nx = _maxScoreUnit.x;
+    const ny = _maxScoreUnit.y;
 
     plugin.pxToWorld.xyz(nx, ny, _pos);
 
@@ -39,7 +41,7 @@ export class SecondView {
     const plugin = this.#plugin;
     let decayedSecondScore = 0;
 
-    if (secondHottestQuadrant) {
+    if (secondHottestQuadrant && secondHottestQuadrant.items.length > 0) {
       decayedSecondScore =
         plugin.u8.action.get(
           secondHottestQuadrant.x,
