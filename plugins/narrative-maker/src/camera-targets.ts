@@ -1,7 +1,6 @@
 import { Unit } from "@titan-reactor-runtime/host";
 import { areProximate } from "./utils/camera-utils";
 import {
-  calculateMeanCenter,
   calculateMedianCenter,
   easeIn,
   easeOut,
@@ -10,8 +9,6 @@ import {
 } from "./utils/math-utils";
 import type PluginAddon from "./index";
 import { CUT_TRANSITION_PROXIMITY_MIN  } from "./utils/constants";
-import { Quadrant } from "./structures/array-grid";
-import { isHarvesting, isWorkerUnit } from "./utils/unit-helpers";
 
 const _a = new THREE.Vector3(), _b = new THREE.Vector3() ;
 const _ma = new THREE.Vector3(), _mb = new THREE.Vector3() ;

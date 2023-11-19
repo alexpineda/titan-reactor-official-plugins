@@ -1,9 +1,8 @@
-import { Unit } from "@titan-reactor-runtime/host";
-import { ArrayGrid } from "./structures/array-grid";
 import { DecayMap } from "./structures/decay-map";
 import { ValueGrid } from "./structures/value-grid";
 import { GridTransform } from "./structures/grid-transform";
 import { AO_Unit } from "./utils/unit-helpers";
+import { ArrayGridValue, NumericGridValue } from "./structures/grid-values";
 
 export class ScoreManager {
 
@@ -12,7 +11,7 @@ export class ScoreManager {
   /**
    * Units by quadrant
    */
-  units: ArrayGrid<AO_Unit>;
+  units: ValueGrid<AO_Unit[]>;
   /**
    * 0 = pay attention
    * 1 = ignore
@@ -21,22 +20,22 @@ export class ScoreManager {
   /**
    * Unit score averages by quadrant
    */
-  action: ValueGrid;
+  action: ValueGrid<number>;
 
   /**
    * The differences in owners of units
    */
-  tension: ValueGrid;
+  tension: ValueGrid<number>;
 
   worldGrid: GridTransform;
   pxGrid: GridTransform;
 
   constructor(size: number, mapSize: number[]) {
     this.size = size;
-    this.units = new ArrayGrid<AO_Unit>( size );
-    this.adhd = new DecayMap(size);
-    this.action = new ValueGrid(size);
-    this.tension = new ValueGrid(size);
+    this.units = new ValueGrid<AO_Unit[]>(size, ArrayGridValue); // new ArrayGrid<AO_Unit>( size );
+    this.adhd = new DecayMap(size, NumericGridValue);
+    this.action = new ValueGrid(size, NumericGridValue);
+    this.tension = new ValueGrid(size, NumericGridValue);
 
     this.worldGrid = new GridTransform(
         new THREE.Vector2(size, size),

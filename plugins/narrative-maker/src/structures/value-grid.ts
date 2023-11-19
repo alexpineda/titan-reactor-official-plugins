@@ -1,15 +1,15 @@
+import { GridValue } from "./grid-values";
 
-export type HeatmapValue = { value: number, x: number, y: number };
 
-export class ValueGrid {
-  protected heatmap: HeatmapValue[] = [];
-  protected size: number;
+export class ValueGrid<T> {
+  grid: GridValue<T>[] = [];
+  size: number;
 
-  constructor(size: number) {
+  constructor(size: number, Constructor: new (x: number, y:number) => GridValue<T>) {
     this.size = size;
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
-        this.heatmap.push({ value: 0, x, y });
+        this.grid.push(new Constructor(x, y));
       }
     }
   }
@@ -18,21 +18,41 @@ export class ValueGrid {
     return y * this.size + x;
   }
   
+  /**
+   * Get the grid value
+   */
   get(xy: {x: number, y: number}) {
     const index = this.getIndex(xy.x, xy.y);
-    return this.heatmap[index].value;
+    return this.grid[index].value;
   }
 
-  set(xy: {x: number, y: number}, value: number | undefined = 1) {
+  /**
+   * Get the grid item
+   */
+  $get(xy: {x: number, y: number}) {
     const index = this.getIndex(xy.x, xy.y);
-    this.heatmap[index].value = value;
+    return this.grid[index];
+  }
+
+  set(xy: {x: number, y: number}, value: T) {
+    const index = this.getIndex(xy.x, xy.y);
+    this.grid[index].value = value;
   }
   
   clear() {
-    for (const quadrant of this.heatmap) {
-      quadrant.value = 0;
+    for (const quadrant of this.grid) {
+      quadrant.clear();
     }
   }
+
+  getNearbyList(arr: T[], xy: {x: number, y: number}, radius = 0) {
+    arr.length = 0;
+    for (const item of this.getNearby(xy, radius)) {
+      arr.push(item.value);
+    }
+    return arr;
+  }
+
 
   *getNearby(xy: {x: number, y: number}, radius = 0) {
 
@@ -44,7 +64,7 @@ export class ValueGrid {
     for (let y = minY; y <= maxY; y++) {
       for (let x = minX; x <= maxX; x++) {
         const index = this.getIndex(x, y);
-        yield this.heatmap[index];
+        yield this.grid[index];
       }
     }
   }
