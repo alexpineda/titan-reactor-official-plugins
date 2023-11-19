@@ -1,6 +1,6 @@
 import { GameViewPort } from "@titan-reactor-runtime/host";
 import { DEFAULT_FAR, PIP_PROXIMITY, POLAR_MAX, POLAR_MIN } from "./constants";
-import type PluginAddon from "./index";
+import type PluginAddon from "../index";
 import type { PerspectiveCamera } from "three";
 
 const setupCamera = async (plugin: PluginAddon, viewport: GameViewPort) => {

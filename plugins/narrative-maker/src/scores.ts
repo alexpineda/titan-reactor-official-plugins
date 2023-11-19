@@ -3,6 +3,7 @@ import { ArrayGrid } from "./structures/array-grid";
 import { DecayMap } from "./structures/decay-map";
 import { ValueGrid } from "./structures/value-grid";
 import { GridTransform } from "./structures/grid-transform";
+import { AO_Unit } from "./utils/unit-helpers";
 
 export class ScoreManager {
 
@@ -11,7 +12,7 @@ export class ScoreManager {
   /**
    * Units by quadrant
    */
-  units: ArrayGrid<Unit>;
+  units: ArrayGrid<AO_Unit>;
   /**
    * 0 = pay attention
    * 1 = ignore
@@ -32,7 +33,7 @@ export class ScoreManager {
 
   constructor(size: number, mapSize: number[]) {
     this.size = size;
-    this.units = new ArrayGrid<Unit>( size );
+    this.units = new ArrayGrid<AO_Unit>( size );
     this.adhd = new DecayMap(size);
     this.action = new ValueGrid(size);
     this.tension = new ValueGrid(size);
@@ -40,7 +41,7 @@ export class ScoreManager {
     this.worldGrid = new GridTransform(
         new THREE.Vector2(size, size),
         new THREE.Vector2(mapSize[0], mapSize[1]),
-        new THREE.Vector2(-mapSize[0] / 2, -mapSize[1] / 2),
+        new THREE.Vector2(mapSize[0] / 2, mapSize[1] / 2),
     );
 
     this.pxGrid = new GridTransform(

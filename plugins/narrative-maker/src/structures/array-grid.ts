@@ -38,6 +38,14 @@ export class ArrayGrid<T> {
     this.#items[`${xy.x},${xy.y}`].push(item);
   }
 
+  getNearbyList(arr: T[], xy: {x: number, y: number}, radius = 0) {
+    arr.length = 0;
+    for (const item of this.getNearby(xy, radius)) {
+      arr.push(item);
+    }
+    return arr;
+  }
+
   *getNearby(xy: {x: number, y: number}, radius = 0) {
     if (radius === 0) {
       return this.#items[`${xy.x},${xy.y}`];

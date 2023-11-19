@@ -15,11 +15,7 @@ export class ValueGrid {
   }
 
   getIndex(x: number, y: number) {
-    const idx = y * this.size + x;
-    if (this.heatmap[idx] === undefined) {
-      debugger
-    }
-    return idx;
+    return y * this.size + x;
   }
   
   get(xy: {x: number, y: number}) {

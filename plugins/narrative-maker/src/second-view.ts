@@ -1,7 +1,7 @@
 import type { Unit } from "@titan-reactor-runtime/host";
 import type PluginAddon from "./index";
 import { Quadrant } from "./structures/array-grid";
-import { distance } from "./math-utils";
+import { distance } from "./utils/math-utils";
 import { maxScoreUnit } from "./unit-interest/unit-score-calculator";
 
 const _pos = new THREE.Vector3();
@@ -36,17 +36,12 @@ export class SecondView {
   activateIfExists(
     secondHottestQuadrant: Quadrant<Unit> | undefined,
     hottestQuadrant: Quadrant<Unit>,
-    hottestScore: number
   ) {
     const plugin = this.#plugin;
-    let decayedSecondScore = 0;
 
     if (secondHottestQuadrant && secondHottestQuadrant.items.length > 0) {
-      decayedSecondScore =
-        plugin.u8.action.get(secondHottestQuadrant) * (1 - plugin.u8.adhd.get(secondHottestQuadrant));
       if (
-        decayedSecondScore >
-        (hottestScore * distance(hottestQuadrant, secondHottestQuadrant)) / 8
+         distance(hottestQuadrant, secondHottestQuadrant) > 4
       ) {
         this.#activate(secondHottestQuadrant);
         plugin.secondViewport.enabled = true;

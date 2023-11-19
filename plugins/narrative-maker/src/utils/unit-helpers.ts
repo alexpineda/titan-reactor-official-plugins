@@ -71,3 +71,12 @@ export const isTownCenter = (unit: Unit) => {
     unit.typeId === unitTypes.nexus ||
     unit.typeId === unitTypes.hatchery;
 }
+
+export interface AO_Unit extends Unit {
+  extras: Unit["extras"] & {
+    autoObserver: {
+      score: number;
+      timeOnStrategyQueueMS: number;
+    };
+  }
+}
