@@ -1,11 +1,11 @@
-import { GridValue } from "./grid-values";
+import { GridItem } from "./grid-item";
 
 
-export class ValueGrid<T> {
-  grid: GridValue<T>[] = [];
+export class Grid<T, U = any> {
+  grid: GridItem<T, U>[] = [];
   size: number;
 
-  constructor(size: number, Constructor: new (x: number, y:number) => GridValue<T>) {
+  constructor(size: number, Constructor: new (x: number, y:number) => GridItem<T, U>) {
     this.size = size;
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {

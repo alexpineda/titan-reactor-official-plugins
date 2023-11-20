@@ -29,7 +29,7 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
     q.weightedScore = weightedScore;
   });
 
-  const maxScore = Math.max(...quadrants.quadrants.map((q) => q.weightedScore));
+  const maxScore = Math.max(...quadrants.quadrants.map((q) => q.tensionWeight));
   const colorScale = d3
     .scaleSequential(d3.interpolateRgb("purple", "blue")) // Start with blue
     .domain([0, maxScore / 2, maxScore]); // Adjust the domain as needed
@@ -56,7 +56,7 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
         }}
       >
         {quadrants.quadrants.map((q, i) => {
-          const backgroundColor = q.active ? "red" : colorScale(q.weightedScore); //isGray ? 
+          const backgroundColor = q.active ? "red" : colorScale(q.tensionWeight); //isGray ? 
 
           return (
             <div
@@ -67,10 +67,10 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
               }}
             >
               <div>
-              {q.units}, {q.score.toFixed(3)}, {q.adhd.toFixed(2)}, {q.tension.toFixed(2)}
+              {q.units}, {q.score.toFixed(2)}, {q.adhd.toFixed(1)}, {q.tension.toFixed(2)}
               </div>
               <div>
-              {q.units}, {q.weightedScore.toFixed(3)}, {q.adhdWeight.toFixed(2)}, {q.tensionWeight.toFixed(2)}
+              {q.units}, {q.weightedScore.toFixed(2)}, {q.adhdWeight.toFixed(1)}, {q.tensionWeight.toFixed(2)}
               </div>
               <div>
 

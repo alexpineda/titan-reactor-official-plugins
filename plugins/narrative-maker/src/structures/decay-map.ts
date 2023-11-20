@@ -1,6 +1,6 @@
-import { ValueGrid } from "./value-grid";
+import { Grid } from "./grid";
 
-export class DecayMap extends ValueGrid<number> {
+export class DecayMap extends Grid<number> {
   defaultDecay = 0.9;
 
   decayAll(decay = this.defaultDecay) {

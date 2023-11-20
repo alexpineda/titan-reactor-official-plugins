@@ -105,6 +105,8 @@ export class CameraTargets {
       _a2,
       units,
     );
+
+    // group by speed, pick biggest speed, if tied, pick biggest speed
     const moveCenter = this.#calculateUnitHeadingWeightedCenter(
       _b2,
       units,

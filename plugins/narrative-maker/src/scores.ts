@@ -1,41 +1,46 @@
 import { DecayMap } from "./structures/decay-map";
-import { ValueGrid } from "./structures/value-grid";
+import { Grid } from "./structures/grid";
 import { GridTransform } from "./structures/grid-transform";
-import { AO_Unit } from "./utils/unit-helpers";
-import { ArrayGridValue, NumericGridValue } from "./structures/grid-values";
-
+import { AO_Unit, QuadrantUserData } from "./utils/unit-helpers";
+import { ArrayGridItem, NumericGridItem } from "./structures/grid-item";
 export class ScoreManager {
 
   size: number;
 
-  /**
-   * Units by quadrant
-   */
-  units: ValueGrid<AO_Unit[]>;
-  /**
-   * 0 = pay attention
-   * 1 = ignore
-   */
+  units: Grid<AO_Unit[], QuadrantUserData>;
   adhd: DecayMap;
-  /**
-   * Unit score averages by quadrant
-   */
-  action: ValueGrid<number>;
-
-  /**
-   * The differences in owners of units
-   */
-  tension: ValueGrid<number>;
+  action: Grid<number>;
+  tension: Grid<number>;
+  strategy: Grid<number>;
 
   worldGrid: GridTransform;
   pxGrid: GridTransform;
 
   constructor(size: number, mapSize: number[]) {
     this.size = size;
-    this.units = new ValueGrid<AO_Unit[]>(size, ArrayGridValue); // new ArrayGrid<AO_Unit>( size );
-    this.adhd = new DecayMap(size, NumericGridValue);
-    this.action = new ValueGrid(size, NumericGridValue);
-    this.tension = new ValueGrid(size, NumericGridValue);
+    this.units = new Grid<AO_Unit[], QuadrantUserData>(size, ArrayGridItem);
+    for (const unit of this.units.grid) {
+      unit.userData = {
+        active: {
+          score: 0,
+          action: 0,
+          adhd: 0,
+          tension: 0,
+          strategy: 0,
+        },
+        lastUsed: {
+          score: 0,
+          action: 0,
+          adhd: 0,
+          tension: 0,
+          strategy: 0,
+        }
+      };
+    }
+    this.adhd = new DecayMap(size, NumericGridItem);
+    this.action = new Grid(size, NumericGridItem);
+    this.tension = new Grid(size, NumericGridItem);
+    this.strategy = new Grid(size, NumericGridItem);
 
     this.worldGrid = new GridTransform(
         new THREE.Vector2(size, size),
@@ -55,6 +60,7 @@ export class ScoreManager {
     this.adhd.clear();
     this.action.clear();
     this.tension.clear();
+    this.strategy.clear();
   }
   
 }

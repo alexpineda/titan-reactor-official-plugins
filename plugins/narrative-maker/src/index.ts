@@ -18,14 +18,16 @@ import {
 import { PIP_PROXIMITY, POLAR_MIN, QUAD_SIZE } from "./utils/constants";
 import { CameraTargets } from "./camera-targets";
 import { calcCoeff } from "./utils/math-utils";
-import { SecondView } from "./second-view";
 import { buildingUnitRanks, regularOrderRanks, regularUnitRanks } from "./unit-interest/rankings";
 
 import { createNoise2D } from "simplex-noise";
 import alea from "alea";
 import { ScoreManager } from "./scores";
 import { createUnitScoreCalculator } from "./unit-interest/unit-score-calculator";
-import { GridValue } from "./structures/grid-values";
+import { GridItem } from "./structures/grid-item";
+
+const _a4 = new THREE.Vector4(0, 0, 0, 0);
+const _b4 = new THREE.Vector4(0, 0, 0, 0);
 
 const _a3 = new THREE.Vector3(0, 0, 0);
 const _b3 = new THREE.Vector3(0, 0, 0);
@@ -40,7 +42,6 @@ export default class PluginAddon extends SceneController {
 
   u8!: ScoreManager;
   targets!: CameraTargets;
-  secondView!: SecondView;
   unitScore = createUnitScoreCalculator({
     unitRanks: regularUnitRanks,
     unitRankCurve: (t) => t,
@@ -60,7 +61,7 @@ export default class PluginAddon extends SceneController {
 
   lastActiveQuadrantUpdateMS = 0;
   lastSecondaryActiveQuadrantUpdateMS = 0;
-  lastSelectionWeight: "unit" | "tension" | "strategy" = "unit";
+  lastSelectionWeight: "unit" | "strategy" = "unit";
 
   lastDecayUpdateMS = 0;
   lastUnitDestroyedMS = 0;
@@ -68,7 +69,8 @@ export default class PluginAddon extends SceneController {
 
   targetGameSpeed = 1;
   gameIsLulled = true;
-  lastTimeGameWasLulledMS = 0;
+  lastTimeGameStartedActionMS = 0;
+  lastTimeGameStartedLullMS = 0;
   activeQuadrant: Quadrant | undefined;
   cameraFatigue = 0;
   cameraFatigue2 = 0;
@@ -90,7 +92,6 @@ export default class PluginAddon extends SceneController {
   }
 
   #reset() {
-    this.secondView.reset();
     this.u8.clear();
     this.strategyQueue.length = 0;
 
@@ -111,7 +112,6 @@ export default class PluginAddon extends SceneController {
   }
 
   public async onEnterScene(prevData: PrevSceneData) {
-    this.secondView = new SecondView(this);
     this.targets = new CameraTargets(this);
 
     this.targets.setMoveTargets([prevData.target]);
@@ -144,7 +144,6 @@ export default class PluginAddon extends SceneController {
     );
 
     this.events.on("unit-destroyed", (unit) => {
-      this.secondView.onUnitDestroyed(unit);
       this.strategyQueue = this.strategyQueue.filter((u) => u.id !== unit.id);
     });
 
@@ -267,11 +266,13 @@ export default class PluginAddon extends SceneController {
     this.u8.adhd.defaultDecay = this.config.heatMapDecay;
     this.viewport.orbit.minPolarAngle =
       POLAR_MIN + THREE.MathUtils.degToRad(this.config.tilt);
+
+    this.#targetObject.visible = this.config.showDebug;
+    this.#targetObject2.visible = this.config.showDebug;
   }
 
   onTick(delta: number) {
     this.targets.update();
-    this.secondView.onTick();
 
     this.cameraFatigue -= delta;
     this.cameraFatigue2 -= delta;
@@ -282,7 +283,7 @@ export default class PluginAddon extends SceneController {
     ) {
       this.targetGameSpeed = 1;
       this.gameIsLulled = false;
-      this.lastTimeGameWasLulledMS = this.elapsed;
+      this.lastTimeGameStartedActionMS = this.elapsed;
     } else {
       this.targetGameSpeed = THREE.MathUtils.damp(
         this.targetGameSpeed,
@@ -291,6 +292,7 @@ export default class PluginAddon extends SceneController {
         delta / 1000
       );
       this.gameIsLulled = true;
+      this.lastTimeGameStartedLullMS = this.elapsed;
     }
 
     this.secondViewport.enabled =
@@ -306,41 +308,7 @@ export default class PluginAddon extends SceneController {
     }
   }
 
-  #updateScores() {
-    let maxScore = 0;
-    for (const quadrant of this.u8.units.grid) {
-      let sumScore = 0;
 
-      // use surrounding quadrants to calculate score
-      const _teams = new Array(8).fill(0);
-      // for (const unit of quadrant.items) {
-      for (const unit of quadrant.value.flat()) {
-        //this.u8.units.getNearby( quadrant, 1 )) {
-        const unitScore = this.unitScore(unit);
-        sumScore += unitScore;
-
-        if (unit.extras.dat.isBuilding) {
-          _teams[unit.owner]++;
-        }
-
-        (unit as AO_Unit).extras.autoObserver.score = unit.extras.dat.isBuilding ? this.buildingScore(unit) : unitScore;
-
-      }
-
-      const tension = calcCoeff(_teams.filter((_, i) => this.players.get(i)));
-      this.u8.action.set(quadrant, sumScore);
-      this.u8.tension.set(quadrant, tension);
-
-      if (sumScore > maxScore) {
-        maxScore = sumScore;
-      }
-    }
-
-    // normalize scores
-    // for (const quadrant of this.u8.units.quadrants) {
-    //   this.u8.action.set(quadrant, this.u8.action.get(quadrant) / maxScore);
-    // }
-  }
 
   #updateStrategy() {
     if (this.strategyQueue.length === 0) {
@@ -351,6 +319,7 @@ export default class PluginAddon extends SceneController {
         }
       }
     }
+    
 
     const hasMultipleOwners = this.strategyQueue.some(
       (u) => u.owner !== this.strategyQueue[0].owner
@@ -407,12 +376,105 @@ export default class PluginAddon extends SceneController {
       // todo:many buildings that are training (macro)
       return this.buildingScore(b) * elapsedBWeight - this.buildingScore(a) * elapsedAWeight;
     });
+
+    if (this.strategyQueue.length > 10) {
+      this.strategyQueue.length = 10;
+    }
+  }
+
+  #updateScores() {
+    let maxScore = 0;
+    for (const quadrant of this.u8.units.grid) {
+      let sumScore = 0;
+
+      // use surrounding quadrants to calculate score
+      const _teams = new Array(8).fill(0);
+      // for (const unit of quadrant.items) {
+      for (const unit of quadrant.value) {
+        //this.u8.units.getNearby( quadrant, 1 )) {
+        const unitScore = this.unitScore(unit);
+        sumScore += unitScore;
+
+        _teams[unit.owner] = 1;
+
+        (unit as AO_Unit).extras.autoObserver.score = unit.extras.dat.isBuilding ? this.buildingScore(unit) : unitScore;
+
+      }
+
+      const tension = calcCoeff(_teams.filter((_, i) => this.players.get(i)));
+      this.u8.action.set(quadrant, sumScore);
+      this.u8.tension.set(quadrant, tension);
+
+      if (sumScore > maxScore) {
+        maxScore = sumScore;
+      }
+    }
+
+    // normalize scores
+    for (const quadrant of this.u8.units.grid) {
+      this.u8.action.set(quadrant, this.u8.action.get(quadrant) / maxScore);
+    }
+  }
+
+  #sortedQuadrants = new Array<Quadrant>();
+
+  #calcWeighted( quadrant: Quadrant ) {
+    const score = this.u8.action.get(quadrant);
+    const adhdWeight = (1 - this.u8.adhd.get(quadrant)) * this.config.weightsADHD;
+    const tensionWeight = this.u8.tension.get(quadrant) * this.config.weightsTension;
+
+    // const gameLullWeight = Math.sin((this.lastTimeGameStartedActionMS - this.lastTimeGameStartedLullMS) / 1000);
+
+    // // find heightest priority building
+    // const building = quadrant.value.find(u => this.strategyQueue.includes(u));
+    // const buildingScore = building ?  1 - this.strategyQueue.indexOf(building) / this.strategyQueue.length : 0;
+    // const weightedScore = (score + tensionWeight) * adhdWeight;
+
+    quadrant.userData.active.action = score;
+    quadrant.userData.active.adhd = adhdWeight;
+    quadrant.userData.active.tension = tensionWeight;
+    // quadrant.userData.active.strategy = weightedScore;
+    quadrant.userData.active.score = weightedScore;
+
+  }
+
+  #sortQuadrantsByScores() {
+
+    for (let q = 0; q < this.u8.units.grid.length; q++) {
+      this.#sortedQuadrants[q] = this.u8.units.grid[q];
+    }
+
+    this.#sortedQuadrants.sort((a, b) => {
+      if (a.value.length === 0) return 1;
+      if (b.value.length === 0) return -1;
+
+      this.#calcWeighted( a );
+      this.#calcWeighted( b );
+
+      return b.userData.active.score - a.userData.active.score;
+
+    });
+
+
+    // const haventSeenStrategyInAWhile =
+    //   this.elapsed > this.timeSinceLastStrategySelectionMS + 20_000;
+
+    // if (
+    //   this.gameIsLulled &&
+    //   (gameLullSufficient || haventSeenStrategyInAWhile)
+    // ) {
+    //   const building = this.strategyQueue[0];
+    //   if (building) {
+    //     hottestQuadrant = this.u8.units.$get(
+    //       this.u8.pxGrid.fromWorldToGrid(_a2, building.x, building.y)
+    //     );
+    //     selectionWeight = "strategy";
+    //   }
+    // }
   }
 
   onFrame(frame: number): void {
     const tensionVsStrategy = this.strategyFocusNoise2D(this.frame / 1000, 0);
-    let hottestQuadrant: Quadrant | undefined;
-    let secondHottestQuadrant: Quadrant | undefined;
     let selectionWeight = this.lastSelectionWeight;
 
     if (this.config.showDebug) {
@@ -445,88 +507,28 @@ export default class PluginAddon extends SceneController {
       });
     }
 
-    if (this.cameraFatigue < 0 || this.cameraFatigue2 < 0) {
-      // update scores
-      this.#updateScores();
-      this.#updateStrategy();
-
-      // calculate hottest quadrant
-      const gameLullSufficient =
-        this.elapsed >
-        this.lastTimeGameWasLulledMS + 5_000 / this.openBW.gameSpeed;
-      const haventSeenStrategyInAWhile =
-        this.elapsed > this.timeSinceLastStrategySelectionMS + 20_000;
-
-      if (
-        this.gameIsLulled &&
-        (gameLullSufficient || haventSeenStrategyInAWhile)
-      ) {
-        const building = this.strategyQueue[0];
-        if (building) {
-          hottestQuadrant = this.u8.units.$get(
-            this.u8.pxGrid.fromWorldToGrid(_a2, building.x, building.y)
-          );
-          selectionWeight = "strategy";
-        }
-      } else {
-        let hottestScore = 0;
-
-        for (const quadrant of this.u8.units.grid) {
-          if (quadrant.value.length === 0) continue;
-
-          const score = this.u8.action.get(quadrant);
-          const adhdWeight =
-            (1 - this.u8.adhd.get(quadrant)) * this.config.weightsADHD;
-          const tensionWeight =
-            this.u8.tension.get(quadrant) * this.config.weightsTension;
-
-          const weightedScore = (score + tensionWeight) * adhdWeight; //(unitScore + tensionWeight) * adhdWeight;
-
-          // the or is a special case early game where base strategy scores are even
-          // typically however interesting quadrants will be quite varying in score ( not even )
-          if (weightedScore > hottestScore) {
-            hottestScore = weightedScore;
-            secondHottestQuadrant = hottestQuadrant;
-            hottestQuadrant = quadrant;
-            // todo: base off the above criteria
-            selectionWeight = "unit";
-            // selectionWeight = this.gameIsLulled ? "strategy" : "unit";
-          }
-        }
-      }
-    }
-
     if (
-      hottestQuadrant &&
-      hottestQuadrant.value.length &&
       this.cameraFatigue < 0
     ) {
-      //todo: change selection to next hottest quadrant
-      //with factor such as distance and tension
-      if (
-        this.frame > 10_000 &&
-        this.elapsed - this.lastSecondaryActiveQuadrantUpdateMS > 10_000
-      ) {
-        // this.secondView.activateIfExists(
-        //   secondHottestQuadrant,
-        //   hottestQuadrant
-        // );
-        this.lastSecondaryActiveQuadrantUpdateMS = this.elapsed;
-      }
+      // update scores
+      this.#updateStrategy();
+      this.#updateScores();
+      this.#sortQuadrantsByScores();
+      
+      const quadrant = this.#sortedQuadrants[0];
 
       this.viewport.orbit.getTarget(_c3);
 
       // activate quadrant
-      const moveToUnits = hottestQuadrant.value.filter(
+      const moveToUnits = quadrant.value.filter(
         selectionWeight === "strategy"
           ? this.uf_Building
           : this.uf_NonHarvesting
       );
       // sometimes in strategy moveToUnits is empty, figure out why bruh
       const t = this.targets.moveToUnits(
-        moveToUnits.length > 0 ? moveToUnits : hottestQuadrant.value
+        moveToUnits.length > 0 ? moveToUnits : quadrant.value
       );
-      // this.units8.getNearby(quadrant.x, quadrant.y, 1, false),
 
       this.lastSelectionWeight = selectionWeight;
 
@@ -537,34 +539,43 @@ export default class PluginAddon extends SceneController {
       this.#targetObject2.updateMatrix();
       this.#targetObject2.updateMatrixWorld();
 
-      //todo: bias this by game speed a little?
       this.cameraFatigue =
         4000 / this.openBW.gameSpeed +
         this.targets.moveTarget.distanceTo(_c3) * 50 +
         4_000 * (1 - Math.min(1, frame / 4000));
       this.cameraFatigue2 = 500 / this.openBW.gameSpeed;
 
-      this.targets.adjustDollyToUnitSpread(hottestQuadrant.value);
+      this.targets.adjustDollyToUnitSpread(quadrant.value);
 
       this.lastActiveQuadrantUpdateMS = this.elapsed;
 
-      this.u8.adhd.set(hottestQuadrant, 1);
-      this.activeQuadrant = hottestQuadrant;
+      this.u8.adhd.set(quadrant, 1);
+      this.activeQuadrant = quadrant;
 
       if (selectionWeight === "strategy") {
         const building = this.strategyQueue.shift();
         this.lastSelectedStrategyOwner = building?.owner ?? -1;
         this.timeSinceLastStrategySelectionMS = this.elapsed;
       }
+
+      quadrant.userData.lastUsed.action = quadrant.userData.active.action;
+      quadrant.userData.lastUsed.adhd = quadrant.userData.active.adhd;
+      quadrant.userData.lastUsed.tension = quadrant.userData.active.tension;
+      quadrant.userData.lastUsed.strategy = quadrant.userData.active.strategy;
+      quadrant.userData.lastUsed.score = quadrant.userData.active.score;
+
     } else if (
       this.cameraFatigue2 < 0
     ) {
-      // if nearby quadrants are hot, stick around
-      // activate quadrant
+        // keep moving focus to nearby stuff to keep the camera active
         this.viewport.orbit.getTarget(_c3);
         this.u8.worldGrid.fromWorldToGrid(_a2, _c3.x, _c3.z);
 
         const nearbyUnits = this.u8.units.getNearbyList([], _a2, 1).flat();
+
+        // this observer has a different set of requirements
+        // we are more interested in moving units if there are any
+        // however if we are looking at a base, we should be more interested in buildings
 
         // bug: for buildings maxScore is 0 many times when it shouldnt be
         // not such a big deal since this is more important for units anyway
@@ -587,14 +598,15 @@ export default class PluginAddon extends SceneController {
             "smooth"
           );
 
-          this.#targetObject.position.copy(t[0]);
-          this.#targetObject2.position.copy(t[1]);
-          this.#targetObject.updateMatrix();
-          this.#targetObject.updateMatrixWorld();
-          this.#targetObject2.updateMatrix();
-          this.#targetObject2.updateMatrixWorld();
+          if (this.config.showDebug) {
+            this.#targetObject.position.copy(t[0]);
+            this.#targetObject2.position.copy(t[1]);
+            this.#targetObject.updateMatrix();
+            this.#targetObject.updateMatrixWorld();
+            this.#targetObject2.updateMatrix();
+            this.#targetObject2.updateMatrixWorld();
+          }
 
-          //todo: adjust by delta in movetounits as well
           this.cameraFatigue2 =
             300 / this.openBW.gameSpeed +
             this.targets.moveTarget.distanceTo(_c3) * 20;
@@ -647,7 +659,6 @@ export default class PluginAddon extends SceneController {
         groundTarget(this.secondViewport, _b3),
         PIP_PROXIMITY
       );
-      this.secondView.followedUnit = null;
 
       if (isDragStart) {
         if (this.secondViewport.enabled) {

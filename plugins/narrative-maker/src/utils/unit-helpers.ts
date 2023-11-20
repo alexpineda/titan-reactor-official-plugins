@@ -1,5 +1,5 @@
 import { BwDAT, Unit } from "@titan-reactor-runtime/host";
-import { GridValue } from "../structures/grid-values";
+import { GridItem } from "../structures/grid-item";
 
 export const unitTypes = enums.unitTypes;
 const UnitFlags = enums.UnitFlags;
@@ -82,4 +82,22 @@ export interface AO_Unit extends Unit {
   }
 }
 
-export type Quadrant = GridValue<AO_Unit[]>;
+export type Quadrant = GridItem<AO_Unit[], QuadrantUserData>;
+
+export type QuadrantUserData = {
+  active: {
+    score:number,
+    action:number,
+    adhd: number, 
+    tension: number, 
+    strategy: number,
+  },
+  lastUsed: {
+    score:number,
+    action:number,
+    adhd: number, 
+    tension: number, 
+    strategy: number,
+  }
+  
+}
