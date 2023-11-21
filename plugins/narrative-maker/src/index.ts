@@ -68,7 +68,6 @@ export default class PluginAddon extends SceneController {
   lastUnitAttackedMS = 0;
 
   targetGameSpeed = 1;
-  gameIsLulled = true;
   lastTimeGameStartedActionMS = 0;
   lastTimeGameStartedLullMS = 0;
   activeQuadrant: Quadrant | undefined;
@@ -105,7 +104,6 @@ export default class PluginAddon extends SceneController {
     this.cameraFatigue2 = 0;
 
     this.activeQuadrant = undefined;
-    this.gameIsLulled = true;
     this.targetGameSpeed = 1;
 
     this.lastSelectionWeight = "unit";
@@ -184,8 +182,7 @@ export default class PluginAddon extends SceneController {
         ).value.push(unit as AO_Unit);
       }
       if (unit.extras.recievingDamage) {
-        this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
-        this.u8.adhd.decay(_a2.x, _a2.y);
+        this.u8.adhd.decay(this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y));
 
         if (!canOnlySelectOne(unit) && this.config.autoSelectUnits) {
           this.selectedUnits.add(unit);
@@ -199,8 +196,7 @@ export default class PluginAddon extends SceneController {
       }
 
       if (unit.isAttacking) {
-        this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y);
-        this.u8.adhd.decay(_a2.x, _a2.y);
+        this.u8.adhd.decay(this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y));
         this.lastUnitAttackedMS = this.elapsed;
       }
     });
@@ -282,7 +278,6 @@ export default class PluginAddon extends SceneController {
       this.elapsed < this.lastUnitDestroyedMS + 3_000 / this.openBW.gameSpeed
     ) {
       this.targetGameSpeed = 1;
-      this.gameIsLulled = false;
       this.lastTimeGameStartedActionMS = this.elapsed;
     } else {
       this.targetGameSpeed = THREE.MathUtils.damp(
@@ -291,7 +286,6 @@ export default class PluginAddon extends SceneController {
         0.1,
         delta / 1000
       );
-      this.gameIsLulled = true;
       this.lastTimeGameStartedLullMS = this.elapsed;
     }
 
@@ -324,6 +318,9 @@ export default class PluginAddon extends SceneController {
     const hasMultipleOwners = this.strategyQueue.some(
       (u) => u.owner !== this.strategyQueue[0].owner
     );
+
+    // 30s lifespan
+    this.strategyQueue = this.strategyQueue.filter((u) => this.elapsed - (u as AO_Unit).extras.autoObserver.timeOnStrategyQueueMS < 30_000);
 
     this.strategyQueue.sort((a, b) => {
       // we want to alternate owners
@@ -384,17 +381,17 @@ export default class PluginAddon extends SceneController {
 
   #updateScores() {
     let maxScore = 0;
+
     for (const quadrant of this.u8.units.grid) {
       let sumScore = 0;
 
-      // use surrounding quadrants to calculate score
       const _teams = new Array(8).fill(0);
-      // for (const unit of quadrant.items) {
+
       for (const unit of quadrant.value) {
-        //this.u8.units.getNearby( quadrant, 1 )) {
         const unitScore = this.unitScore(unit);
         sumScore += unitScore;
 
+        //todo: if nexus and tension, make it 10
         _teams[unit.owner] = 1;
 
         (unit as AO_Unit).extras.autoObserver.score = unit.extras.dat.isBuilding ? this.buildingScore(unit) : unitScore;
@@ -428,7 +425,7 @@ export default class PluginAddon extends SceneController {
     // // find heightest priority building
     // const building = quadrant.value.find(u => this.strategyQueue.includes(u));
     // const buildingScore = building ?  1 - this.strategyQueue.indexOf(building) / this.strategyQueue.length : 0;
-    // const weightedScore = (score + tensionWeight) * adhdWeight;
+    const weightedScore = (score + tensionWeight) * adhdWeight;
 
     quadrant.userData.active.action = score;
     quadrant.userData.active.adhd = adhdWeight;
@@ -488,7 +485,7 @@ export default class PluginAddon extends SceneController {
           elapsed: this.elapsed,
           frame,
           tensionVsStrategy,
-          gameIsLulled: this.gameIsLulled,
+          gameIsLulled: this.lastTimeGameStartedLullMS > this.lastTimeGameStartedActionMS,
         },
         data: {
           size: this.u8.units.size,
@@ -620,6 +617,9 @@ export default class PluginAddon extends SceneController {
     this.u8.units.clear();
   }
 
+  /**
+   * Manual user minimap drag
+   */
   onMinimapDragUpdate(
     pos: THREE.Vector2,
     isDragStart: boolean,
@@ -680,6 +680,9 @@ export default class PluginAddon extends SceneController {
     }
   }
 
+  /**
+   * Manual user wheel scroll
+   */
   onCameraMouseUpdate(_: number, __: number, scrollY: number) {
     if (scrollY) {
       if (scrollY < 0) {

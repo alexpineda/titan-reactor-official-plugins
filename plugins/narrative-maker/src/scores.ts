@@ -1,4 +1,4 @@
-import { DecayMap } from "./structures/decay-map";
+import { DecayGrid } from "./structures/decay-grid";
 import { Grid } from "./structures/grid";
 import { GridTransform } from "./structures/grid-transform";
 import { AO_Unit, QuadrantUserData } from "./utils/unit-helpers";
@@ -8,10 +8,11 @@ export class ScoreManager {
   size: number;
 
   units: Grid<AO_Unit[], QuadrantUserData>;
-  adhd: DecayMap;
+  adhd: DecayGrid;
   action: Grid<number>;
   tension: Grid<number>;
   strategy: Grid<number>;
+  wScore: Grid<number>;
 
   worldGrid: GridTransform;
   pxGrid: GridTransform;
@@ -37,10 +38,11 @@ export class ScoreManager {
         }
       };
     }
-    this.adhd = new DecayMap(size, NumericGridItem);
+    this.adhd = new DecayGrid(size, NumericGridItem);
     this.action = new Grid(size, NumericGridItem);
     this.tension = new Grid(size, NumericGridItem);
     this.strategy = new Grid(size, NumericGridItem);
+    this.wScore = new Grid(size, NumericGridItem);
 
     this.worldGrid = new GridTransform(
         new THREE.Vector2(size, size),

@@ -1,6 +1,6 @@
 import { Grid } from "./grid";
 
-export class DecayMap extends Grid<number> {
+export class DecayGrid extends Grid<number> {
   defaultDecay = 0.9;
 
   decayAll(decay = this.defaultDecay) {
@@ -9,8 +9,8 @@ export class DecayMap extends Grid<number> {
     }
   }
 
-  decay(x: number, y: number, decay = this.defaultDecay) {
-    const index = this.getIndex(x, y);
+  decay(xy: {x: number, y: number}, decay = this.defaultDecay) {
+    const index = this.getIndex(xy.x, xy.y);
     this.grid[index].value *= decay;
     if (this.grid[index].value < 0) {
       this.grid[index].value = 0;
