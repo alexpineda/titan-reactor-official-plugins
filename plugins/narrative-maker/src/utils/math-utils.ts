@@ -17,6 +17,10 @@ export function easeIn(x: number, e: number): number {
   return Math.pow(x, e);
 }
 
+export function easeInSine(x: number): number {
+  return 1 - Math.cos((x * Math.PI) / 2);
+}
+
 export const getAngle = ( direction: number ) => {
   direction -= 64;
   if ( direction < 0 ) direction += 256;

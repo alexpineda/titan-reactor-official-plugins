@@ -22,11 +22,9 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
   quadrants.quadrants.forEach((q, i) => {
     const adhdWeight = (1 - q.adhd) * config.weightsADHD;
     const tensionWeight = q.tension * config.weightsTension;
-    const weightedScore = (q.score + tensionWeight) * adhdWeight;
 
     q.adhdWeight = adhdWeight;
     q.tensionWeight = tensionWeight;
-    q.weightedScore = weightedScore;
   });
 
   const maxScore = Math.max(...quadrants.quadrants.map((q) => q.tensionWeight));
@@ -41,18 +39,22 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
         flexDirection: "column",
         color: "white",
         backgroundColor: "rgba(0,0,0,0.3)",
-        opacity: 0.5
+        opacity: 0.5,
+        fontSize: "11px"
       }}
     >
+      <div>frame: {state.frame}</div>
       <div>cameraFatigue: {state.cameraFatigue}</div>
       <div>cameraFatigue2: {state.cameraFatigue2}</div>
-      <div>tensionVsStrategy: {state.tensionVsStrategy}</div>
-      <div>gameIsLulled: {state.gameIsLulled ? "true" : "false"}</div>
-      <div>units, score, adhd, tension</div>
+      <div>elapsed: {state.elapsed}</div>
+      <div>lastTimeGameStartedLullMS: {state.lastTimeGameStartedLullMS}</div>
+      <div>lastTimeGameStartedActionMS: {state.lastTimeGameStartedActionMS}</div>
+      <div>units, score, adhd, tension, strat, wScore</div>
       <div
         style={{
           display: "grid",
           gridTemplateColumns: `repeat(${quadrants.size}, 1fr)`,
+          gap: "4px",
         }}
       >
         {quadrants.quadrants.map((q, i) => {
@@ -67,13 +69,7 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
               }}
             >
               <div>
-              {q.units}, {q.score.toFixed(2)}, {q.adhd.toFixed(1)}, {q.tension.toFixed(2)}
-              </div>
-              <div>
-              {q.units}, {q.weightedScore.toFixed(2)}, {q.adhdWeight.toFixed(1)}, {q.tensionWeight.toFixed(2)}
-              </div>
-              <div>
-
+              {q.units}, {Math.floor(q.score * 100)}, {Math.floor(q.adhd * 100)}, {Math.floor(q.tension * 100)}, {Math.floor(q.strategy * 100)}, {Math.floor(q.wScore * 100)}
               </div>
             </div>
           );

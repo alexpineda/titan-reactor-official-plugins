@@ -14,6 +14,9 @@ export class ScoreManager {
   strategy: Grid<number>;
   wScore: Grid<number>;
 
+  prevActions: Grid<number>[] = [];
+  deltaAction: Grid<number>;
+
   worldGrid: GridTransform;
   pxGrid: GridTransform;
 
@@ -43,6 +46,9 @@ export class ScoreManager {
     this.tension = new Grid(size, NumericGridItem);
     this.strategy = new Grid(size, NumericGridItem);
     this.wScore = new Grid(size, NumericGridItem);
+
+    this.deltaAction = new Grid(size, NumericGridItem);
+    this.prevActions = new Array(10).fill(0).map(() => new Grid(size, NumericGridItem));
 
     this.worldGrid = new GridTransform(
         new THREE.Vector2(size, size),

@@ -17,14 +17,13 @@ import {
 } from "./utils/unit-helpers";
 import { PIP_PROXIMITY, POLAR_MIN, QUAD_SIZE } from "./utils/constants";
 import { CameraTargets } from "./camera-targets";
-import { calcCoeff } from "./utils/math-utils";
+import { calcCoeff, easeInSine } from "./utils/math-utils";
 import { buildingUnitRanks, regularOrderRanks, regularUnitRanks } from "./unit-interest/rankings";
 
 import { createNoise2D } from "simplex-noise";
 import alea from "alea";
 import { ScoreManager } from "./scores";
 import { createUnitScoreCalculator } from "./unit-interest/unit-score-calculator";
-import { GridItem } from "./structures/grid-item";
 
 const _a4 = new THREE.Vector4(0, 0, 0, 0);
 const _b4 = new THREE.Vector4(0, 0, 0, 0);
@@ -37,31 +36,27 @@ const _a2 = new THREE.Vector2(0, 0);
 const _b2 = new THREE.Vector2(0, 0);
 const _c2 = new THREE.Vector2(0, 0);
 
+const unitOfInterest = (unit: Unit) => !unit.extras.dat.isResourceContainer &&
+unit.owner < 8 &&
+canSelectUnit(unit);
+
 export default class PluginAddon extends SceneController {
   viewportsCount = 2;
 
   u8!: ScoreManager;
   targets!: CameraTargets;
   unitScore = createUnitScoreCalculator({
-    unitRanks: regularUnitRanks,
-    unitRankCurve: (t) => t,
+    unitRanks: [buildingUnitRanks.flat(), ...regularUnitRanks],
+    unitRankCurve: easeInSine,
     orderRanks: regularOrderRanks,
-    orderRankCurve: (t) => t,
+    orderRankCurve: (t) => 0.1 + (t - 0.1), // minimum 0.1
   });
-  buildingScore = createUnitScoreCalculator({
-    unitRanks: buildingUnitRanks,
-    unitRankCurve: (t) => t,
-    orderRanks: regularOrderRanks,
-    orderRankCurve: (t) => t,
-  });
-  strategyFocusNoise2D = createNoise2D(alea("strategy-focus"));
-  strategyQueue: Unit[] = [];
+  strategyQueue: AO_Unit[] = [];
   lastSelectedStrategyOwner = -1;
   timeSinceLastStrategySelectionMS = 0;
 
   lastActiveQuadrantUpdateMS = 0;
   lastSecondaryActiveQuadrantUpdateMS = 0;
-  lastSelectionWeight: "unit" | "strategy" = "unit";
 
   lastDecayUpdateMS = 0;
   lastUnitDestroyedMS = 0;
@@ -84,12 +79,6 @@ export default class PluginAddon extends SceneController {
     new THREE.MeshBasicMaterial({ color: 0x00ff00 })
   );
 
-  onUIMessage(message: any): void {
-    if (message.type === "close-intro") {
-      this.saveConfigProperty("showIntro", false);
-    }
-  }
-
   #reset() {
     this.u8.clear();
     this.strategyQueue.length = 0;
@@ -99,6 +88,8 @@ export default class PluginAddon extends SceneController {
     this.lastDecayUpdateMS = 0;
     this.lastUnitDestroyedMS = 0;
     this.lastUnitAttackedMS = 0;
+    this.lastTimeGameStartedActionMS = 0;
+    this.lastTimeGameStartedLullMS = 0;
 
     this.cameraFatigue = 0;
     this.cameraFatigue2 = 0;
@@ -106,7 +97,6 @@ export default class PluginAddon extends SceneController {
     this.activeQuadrant = undefined;
     this.targetGameSpeed = 1;
 
-    this.lastSelectionWeight = "unit";
   }
 
   public async onEnterScene(prevData: PrevSceneData) {
@@ -123,12 +113,11 @@ export default class PluginAddon extends SceneController {
 
     await setupViewports(this);
 
-    /**
-     * reset adhd if unit is killed
-     */
     this.events.on(
       "unit-killed",
       (unit) => {
+        
+        //reset adhd if unit is killed
         this.u8.adhd.set(
           this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y),
           0
@@ -146,41 +135,35 @@ export default class PluginAddon extends SceneController {
     });
 
     this.events.on("unit-created", (unit) => {
+      // reset metadata
       (unit as AO_Unit).extras.autoObserver = {
         score: 0,
         timeOnStrategyQueueMS: 0,
       }
 
       if (
-        !unit.extras.dat.isResourceContainer &&
-        unit.owner < 8 &&
+        unitOfInterest(unit) &&
         unit.extras.dat.isBuilding
       ) {
-        this.strategyQueue.push(unit);
+        this.strategyQueue.push(unit as AO_Unit);
         (unit as AO_Unit).extras.autoObserver.timeOnStrategyQueueMS = this.elapsed;
       }
 
       
     });
 
-    /**
-     * add units to quadtree
-     * add units to selected units if taking damage
-     * decay adhd if attacking or taking damage
-     */
-    this.events.on("unit-updated", (unit: Unit) => {
-      const unitType = this.assets.bwDat.units[unit.typeId];
 
+    this.events.on("unit-updated", (unit: Unit) => {
       // add selectable player owned non-building units to quadtree
       if (
-        !unitType.isResourceContainer &&
-        unit.owner < 8 &&
-        canSelectUnit(unit)
+        unitOfInterest(unit)
       ) {
+        // add unit to grid - fyi this grid is cleared every frame
         this.u8.units.$get(
           this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y),
         ).value.push(unit as AO_Unit);
       }
+
       if (unit.extras.recievingDamage) {
         this.u8.adhd.decay(this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y));
 
@@ -190,7 +173,6 @@ export default class PluginAddon extends SceneController {
 
         this.adjustCameraFatigueBasedOnRecentAction(unit, 2, 3);
 
-        // this.cameraFatigue -= dist;
       } else if (this.config.autoSelectUnits) {
         this.selectedUnits.delete(unit);
       }
@@ -215,6 +197,7 @@ export default class PluginAddon extends SceneController {
 
   }
 
+  // adjust (detract) camera fatigue based on recent action
   adjustCameraFatigueBasedOnRecentAction(unit: Unit, f1: number, f2: number) {
     if (
       this.elapsed > this.cameraFatigueAdjustmentTimeoutMS + 100 &&
@@ -302,18 +285,15 @@ export default class PluginAddon extends SceneController {
     }
   }
 
-
-
   #updateStrategy() {
     if (this.strategyQueue.length === 0) {
       for (const unit of this.units) {
         if (unit.extras.dat.isBuilding) {
-          this.strategyQueue.push(unit);
+          this.strategyQueue.push(unit as AO_Unit);
           (unit as AO_Unit).extras.autoObserver.timeOnStrategyQueueMS = this.elapsed;
         }
       }
     }
-    
 
     const hasMultipleOwners = this.strategyQueue.some(
       (u) => u.owner !== this.strategyQueue[0].owner
@@ -333,7 +313,6 @@ export default class PluginAddon extends SceneController {
         }
       }
 
-      // nexus that has tension
       const tensionA = this.u8.tension.get(
         this.u8.pxGrid.fromWorldToGrid(_a2, a.x, a.y)
       );
@@ -371,7 +350,7 @@ export default class PluginAddon extends SceneController {
       const elapsedBWeight = 1 - (b as AO_Unit).extras.autoObserver.timeOnStrategyQueueMS / biggerElapses;
 
       // todo:many buildings that are training (macro)
-      return this.buildingScore(b) * elapsedBWeight - this.buildingScore(a) * elapsedAWeight;
+      return this.unitScore(b) * elapsedBWeight - this.unitScore(a) * elapsedAWeight;
     });
 
     if (this.strategyQueue.length > 10) {
@@ -392,9 +371,9 @@ export default class PluginAddon extends SceneController {
         sumScore += unitScore;
 
         //todo: if nexus and tension, make it 10
-        _teams[unit.owner] = 1;
+        _teams[unit.owner] += unitScore;
 
-        (unit as AO_Unit).extras.autoObserver.score = unit.extras.dat.isBuilding ? this.buildingScore(unit) : unitScore;
+        (unit as AO_Unit).extras.autoObserver.score = unitScore;
 
       }
 
@@ -405,6 +384,10 @@ export default class PluginAddon extends SceneController {
       if (sumScore > maxScore) {
         maxScore = sumScore;
       }
+
+      const building = quadrant.value.find(u => this.strategyQueue.includes(u));
+      const buildingQ = building ?  1 - this.strategyQueue.indexOf(building) / this.strategyQueue.length : 0;
+      this.u8.strategy.set(quadrant, buildingQ);
     }
 
     // normalize scores
@@ -416,21 +399,21 @@ export default class PluginAddon extends SceneController {
   #sortedQuadrants = new Array<Quadrant>();
 
   #calcWeighted( quadrant: Quadrant ) {
-    const score = this.u8.action.get(quadrant);
-    const adhdWeight = (1 - this.u8.adhd.get(quadrant)) * this.config.weightsADHD;
-    const tensionWeight = this.u8.tension.get(quadrant) * this.config.weightsTension;
+    const scoreQ = this.u8.action.get(quadrant);
+    const adhdQ = (1 - this.u8.adhd.get(quadrant)) * this.config.weightsADHD;
+    const tensionQ = this.u8.tension.get(quadrant) * this.config.weightsTension;
+    const buildingQ = this.u8.strategy.get(quadrant) * this.config.weightsStrategy
 
-    // const gameLullWeight = Math.sin((this.lastTimeGameStartedActionMS - this.lastTimeGameStartedLullMS) / 1000);
+    const gameLullQ = (1 + Math.sin((this.lastTimeGameStartedActionMS - this.lastTimeGameStartedLullMS) / 1000)) / 2;
 
-    // // find heightest priority building
-    // const building = quadrant.value.find(u => this.strategyQueue.includes(u));
-    // const buildingScore = building ?  1 - this.strategyQueue.indexOf(building) / this.strategyQueue.length : 0;
-    const weightedScore = (score + tensionWeight) * adhdWeight;
+    // trying adhd against unit score only rn
+    const weightedScore = (scoreQ * gameLullQ * adhdQ + buildingQ * ( 1 - gameLullQ ) + tensionQ);
+    this.u8.wScore.set(quadrant, weightedScore)
 
-    quadrant.userData.active.action = score;
-    quadrant.userData.active.adhd = adhdWeight;
-    quadrant.userData.active.tension = tensionWeight;
-    // quadrant.userData.active.strategy = weightedScore;
+    quadrant.userData.active.action = scoreQ;
+    quadrant.userData.active.adhd = adhdQ;
+    quadrant.userData.active.tension = tensionQ;
+    quadrant.userData.active.strategy = buildingQ;
     quadrant.userData.active.score = weightedScore;
 
   }
@@ -452,27 +435,9 @@ export default class PluginAddon extends SceneController {
 
     });
 
-
-    // const haventSeenStrategyInAWhile =
-    //   this.elapsed > this.timeSinceLastStrategySelectionMS + 20_000;
-
-    // if (
-    //   this.gameIsLulled &&
-    //   (gameLullSufficient || haventSeenStrategyInAWhile)
-    // ) {
-    //   const building = this.strategyQueue[0];
-    //   if (building) {
-    //     hottestQuadrant = this.u8.units.$get(
-    //       this.u8.pxGrid.fromWorldToGrid(_a2, building.x, building.y)
-    //     );
-    //     selectionWeight = "strategy";
-    //   }
-    // }
   }
 
   onFrame(frame: number): void {
-    const tensionVsStrategy = this.strategyFocusNoise2D(this.frame / 1000, 0);
-    let selectionWeight = this.lastSelectionWeight;
 
     if (this.config.showDebug) {
       this.sendUIMessage({
@@ -484,8 +449,8 @@ export default class PluginAddon extends SceneController {
           cameraFatigue2: this.cameraFatigue2,
           elapsed: this.elapsed,
           frame,
-          tensionVsStrategy,
-          gameIsLulled: this.lastTimeGameStartedLullMS > this.lastTimeGameStartedActionMS,
+          lastTimeGameStartedLullMS: this.lastTimeGameStartedLullMS,
+          lastTimeGameStartedActionMS: this.lastTimeGameStartedActionMS,
         },
         data: {
           size: this.u8.units.size,
@@ -498,6 +463,8 @@ export default class PluginAddon extends SceneController {
               units: q.value.length,
               adhd: this.u8.adhd.get(q),
               tension: this.u8.tension.get(q),
+              strategy: this.u8.strategy.get(q),
+              wScore: this.u8.wScore.get(q),
             };
           }),
         },
@@ -517,17 +484,11 @@ export default class PluginAddon extends SceneController {
       this.viewport.orbit.getTarget(_c3);
 
       // activate quadrant
-      const moveToUnits = quadrant.value.filter(
-        selectionWeight === "strategy"
-          ? this.uf_Building
-          : this.uf_NonHarvesting
-      );
+      const moveToUnits = quadrant.value.filter(this.uf_NonHarvesting);
       // sometimes in strategy moveToUnits is empty, figure out why bruh
       const t = this.targets.moveToUnits(
         moveToUnits.length > 0 ? moveToUnits : quadrant.value
       );
-
-      this.lastSelectionWeight = selectionWeight;
 
       this.#targetObject.position.copy(t[0]);
       this.#targetObject2.position.copy(t[1]);
@@ -549,7 +510,7 @@ export default class PluginAddon extends SceneController {
       this.u8.adhd.set(quadrant, 1);
       this.activeQuadrant = quadrant;
 
-      if (selectionWeight === "strategy") {
+      if (quadrant.value.includes(this.strategyQueue[0])) {
         const building = this.strategyQueue.shift();
         this.lastSelectedStrategyOwner = building?.owner ?? -1;
         this.timeSinceLastStrategySelectionMS = this.elapsed;
@@ -580,11 +541,7 @@ export default class PluginAddon extends SceneController {
 
         // move to nearby units, focusing on more important ones (usually moving / attacking = greater score)
         const moveToUnits = nearbyUnits.filter(unit => {
-          const b = this.lastSelectionWeight === "strategy"
-          ? this.uf_Building(unit)
-          : this.uf_NonHarvesting(unit);
-
-          return b && (maxScore === 0 ||  unit.extras.autoObserver.score > maxScore * 0.25);
+          return this.uf_NonHarvesting(unit) && (maxScore === 0 ||  unit.extras.autoObserver.score > maxScore * 0.25);
         });
           
 
@@ -644,7 +601,6 @@ export default class PluginAddon extends SceneController {
       this.activeQuadrant = this.u8.units.$get(
         this.u8.worldGrid.fromWorldToGrid(_a2, pos.x, pos.y)
       );
-      this.lastSelectionWeight = "unit";
 
       if (this.secondViewport.enabled) {
         this.secondViewport.enabled = !viewportsAreProximate;
