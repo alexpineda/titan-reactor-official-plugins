@@ -33,7 +33,7 @@ export class CameraTargets {
    */
   dollyTarget = 55;
 
-  #moveTargets: THREE.Vector3[] = [];
+  moveTargets: THREE.Vector3[] = [];
   #maxDistance = 0;
 
   #plugin: PluginAddon;
@@ -47,13 +47,7 @@ export class CameraTargets {
     );
   }
 
-  get moveTargets() {
-    return this.#moveTargets;
-  }
-
-  setMoveTargets(value: THREE.Vector3[], _damping?: number, force?: "smooth" | "cut") {
-    this.#moveTargets = value;
-
+  lookAtMoveTarget(dampingM = 1, force?: "smooth" | "cut") {
     //set damping based on camera origin to move target
     const plugin = this.#plugin;
     plugin.viewport.orbit.getTarget(_a);
@@ -65,7 +59,7 @@ export class CameraTargets {
     // value closer to 0 the farther away the camera is, so if camera is really far, we can have a lower damping as its not as jarring
     const cameraDistanceDampingFactor = 0.2 + easeOut(1 - cameraDistance / plugin.viewport.orbit.maxDistance, 4) * 0.8;
     const damping = originDistanceToTarget * 5 * cameraDistanceDampingFactor + 0.5;
-    plugin.settings.input.dampingFactor.$set(_damping ?? damping);
+    plugin.settings.input.dampingFactor.$set(damping * dampingM);
 
     // modify cut transition promixity based on distance
     const cutProximity = cameraDistance / 4 + CUT_TRANSITION_PROXIMITY_MIN
@@ -98,7 +92,7 @@ export class CameraTargets {
     return _a2;
   })
 
-  moveToUnits(units: Unit[], damping?: number, force?: "smooth" | "cut") {
+  calculateMoveTargetsFromUnits(units: Unit[]) {
     const plugin = this.#plugin;
     const center = this.#calculateUnitPosWeightedCenter(
       _a2,
@@ -114,29 +108,25 @@ export class CameraTargets {
     plugin.pxToWorld.xyz(center.x, center.y, _ma);
     plugin.pxToWorld.xyz(moveCenter.x, moveCenter.y, _mb);
 
-    // plugin.selectedUnits.set(quadrant.items)
-
-    this.setMoveTargets(_ml, damping, force);
-
     return _ml;
 
   }
 
   // todo calc once
   get moveTarget() {
-    if (this.#moveTargets.length > 1) {
+    if (this.moveTargets.length > 1) {
       // lerp between the two targets
       // its "stickier" to the a than to b
-      const a = this.#moveTargets[0];
-      const b = this.#moveTargets[1];
+      const a = this.moveTargets[0];
+      const b = this.moveTargets[1];
       const dist = easeIn(1 - a.distanceTo(b) / this.#maxDistance, 3);
       return _moveTarget.lerpVectors(
-        this.#moveTargets[0],
-        this.#moveTargets[1],
+        this.moveTargets[0],
+        this.moveTargets[1],
         dist
       );
     }
-    return this.#moveTargets[0];
+    return this.moveTargets[0];
   }
 
   adjustDollyToUnitSpread(units: Unit[]) {
@@ -166,7 +156,7 @@ export class CameraTargets {
       plugin.viewport.orbit.zoomTo(1, false);
     }
 
-    const dampSpeed = plugin.targetGameSpeed > 1 ? 0.1 : 0.5;
+    const dampSpeed = plugin.targetGameSpeed > 1 ? 0.01 : 0.05;
     plugin.openBW.setGameSpeed(
       THREE.MathUtils.damp(
         plugin.openBW.gameSpeed,
@@ -193,6 +183,7 @@ export class CameraTargets {
       ),
       false
     );
+
     plugin.viewport.orbit.rotatePolarTo(
       THREE.MathUtils.damp(
         plugin.viewport.orbit.polarAngle,
@@ -218,6 +209,7 @@ export class CameraTargets {
         plugin.viewport.orbit.minPolarAngle +
         Math.random() * THREE.MathUtils.degToRad(plugin.config!.polarVariance);
 
+      // azimuth target is tied to polar target
       this.azimuthTarget =
         [-1, 0, 1][Math.floor(Math.random() * 3)] *
         easeIn((this.polarTarget - plugin.viewport.orbit.minPolarAngle) / THREE.MathUtils.degToRad(plugin.config!.polarVariance), 2) *
