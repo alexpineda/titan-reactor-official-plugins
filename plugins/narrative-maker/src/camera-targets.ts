@@ -67,7 +67,6 @@ export class CameraTargets {
     const damping = originDistanceToTarget * 5 * cameraDistanceDampingFactor + 0.5;
     plugin.settings.input.dampingFactor.$set(_damping ?? damping);
 
-
     // modify cut transition promixity based on distance
     const cutProximity = cameraDistance / 4 + CUT_TRANSITION_PROXIMITY_MIN
 
@@ -142,8 +141,7 @@ export class CameraTargets {
 
   adjustDollyToUnitSpread(units: Unit[]) {
     const plugin = this.#plugin;
-    // multiply by 2 as its barely getting past 0.5 otherwise
-    const cameraAdjustment = getCameraDistance(units, plugin.map.size) * 1.2;
+    const cameraAdjustment = getCameraDistance(units, plugin.map.size);
 
     //todo: this doesnt capture surrounding areas
     this.dollyTarget = THREE.MathUtils.lerp(
@@ -181,12 +179,16 @@ export class CameraTargets {
         plugin.delta / 1000
       )
     );
+
+    //  0-1, 1 is lots of movement on rotation
+    const flow = easeIn((1 + Math.sin(plugin.elapsed / 100_000)) * 0.5, 2);
+    const rotationDamping = flow * 0.09 + 0.01; // 0.01 - 0.1
     
     plugin.viewport.orbit.rotateAzimuthTo(
       THREE.MathUtils.damp(
         plugin.viewport.orbit.azimuthAngle,
         this.azimuthTarget,
-        0.1,
+        rotationDamping, 
         plugin.delta / 1000
       ),
       false
@@ -195,7 +197,7 @@ export class CameraTargets {
       THREE.MathUtils.damp(
         plugin.viewport.orbit.polarAngle,
         this.polarTarget,
-        0.1,
+        rotationDamping,
         plugin.delta / 1000
       ),
       false

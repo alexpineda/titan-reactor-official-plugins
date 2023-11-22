@@ -409,12 +409,7 @@ export default class PluginAddon extends SceneController {
     // trying adhd against unit score only rn
     const weightedScore = (scoreQ * gameLullQ * adhdQ + buildingQ * ( 1 - gameLullQ ) + tensionQ);
     this.u8.wScore.set(quadrant, weightedScore)
-
-    quadrant.userData.active.action = scoreQ;
-    quadrant.userData.active.adhd = adhdQ;
-    quadrant.userData.active.tension = tensionQ;
-    quadrant.userData.active.strategy = buildingQ;
-    quadrant.userData.active.score = weightedScore;
+    return weightedScore;
 
   }
 
@@ -428,10 +423,7 @@ export default class PluginAddon extends SceneController {
       if (a.value.length === 0) return 1;
       if (b.value.length === 0) return -1;
 
-      this.#calcWeighted( a );
-      this.#calcWeighted( b );
-
-      return b.userData.active.score - a.userData.active.score;
+      return this.#calcWeighted( b ) - this.#calcWeighted( a );
 
     });
 
@@ -510,17 +502,14 @@ export default class PluginAddon extends SceneController {
       this.u8.adhd.set(quadrant, 1);
       this.activeQuadrant = quadrant;
 
-      if (quadrant.value.includes(this.strategyQueue[0])) {
-        const building = this.strategyQueue.shift();
-        this.lastSelectedStrategyOwner = building?.owner ?? -1;
+      // strategy buildings that exist in this quadrant
+      const buildings = quadrant.value.filter(u => this.strategyQueue.includes(u));
+      if (buildings.length) {
+        // remove them from the strategy queue
+        this.strategyQueue = this.strategyQueue.filter(u => !buildings.includes(u));
+        this.lastSelectedStrategyOwner = buildings[0].owner ?? -1;
         this.timeSinceLastStrategySelectionMS = this.elapsed;
       }
-
-      quadrant.userData.lastUsed.action = quadrant.userData.active.action;
-      quadrant.userData.lastUsed.adhd = quadrant.userData.active.adhd;
-      quadrant.userData.lastUsed.tension = quadrant.userData.active.tension;
-      quadrant.userData.lastUsed.strategy = quadrant.userData.active.strategy;
-      quadrant.userData.lastUsed.score = quadrant.userData.active.score;
 
     } else if (
       this.cameraFatigue2 < 0
@@ -553,12 +542,12 @@ export default class PluginAddon extends SceneController {
           );
 
           if (this.config.showDebug) {
-            this.#targetObject.position.copy(t[0]);
-            this.#targetObject2.position.copy(t[1]);
-            this.#targetObject.updateMatrix();
-            this.#targetObject.updateMatrixWorld();
-            this.#targetObject2.updateMatrix();
-            this.#targetObject2.updateMatrixWorld();
+            // this.#targetObject.position.copy(t[0]);
+            // this.#targetObject2.position.copy(t[1]);
+            // this.#targetObject.updateMatrix();
+            // this.#targetObject.updateMatrixWorld();
+            // this.#targetObject2.updateMatrix();
+            // this.#targetObject2.updateMatrixWorld();
           }
 
           this.cameraFatigue2 =

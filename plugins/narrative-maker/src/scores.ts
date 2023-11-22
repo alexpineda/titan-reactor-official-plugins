@@ -1,13 +1,13 @@
 import { DecayGrid } from "./structures/decay-grid";
 import { Grid } from "./structures/grid";
 import { GridTransform } from "./structures/grid-transform";
-import { AO_Unit, QuadrantUserData } from "./utils/unit-helpers";
+import { AO_Unit } from "./utils/unit-helpers";
 import { ArrayGridItem, NumericGridItem } from "./structures/grid-item";
 export class ScoreManager {
 
   size: number;
 
-  units: Grid<AO_Unit[], QuadrantUserData>;
+  units: Grid<AO_Unit[]>;
   adhd: DecayGrid;
   action: Grid<number>;
   tension: Grid<number>;
@@ -22,25 +22,7 @@ export class ScoreManager {
 
   constructor(size: number, mapSize: number[]) {
     this.size = size;
-    this.units = new Grid<AO_Unit[], QuadrantUserData>(size, ArrayGridItem);
-    for (const unit of this.units.grid) {
-      unit.userData = {
-        active: {
-          score: 0,
-          action: 0,
-          adhd: 0,
-          tension: 0,
-          strategy: 0,
-        },
-        lastUsed: {
-          score: 0,
-          action: 0,
-          adhd: 0,
-          tension: 0,
-          strategy: 0,
-        }
-      };
-    }
+    this.units = new Grid<AO_Unit[]>(size, ArrayGridItem);
     this.adhd = new DecayGrid(size, NumericGridItem);
     this.action = new Grid(size, NumericGridItem);
     this.tension = new Grid(size, NumericGridItem);

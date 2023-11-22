@@ -60,14 +60,11 @@ export const getCameraDistance = (units: Unit[], mapSize: number[]) => {
   varianceX /= n;
   varianceY /= n;
 
-  // Optional: Normalize the variance by the dimensions of the map
   const normalizedVarianceX =
     varianceX / Math.pow((mapSize[0] * 32) / QUAD_SIZE, 2);
   const normalizedVarianceY =
     varianceY / Math.pow((mapSize[1] * 32) / QUAD_SIZE, 2);
 
-  // Adjust camera distance. This can be a function of normalized variance.
-  // For this example, let's say we linearly scale camera distance
   const cameraDistance = Math.sqrt(normalizedVarianceX + normalizedVarianceY);
 
   return cameraDistance;
