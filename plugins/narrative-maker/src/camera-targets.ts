@@ -33,12 +33,10 @@ export class CameraTargets {
    */
   dollyTarget = 55;
 
-  moveTargets: THREE.Vector3[] = [];
+  moveTarget: THREE.Vector3 = new THREE.Vector3();
   #maxDistance = 0;
 
   #plugin: PluginAddon;
-
-  #zoomEnabledMS: null | number = null;
 
   constructor(plugin: PluginAddon) {
     this.#plugin = plugin;
@@ -80,91 +78,34 @@ export class CameraTargets {
       );
     }
   }
-  #calculateUnitPosWeightedCenter = calculateMedianCenter(unit => unit)
-  #calculateUnitHeadingWeightedCenter = calculateMedianCenter(unit => {
-    const plugin = this.#plugin;
-    if (plugin.assets.bwDat.units[unit.typeId].isBuilding) { 
-      return unit;
-    }
-    const angle = getAngle(unit.currentVelocityDirection);
-    _a2.x = unit.x + Math.cos(angle) * unit.currentSpeed * 64;
-    _a2.y = unit.y + Math.sin(angle) * unit.currentSpeed * 64;
-    return _a2;
-  })
-
-  calculateMoveTargetsFromUnits(units: Unit[]) {
-    const plugin = this.#plugin;
-    const center = this.#calculateUnitPosWeightedCenter(
-      _a2,
-      units,
-    );
-
-    // group by speed, pick biggest speed, if tied, pick biggest speed
-    const moveCenter = this.#calculateUnitHeadingWeightedCenter(
-      _b2,
-      units,
-    );
-
-    plugin.pxToWorld.xyz(center.x, center.y, _ma);
-    plugin.pxToWorld.xyz(moveCenter.x, moveCenter.y, _mb);
-
-    return _ml;
-
-  }
-
-  // todo calc once
-  get moveTarget() {
-    if (this.moveTargets.length > 1) {
-      // lerp between the two targets
-      // its "stickier" to the a than to b
-      const a = this.moveTargets[0];
-      const b = this.moveTargets[1];
-      const dist = easeIn(1 - a.distanceTo(b) / this.#maxDistance, 3);
-      return _moveTarget.lerpVectors(
-        this.moveTargets[0],
-        this.moveTargets[1],
-        dist
-      );
-    }
-    return this.moveTargets[0];
-  }
+  
 
   adjustDollyToUnitSpread(units: Unit[]) {
     const plugin = this.#plugin;
     const cameraAdjustment = getCameraDistance(units, plugin.map.size);
 
-    //todo: this doesnt capture surrounding areas
     this.dollyTarget = THREE.MathUtils.lerp(
       plugin.config!.baseDistance,
       plugin.config!.baseDistance + plugin.config!.distanceVariance,
-      easeOut(cameraAdjustment, 3)
+      easeOut(cameraAdjustment, 2)
     );
-
-    // random zoom
-    if (this.#zoomEnabledMS === null && Math.random() < 0.1) {
-      this.#zoomEnabledMS = plugin.elapsed;
-      plugin.viewport.orbit.zoomTo(1.25 + Math.random() * 0.75, false);
-    }
 
   }
 
   update() {
     const plugin = this.#plugin;
 
-    if (this.#zoomEnabledMS !== null && plugin.elapsed - this.#zoomEnabledMS > 2500) {
-      this.#zoomEnabledMS = null;
-      plugin.viewport.orbit.zoomTo(1, false);
-    }
+    const clampedSpeed = THREE.MathUtils.clamp(
+      plugin.targetGameSpeed,
+      plugin.config.minReplaySpeed,
+      plugin.config.maxReplaySpeed
+    );
 
-    const dampSpeed = plugin.targetGameSpeed > 1 ? 0.01 : 0.05;
+    const dampSpeed = plugin.targetGameSpeed > 1 ? 0.1 : 0.5;
     plugin.openBW.setGameSpeed(
       THREE.MathUtils.damp(
         plugin.openBW.gameSpeed,
-        THREE.MathUtils.clamp(
-          plugin.targetGameSpeed,
-          1,
-          plugin.config.maxReplaySpeed
-        ),
+        clampedSpeed,
         dampSpeed,
         plugin.delta / 1000
       )

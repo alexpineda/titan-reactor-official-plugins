@@ -3,32 +3,34 @@ interface Point {
     y: number;
   }
   
-  export function kMeansClustering(data: Point[], k: number, maxIteratons: number): Point[] {
+export function kMeansClustering<T extends Point>(data: T[], k: number, maxIteratons: number) {
     // Step 1: Initialize centroids
     let centroids: Point[] = [];
     for (let i = 0; i < k; i++) {
-      centroids.push(data[Math.floor(Math.random() * data.length)]);
+        centroids.push(data[Math.floor(Math.random() * data.length)]);
     }
-  
+
     let prevCentroids: Point[] = [];
     let iterations = 0;
-  
+
+    let clusters: T[][] = [];
+
     while (!areCentroidsEqual(centroids, prevCentroids) && iterations++ < maxIteratons) {
-      // Step 2: Assign data points to the nearest centroid
-      const clusters: Point[][] = Array.from({ length: k }, () => []);
-  
-      for (const point of data) {
-        const nearestCentroid = findNearestCentroid(point, centroids);
-        clusters[nearestCentroid].push(point);
-      }
-  
-      // Step 3: Recalculate centroids
-      prevCentroids = [...centroids];
-      centroids = clusters.map(calculateCentroid);
+        // Step 2: Assign data points to the nearest centroid
+        clusters = Array.from({ length: k }, () => []);
+
+        for (const point of data) {
+            const nearestCentroid = findNearestCentroid(point, centroids);
+            clusters[nearestCentroid].push(point);
+        }
+
+        // Step 3: Recalculate centroids
+        prevCentroids = [...centroids];
+        centroids = clusters.map(calculateCentroid);
     }
-  
-    return centroids;
-  }
+
+    return { centroids, clusters };
+}
   
   function areCentroidsEqual(centroids1: Point[], centroids2: Point[]): boolean {
     if (centroids1.length !== centroids2.length) {

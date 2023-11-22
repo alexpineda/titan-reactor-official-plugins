@@ -22,7 +22,7 @@
         },
         "tilt": {
             "folder": "Camera",
-            "label": "Default Polar",
+            "label": "Min Polar",
             "min": 0,
             "max": 45,
             "step": 1,
@@ -30,7 +30,7 @@
         },
         "baseDistance": {
             "folder": "Camera",
-            "label": "Default Distance",
+            "label": "Min Distance",
             "value": 50,
             "min": 30,
             "max": 100,
@@ -39,7 +39,7 @@
         "distanceVariance": {
             "folder": "Camera",
             "label": "Distance Variance",
-            "value": 70,
+            "value": 60,
             "min": 0,
             "max": 100,
             "step": 1
@@ -55,7 +55,7 @@
         "polarVariance": {
             "folder": "Camera",
             "label": "Polar Variance",
-            "value": 35,
+            "value": 45,
             "min": 0,
             "max": 70,
             "step": 1
@@ -79,14 +79,21 @@
         "pipSize": {
             "folder": "PIP",
             "label": "PIP Size",
-            "value": 400,
+            "value": 350,
             "min": 100,
-            "max": 800,
+            "max": 600,
             "step": 25
+        },
+        "minReplaySpeed": {
+            "label": "Min Replay Speed",
+            "value": 1.5,
+            "min": 1,
+            "max": 16,
+            "step": 1
         },
         "maxReplaySpeed": {
             "label": "Max Replay Speed",
-            "value": 4,
+            "value": 8,
             "min": 1,
             "max": 32,
             "step": 1
@@ -102,7 +109,7 @@
         "weightsTension": {
             "folder": "Weights",
             "label": "Tension",
-            "value": 0,
+            "value": 1,
             "min": 0,
             "max": 100,
             "step": 0.1
@@ -110,7 +117,7 @@
         "weightsStrategy": {
             "folder": "Weights",
             "label": "Strategy",
-            "value": 0,
+            "value": 1,
             "min": 0,
             "max": 100,
             "step": 0.1

@@ -10,6 +10,8 @@ import {
   Quadrant,
   canOnlySelectOne,
   canSelectUnit,
+  getAverageUnitDirectionAndSpeed,
+  getUnitsFromLargestRepresentedTeam,
   isHarvesting,
   isTownCenter,
   isWorkerUnit,
@@ -17,18 +19,26 @@ import {
 } from "./utils/unit-helpers";
 import { PIP_PROXIMITY, POLAR_MIN, QUAD_SIZE } from "./utils/constants";
 import { CameraTargets } from "./camera-targets";
-import { calcCoeff, easeInSine } from "./utils/math-utils";
+import {
+  calcCoeff,
+  easeIn,
+  easeInSine,
+  moveVectorByAngleAndMagnitude,
+} from "./utils/math-utils";
 import {
   buildingUnitRanks,
   regularOrderRanks,
   regularUnitRanks,
 } from "./unit-interest/rankings";
 
-import { createNoise2D } from "simplex-noise";
-import alea from "alea";
 import { ScoreManager } from "./scores";
 import { createUnitScoreCalculator } from "./unit-interest/unit-score-calculator";
-import { kMeansClustering } from "./structures/kmeans";
+import {
+  getClusters,
+  getScoreUnitsNearCluster,
+  getUnitsNearCluster,
+  unitScoreReducer,
+} from "./utils/kmeans-utils";
 
 const _a4 = new THREE.Vector4(0, 0, 0, 0);
 const _b4 = new THREE.Vector4(0, 0, 0, 0);
@@ -70,8 +80,8 @@ export default class PluginAddon extends SceneController {
   lastTimeGameStartedActionMS = 0;
   lastTimeGameStartedLullMS = 0;
   activeQuadrant: Quadrant | undefined;
-  cameraFatigue = 0;
-  cameraFatigue2 = 0;
+  gridCameraFatigue = 0;
+  trackingCameraFatigue = 0;
   cameraFatigueAdjustmentTimeoutMS = 0;
 
   #targetObject = new THREE.Mesh(
@@ -95,17 +105,17 @@ export default class PluginAddon extends SceneController {
     this.lastTimeGameStartedActionMS = 0;
     this.lastTimeGameStartedLullMS = 0;
 
-    this.cameraFatigue = 0;
-    this.cameraFatigue2 = 0;
+    this.gridCameraFatigue = 0;
+    this.trackingCameraFatigue = 0;
 
     this.activeQuadrant = undefined;
-    this.targetGameSpeed = 1;
+    this.targetGameSpeed = this.config.minReplaySpeed;
   }
 
   public async onEnterScene(prevData: PrevSceneData) {
     this.targets = new CameraTargets(this);
 
-    this.targets.moveTargets = [prevData.target];
+    this.targets.moveTarget.copy(prevData.target);
     this.targets.lookAtMoveTarget();
 
     this.parent.add(this.#targetObject);
@@ -128,7 +138,7 @@ export default class PluginAddon extends SceneController {
 
         this.lastUnitDestroyedMS = this.elapsed;
 
-        this.adjustCameraFatigueBasedOnRecentAction(unit, 2, 3);
+        this.adjustCameraFatigueBasedOnRecentAction(unit, 20, 1000);
       },
       -1
     );
@@ -167,7 +177,7 @@ export default class PluginAddon extends SceneController {
           this.selectedUnits.add(unit);
         }
 
-        this.adjustCameraFatigueBasedOnRecentAction(unit, 2, 3);
+        this.adjustCameraFatigueBasedOnRecentAction(unit, 20, 500);
       } else if (this.config.autoSelectUnits) {
         this.selectedUnits.delete(unit);
       }
@@ -185,14 +195,14 @@ export default class PluginAddon extends SceneController {
 
     this.events.on("selected-units-changed", (units) => {
       if (!this.config.autoSelectUnits && units.length) {
-        this.cameraFatigue += 3000;
-        this.cameraFatigue2 += 500;
+        this.gridCameraFatigue += 3000;
+        this.trackingCameraFatigue += 500;
       }
     });
   }
 
   // adjust (detract) camera fatigue based on recent action
-  adjustCameraFatigueBasedOnRecentAction(unit: Unit, f1: number, f2: number) {
+  adjustCameraFatigueBasedOnRecentAction(unit: Unit, distanceFactor: number, scoreDeltaFactor: number) {
     if (
       this.elapsed > this.cameraFatigueAdjustmentTimeoutMS + 100 &&
       this.activeQuadrant
@@ -209,9 +219,9 @@ export default class PluginAddon extends SceneController {
         ) - this.u8.action.get(this.activeQuadrant);
       // we tweak the magnitude by how much there is a score difference
       if (delta > 0) {
-        adjustment = -dist * (f1 + delta * f2);
+        adjustment = -dist * (distanceFactor + delta * scoreDeltaFactor);
       }
-      this.cameraFatigue += adjustment;
+      this.gridCameraFatigue += adjustment;
       this.cameraFatigueAdjustmentTimeoutMS = this.elapsed;
     }
   }
@@ -247,14 +257,14 @@ export default class PluginAddon extends SceneController {
   onTick(delta: number) {
     this.targets.update();
 
-    this.cameraFatigue -= delta;
-    this.cameraFatigue2 -= delta;
+    this.gridCameraFatigue -= delta;
+    this.trackingCameraFatigue -= delta;
 
     if (
       this.elapsed < this.lastUnitAttackedMS + 500 / this.openBW.gameSpeed ||
       this.elapsed < this.lastUnitDestroyedMS + 3_000 / this.openBW.gameSpeed
     ) {
-      this.targetGameSpeed = 1;
+      this.targetGameSpeed = this.config.minReplaySpeed;
       this.lastTimeGameStartedActionMS = this.elapsed;
     } else {
       this.targetGameSpeed = THREE.MathUtils.damp(
@@ -381,7 +391,6 @@ export default class PluginAddon extends SceneController {
         const unitScore = this.unitScore(unit);
         sumScore += unitScore;
 
-        //todo: if nexus and tension, make it 10
         _teams[unit.owner] += unitScore;
 
         (unit as AO_Unit).extras.autoObserver.score = unitScore;
@@ -454,8 +463,8 @@ export default class PluginAddon extends SceneController {
         targetSpeed: this.targetGameSpeed,
 
         state: {
-          cameraFatigue: this.cameraFatigue,
-          cameraFatigue2: this.cameraFatigue2,
+          cameraFatigue: this.gridCameraFatigue,
+          cameraFatigue2: this.trackingCameraFatigue,
           elapsed: this.elapsed,
           frame,
           lastTimeGameStartedLullMS: this.lastTimeGameStartedLullMS,
@@ -480,7 +489,8 @@ export default class PluginAddon extends SceneController {
       });
     }
 
-    if (this.cameraFatigue < 0) {
+    // update to a new grid area of focus
+    if (this.gridCameraFatigue < 0) {
       // update scores
       this.#updateStrategy();
       this.#updateScores();
@@ -490,40 +500,52 @@ export default class PluginAddon extends SceneController {
 
       this.viewport.orbit.getTarget(_c3);
 
-      // activate quadrant
       const moveToUnits = quadrant.value.filter(this.uf_NonHarvesting);
-      // sometimes in strategy moveToUnits is empty, figure out why bruh
-      // const t = this.targets.calculateMoveTargetsFromUnits(
-      //   moveToUnits.length > 0 ? moveToUnits : quadrant.value
-      // );
 
-      if (moveToUnits.length) { 
-        const clusters = kMeansClustering(moveToUnits, 2, 10);
-        this.pxToWorld.xyz(clusters[0].x, clusters[0].y, _a3)
-        this.pxToWorld.xyz(clusters[0].x, clusters[0].y, _b3)
+      if (moveToUnits.length) {
+        const {
+          centroids: { a: clA, b: clB },
+          clusters: { a: clAUnits, b: clBUnits },
+        } = getClusters(this, moveToUnits);
 
-        // if we're close by, let camera fatigue 2 continue to handle it
-        if (_a3.distanceTo(_c3) > 10) {
-        // if (t[0].distanceTo(_c3) > 10) {
-          this.targets.moveTargets = [_a3.clone()];
+        // if we're far enough away we'll switch focus to the new targets
+        // otherwise, let tracking camera continue to handle it
+        if (clA.distanceTo(_c3) > 10) {
+          // pick higher score cluster
+          const scoreA = clAUnits.reduce(unitScoreReducer, 0);
+          const scoreB = clBUnits.reduce(unitScoreReducer, 0);
+
+          const cl = scoreA > scoreB ? clA : clB;
+          const clU = scoreA > scoreB ? clAUnits : clBUnits;
+
+          const movement = getAverageUnitDirectionAndSpeed(clU);
+          moveVectorByAngleAndMagnitude(
+            _a3.copy(cl),
+            movement.angle,
+            movement.speed
+          );
+
+          this.targets.moveTarget.copy(_a3.lerp(cl, 0.5));
           this.targets.lookAtMoveTarget();
+        }
+
+        if (this.config.showDebug) {
+          this.#targetObject.position.copy(clA);
+          this.#targetObject2.position.copy(clB);
+          this.#targetObject.updateMatrix();
+          this.#targetObject.updateMatrixWorld();
+          this.#targetObject2.updateMatrix();
+          this.#targetObject2.updateMatrixWorld();
         }
       }
 
-      this.#targetObject.position.copy(_a3);
-      this.#targetObject2.position.copy(_b3);
-      this.#targetObject.updateMatrix();
-      this.#targetObject.updateMatrixWorld();
-      this.#targetObject2.updateMatrix();
-      this.#targetObject2.updateMatrixWorld();
+      const lowUnitCountPenalty =
+        (1 - THREE.MathUtils.clamp(quadrant.value.length / 5, 0, 1)) * 4000;
 
-      const lowUnitCountPenalty = (1 - THREE.MathUtils.clamp(quadrant.value.length / 5, 0, 1)) * 4000;
-
-      this.cameraFatigue =
+      this.gridCameraFatigue =
         4000 / this.openBW.gameSpeed +
-        this.targets.moveTarget.distanceTo(_c3) * 50 +
-        4_000 * (1 - Math.min(1, frame / 4000)) - lowUnitCountPenalty;
-      this.cameraFatigue2 = 500 / this.openBW.gameSpeed;
+        this.targets.moveTarget.distanceTo(_c3) * 50 - lowUnitCountPenalty;
+      this.trackingCameraFatigue = 500 / this.openBW.gameSpeed;
 
       this.targets.adjustDollyToUnitSpread(quadrant.value);
 
@@ -544,65 +566,81 @@ export default class PluginAddon extends SceneController {
         this.lastSelectedStrategyOwner = buildings[0].owner ?? -1;
         this.timeSinceLastStrategySelectionMS = this.elapsed;
       }
-    } else if (this.cameraFatigue2 < 0) {
       // keep moving focus to nearby stuff to keep the camera active
+    } else if (this.trackingCameraFatigue < 0) {
       this.viewport.orbit.getTarget(_c3);
-      const nearbyUnits = this.u8.units
+
+      const nearbyUnits = getUnitsNearCluster(this, this.u8.units
         .getNearbyList(
           [],
           this.u8.worldGrid.fromWorldToGrid(_a2, _c3.x, _c3.z),
           1
         )
-        .flat();
-        
-      const maxScore = Math.max(...nearbyUnits.map(unit => unit.extras.autoObserver.score));
+        .flat(), _c3, 10).filter(this.uf_NonHarvesting);
 
-      const moveToUnits = nearbyUnits.filter(unit => {
-          return this.uf_NonHarvesting(unit) && (maxScore === 0 ||  unit.extras.autoObserver.score > maxScore * 0.25);
-        });
+      // const maxScore = Math.max(
+      //   ...nearbyUnits.map((unit) => unit.extras.autoObserver.score)
+      // );
 
+      // const moveToUnits = nearbyUnits.filter((unit) => {
+      //   return (
+      //     this.uf_NonHarvesting(unit) &&
+      //     (maxScore === 0 || unit.extras.autoObserver.score > maxScore * 0.25)
+      //   );
+      // });
 
+      const moveToUnits = nearbyUnits;
       if (moveToUnits.length) {
-        const clusters = kMeansClustering(moveToUnits, 2, 10);
-        this.pxToWorld.xyz(clusters[0].x, clusters[0].y, _a3)
-        this.pxToWorld.xyz(clusters[1].x, clusters[1].y, _b3)
+        const {
+          centroids: { a: clA, b: clB },
+          clusters: { a: clAUnits, b: clBUnits },
+        } = getClusters(this, moveToUnits);
 
-        if (_a3.distanceTo(_b3) > 5) {
-          const da = _c3.distanceTo(_a3);
-          const db = _c3.distanceTo(_b3);
-          this.targets.moveTargets = [da < db ? _a3.clone() : _b3.clone()];
-        } else {
-          this.targets.moveTargets = [_a3.clone()];
-          //this.targets.calculateMoveTargetsFromUnits(moveToUnits);
-        }
-        this.targets.lookAtMoveTarget(5, "smooth");
+        const scoreA = clAUnits.reduce(unitScoreReducer, 0);
+        const scoreB = clBUnits.reduce(unitScoreReducer, 0);
 
-        if (this.config.showDebug) {
+        const cl = scoreA > scoreB ? clA : clB;
+        const clU = scoreA > scoreB ? clAUnits : clBUnits;
+        
+        const units = getUnitsFromLargestRepresentedTeam(clU); 
+        const movement = getAverageUnitDirectionAndSpeed(units);
+        moveVectorByAngleAndMagnitude(
+          _a3.copy(cl),
+          movement.angle,
+          movement.speed
+        );
 
-          if (clusters[0]) {
-            this.pxToWorld.xyz(clusters[0].x, clusters[0].y, _a3)
-            this.#targetObject.position.copy(_a3);
-          }
-          if (clusters[1]) {
-            this.pxToWorld.xyz(clusters[1].x, clusters[1].y, _a3)
-            this.#targetObject2.position.copy(_a3);
-          }
-          // this.#targetObject.position.copy(t[0]);
-          // this.#targetObject2.position.copy(t[1]);
-          this.#targetObject.updateMatrix();
-          this.#targetObject.updateMatrixWorld();
-          this.#targetObject2.updateMatrix();
-          this.#targetObject2.updateMatrixWorld();
-        }
+        this.targets.moveTarget.copy(_a3);
 
-        this.cameraFatigue2 =
-          300 / this.openBW.gameSpeed +
-          this.targets.moveTarget.distanceTo(_c3) * 20;
+        // 1 = low speed, 0 = high speed
+        const speedFactor = 1 - (THREE.MathUtils.clamp(movement.speed, 0, 10) / 10);
+
+        // 1 = far distance, 0 = close distance
+        const d =  THREE.MathUtils.clamp(_a3.distanceTo(_c3), 1, 10) / 10;
+        // farther we are from target, the faster we move
+        const d2 = 1 + 4 * (1 - d) + speedFactor * 2;
+        this.targets.lookAtMoveTarget(d2 / this.openBW.gameSpeed, "smooth");
+        // if we are moving quickly, add to main camera so we dont jump cut mid move
+        this.gridCameraFatigue += (easeIn(d, 3) * 2000) / this.openBW.gameSpeed; 
+
+        // debug only
+        this.#targetObject.position.copy(cl);
+        this.#targetObject2.position.copy(_a3);
+        this.#targetObject.updateMatrix();
+        this.#targetObject.updateMatrixWorld();
+        this.#targetObject2.updateMatrix();
+        this.#targetObject2.updateMatrixWorld();
+
+        const lowSpeedBoost = speedFactor * 400;
+
+        this.trackingCameraFatigue =
+          (300 / this.openBW.gameSpeed +
+          this.targets.moveTarget.distanceTo(_c3) * 20 + lowSpeedBoost) 
       }
     }
 
     if (this.frame < 30 * 24) {
-      this.targetGameSpeed = 1;
+      this.targetGameSpeed = this.config.minReplaySpeed;
     }
 
     this.u8.units.clear();
@@ -624,13 +662,10 @@ export default class PluginAddon extends SceneController {
     if (mouseButton === 0) {
       this.viewport.orbit.getTarget(_c3);
       const target = _a3.set(pos.x, 0, pos.y).clone();
-      this.targets.moveTargets = [target];
-      this.targets.lookAtMoveTarget(
-        undefined,
-        isDragStart ? "cut" : "smooth"
-      );
-      this.cameraFatigue = 8000;
-      this.cameraFatigue2 = 200;
+      this.targets.moveTarget.copy(target);
+      this.targets.lookAtMoveTarget(undefined, isDragStart ? "cut" : "smooth");
+      this.gridCameraFatigue = 8000;
+      this.trackingCameraFatigue = 200;
 
       this.activeQuadrant = this.u8.units.$get(
         this.u8.worldGrid.fromWorldToGrid(_a2, pos.x, pos.y)

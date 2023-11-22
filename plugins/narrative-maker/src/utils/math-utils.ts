@@ -228,3 +228,24 @@ function calculateMedian(values: number[]) {
     return values[middleIndex];
   }
 }
+
+export function getAverageAngle(angles: number[]): number {
+  let sumX = 0;
+  let sumY = 0;
+
+  for (const angle of angles) {
+      sumX += Math.cos(angle);
+      sumY += Math.sin(angle);
+  }
+
+  let avgX = sumX / angles.length;
+  let avgY = sumY / angles.length;
+
+  return Math.atan2(avgY, avgX);
+}
+
+export function moveVectorByAngleAndMagnitude(out: THREE.Vector3, angle: number, mag: number) {
+  out.x = out.x + Math.cos(angle) * mag;
+  out.z = out.z + Math.sin(angle) * mag;
+  return out;
+}
