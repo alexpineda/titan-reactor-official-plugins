@@ -2,6 +2,7 @@ import { Unit } from "@titan-reactor-runtime/host";
 import { areProximate } from "./utils/camera-utils";
 import {
   calculateMedianCenter,
+  clamp,
   easeIn,
   easeOut,
   getAngle,
@@ -95,7 +96,7 @@ export class CameraTargets {
   update() {
     const plugin = this.#plugin;
 
-    const clampedSpeed = THREE.MathUtils.clamp(
+    const clampedSpeed = clamp(
       plugin.targetGameSpeed,
       plugin.config.minReplaySpeed,
       plugin.config.maxReplaySpeed

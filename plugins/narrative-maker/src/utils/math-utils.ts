@@ -245,7 +245,24 @@ export function getAverageAngle(angles: number[]): number {
 }
 
 export function moveVectorByAngleAndMagnitude(out: THREE.Vector3, angle: number, mag: number) {
-  out.x = out.x + Math.cos(angle) * mag;
-  out.z = out.z + Math.sin(angle) * mag;
+  out.x = out.x + Math.sin(angle) * mag;
+  out.z = out.z + Math.cos(angle) * mag;
   return out;
+}
+
+
+export const normalizeWorldDistance = (a: THREE.Vector3, b: THREE.Vector3, maxDistance: number, abs = true) => {
+  if (abs) {
+    return clamp(Math.abs(a.distanceTo(b)) / maxDistance, 0, 1);
+  } else {
+    return clamp(a.distanceTo(b) / maxDistance, -1, 1);
+  }
+}
+
+export const clamp = (value: number, min: number, max: number) => {
+  return Math.min(Math.max(value, min), max);
+}
+
+export const constrain = (value: number, min: number, max: number) => {
+  return clamp(value, min, max) / (max - min);
 }

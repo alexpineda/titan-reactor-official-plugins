@@ -1,3 +1,4 @@
+import { clamp } from "../utils/math-utils";
 import { GridItem } from "./grid-item";
 
 
@@ -15,7 +16,13 @@ export class Grid<T, U = any> {
   }
 
   getIndex(x: number, y: number) {
-    return y * this.size + x;
+    const _x = clamp(x, 0, this.size - 1);
+    const _y = clamp(y, 0, this.size - 1);
+
+    if (x !== _x || y !== _y) {
+      console.warn(`Grid index out of bounds: (${x}, ${y})`);
+    }
+    return _y * this.size + _x
   }
   
   /**

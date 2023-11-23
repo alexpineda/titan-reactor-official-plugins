@@ -21,9 +21,12 @@ import { PIP_PROXIMITY, POLAR_MIN, QUAD_SIZE } from "./utils/constants";
 import { CameraTargets } from "./camera-targets";
 import {
   calcCoeff,
+  clamp,
+  constrain,
   easeIn,
   easeInSine,
   moveVectorByAngleAndMagnitude,
+  normalizeWorldDistance,
 } from "./utils/math-utils";
 import {
   buildingUnitRanks,
@@ -35,7 +38,6 @@ import { ScoreManager } from "./scores";
 import { createUnitScoreCalculator } from "./unit-interest/unit-score-calculator";
 import {
   getClusters,
-  getScoreUnitsNearCluster,
   getUnitsNearCluster,
   unitScoreReducer,
 } from "./utils/kmeans-utils";
@@ -51,8 +53,13 @@ const _a2 = new THREE.Vector2(0, 0);
 const _b2 = new THREE.Vector2(0, 0);
 const _c2 = new THREE.Vector2(0, 0);
 
+const allUnitRanks = [buildingUnitRanks.flat(), ...regularUnitRanks];
+const allUnitRanksFlat = allUnitRanks.flat();
+
+const _unitClusterA: AO_Unit[][] = [];
+
 const unitOfInterest = (unit: Unit) =>
-  !unit.extras.dat.isResourceContainer && unit.owner < 8 && canSelectUnit(unit);
+   unit.owner < 8 && canSelectUnit(unit) && allUnitRanksFlat.includes(unit.typeId);
 
 export default class PluginAddon extends SceneController {
   viewportsCount = 2;
@@ -60,7 +67,7 @@ export default class PluginAddon extends SceneController {
   u8!: ScoreManager;
   targets!: CameraTargets;
   unitScore = createUnitScoreCalculator({
-    unitRanks: [buildingUnitRanks.flat(), ...regularUnitRanks],
+    unitRanks: allUnitRanks,
     unitRankCurve: easeInSine,
     orderRanks: regularOrderRanks,
     orderRankCurve: (t) => 0.1 + (t - 0.1), // minimum 0.1
@@ -138,7 +145,7 @@ export default class PluginAddon extends SceneController {
 
         this.lastUnitDestroyedMS = this.elapsed;
 
-        this.adjustCameraFatigueBasedOnRecentAction(unit, 20, 1000);
+        this.adjustCameraFatigueBasedOnRecentAction(unit, 20 );
       },
       -1
     );
@@ -177,7 +184,7 @@ export default class PluginAddon extends SceneController {
           this.selectedUnits.add(unit);
         }
 
-        this.adjustCameraFatigueBasedOnRecentAction(unit, 20, 500);
+        this.adjustCameraFatigueBasedOnRecentAction(unit, 10 );
       } else if (this.config.autoSelectUnits) {
         this.selectedUnits.delete(unit);
       }
@@ -195,16 +202,16 @@ export default class PluginAddon extends SceneController {
 
     this.events.on("selected-units-changed", (units) => {
       if (!this.config.autoSelectUnits && units.length) {
-        this.gridCameraFatigue += 3000;
-        this.trackingCameraFatigue += 500;
+        // this.gridCameraFatigue += 3000;
+        // this.trackingCameraFatigue += 500;
       }
     });
   }
 
   // adjust (detract) camera fatigue based on recent action
-  adjustCameraFatigueBasedOnRecentAction(unit: Unit, distanceFactor: number, scoreDeltaFactor: number) {
+  adjustCameraFatigueBasedOnRecentAction(unit: Unit, distanceFactor: number) {
     if (
-      this.elapsed > this.cameraFatigueAdjustmentTimeoutMS + 100 &&
+      this.elapsed > this.cameraFatigueAdjustmentTimeoutMS + 25 &&
       this.activeQuadrant
     ) {
       // if action is happening across the map, decrease camera fatigue
@@ -219,7 +226,7 @@ export default class PluginAddon extends SceneController {
         ) - this.u8.action.get(this.activeQuadrant);
       // we tweak the magnitude by how much there is a score difference
       if (delta > 0) {
-        adjustment = -dist * (distanceFactor + delta * scoreDeltaFactor);
+        adjustment = -dist * distanceFactor * delta;
       }
       this.gridCameraFatigue += adjustment;
       this.cameraFatigueAdjustmentTimeoutMS = this.elapsed;
@@ -489,8 +496,9 @@ export default class PluginAddon extends SceneController {
       });
     }
 
-    // update to a new grid area of focus
-    if (this.gridCameraFatigue < 0) {
+    // update to a new grid area of focus, 1 second minimum between updates
+    // it should rarely happen that fatigue drops that fast though
+    if (this.gridCameraFatigue < 0 && this.elapsed > this.lastActiveQuadrantUpdateMS + 1000) {
       // update scores
       this.#updateStrategy();
       this.#updateScores();
@@ -540,7 +548,7 @@ export default class PluginAddon extends SceneController {
       }
 
       const lowUnitCountPenalty =
-        (1 - THREE.MathUtils.clamp(quadrant.value.length / 5, 0, 1)) * 4000;
+        (1 - clamp(quadrant.value.length / 5, 0, 1)) * 4000;
 
       this.gridCameraFatigue =
         4000 / this.openBW.gameSpeed +
@@ -569,25 +577,15 @@ export default class PluginAddon extends SceneController {
       // keep moving focus to nearby stuff to keep the camera active
     } else if (this.trackingCameraFatigue < 0) {
       this.viewport.orbit.getTarget(_c3);
+      const quadrant = this.u8.worldGrid.fromWorldToGrid(_a2, _c3.x, _c3.z);
 
       const nearbyUnits = getUnitsNearCluster(this, this.u8.units
         .getNearbyList(
-          [],
-          this.u8.worldGrid.fromWorldToGrid(_a2, _c3.x, _c3.z),
+          _unitClusterA,
+          quadrant,
           1
         )
         .flat(), _c3, 10).filter(this.uf_NonHarvesting);
-
-      // const maxScore = Math.max(
-      //   ...nearbyUnits.map((unit) => unit.extras.autoObserver.score)
-      // );
-
-      // const moveToUnits = nearbyUnits.filter((unit) => {
-      //   return (
-      //     this.uf_NonHarvesting(unit) &&
-      //     (maxScore === 0 || unit.extras.autoObserver.score > maxScore * 0.25)
-      //   );
-      // });
 
       const moveToUnits = nearbyUnits;
       if (moveToUnits.length) {
@@ -596,12 +594,23 @@ export default class PluginAddon extends SceneController {
           clusters: { a: clAUnits, b: clBUnits },
         } = getClusters(this, moveToUnits);
 
+        const nearA = 1 - normalizeWorldDistance(clA, _c3, 10);
+        const nearB = 1 - normalizeWorldDistance(clB, _c3, 10);
+
+        const mvmtA = getAverageUnitDirectionAndSpeed(clAUnits);
+        const mvmtB = getAverageUnitDirectionAndSpeed(clBUnits);
+
         const scoreA = clAUnits.reduce(unitScoreReducer, 0);
         const scoreB = clBUnits.reduce(unitScoreReducer, 0);
+        const maxScore = Math.max(scoreA, scoreB);
 
-        const cl = scoreA > scoreB ? clA : clB;
-        const clU = scoreA > scoreB ? clAUnits : clBUnits;
-        
+        const weightA = (scoreA / maxScore) * nearA + constrain(mvmtA.speed, 0, 10) * 2;
+        const weightB = (scoreB / maxScore) * nearB + constrain(mvmtB.speed, 0, 10) * 2;
+
+        const cl = weightA > weightB ? clA : clB;
+        const clU = weightA > weightB ? clAUnits : clBUnits;
+        const clOther = weightA > weightB ? clB : clA;
+
         const units = getUnitsFromLargestRepresentedTeam(clU); 
         const movement = getAverageUnitDirectionAndSpeed(units);
         moveVectorByAngleAndMagnitude(
@@ -610,13 +619,18 @@ export default class PluginAddon extends SceneController {
           movement.speed
         );
 
+        // if there is tension, bias towards inbetween clusters
+        _a3.lerp(clOther, this.u8.tension.get(quadrant) * 0.5);
+
+        this.selectedUnits.set(units);
+
         this.targets.moveTarget.copy(_a3);
 
         // 1 = low speed, 0 = high speed
-        const speedFactor = 1 - (THREE.MathUtils.clamp(movement.speed, 0, 10) / 10);
+        const speedFactor = 1 - (clamp(movement.speed, 0, 10) / 10);
 
         // 1 = far distance, 0 = close distance
-        const d =  THREE.MathUtils.clamp(_a3.distanceTo(_c3), 1, 10) / 10;
+        const d = clamp(_a3.distanceTo(_c3), 1, 10) / 10;
         // farther we are from target, the faster we move
         const d2 = 1 + 4 * (1 - d) + speedFactor * 2;
         this.targets.lookAtMoveTarget(d2 / this.openBW.gameSpeed, "smooth");

@@ -130,6 +130,7 @@ export const getAverageUnitDirectionAndSpeed = (units: AO_Unit[]) => {
     return _avgResult;
   }
 
+  _angles.length = 0;
   let _speed = 0;
   for (const unit of units) {
     _angles.push(getAngle(unit.direction));
@@ -159,7 +160,7 @@ export const getUnitsFromLargestRepresentedTeam = (units: AO_Unit[]) => {
   }
 
   // gaps in team owner ids will be undefined, so filter them out
-  const largestTeam = _teams.filter(x => x).reduce((a, b) => a.length > b.length ? a : b, units);
+  const largestTeam = _teams.filter(x => x).reduce((a, b) => a.length > b.length ? a : b, []);
 
   return largestTeam;
 
