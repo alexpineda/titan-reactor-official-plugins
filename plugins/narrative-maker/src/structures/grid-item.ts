@@ -1,5 +1,5 @@
 
-export interface GridItem<T, U = any> { value: T, x: number, y: number, clear(): void, userData: U };
+export interface GridItem<T, U = any> { value: T, x: number, y: number, clear(): void, copy(v: T): void, userData: U };
 
 export class GridItemGeneric<T, U = any> {
   value: T;
@@ -20,6 +20,10 @@ export class GridItemGeneric<T, U = any> {
     this.value = this.#genDefault();
   }
 
+  copy(v: T) {
+    this.value = v;
+  }
+
 }
 
 export class NumericGridItem<U = any> extends GridItemGeneric<number, U> {
@@ -35,5 +39,10 @@ export class ArrayGridItem<T, U = any> extends GridItemGeneric<T[], U> {
 
   override clear() {
     this.value.length = 0;
+  }
+
+  override copy(v: T[]) {
+    this.value.length = 0;
+    this.value.push(...v);
   }
 }

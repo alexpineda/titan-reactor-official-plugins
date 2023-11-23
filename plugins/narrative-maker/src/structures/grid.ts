@@ -60,6 +60,14 @@ export class Grid<T, U = any> {
     return arr;
   }
 
+  copy(grid: Grid<T, U>) {
+    if (this.grid.length !== grid.grid.length) {
+      throw new Error("Grids must be the same size");
+    }
+    for (let i = 0; i < this.grid.length; i++) {
+      this.grid[i].copy(grid.grid[i] as T);
+    }
+  }
 
   *getNearby(xy: {x: number, y: number}, radius = 0) {
 
@@ -75,4 +83,5 @@ export class Grid<T, U = any> {
       }
     }
   }
+
 }

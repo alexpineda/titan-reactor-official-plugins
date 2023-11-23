@@ -27,6 +27,7 @@ import {
   easeInSine,
   moveVectorByAngleAndMagnitude,
   normalizeWorldDistance,
+  standardDeviation,
 } from "./utils/math-utils";
 import {
   buildingUnitRanks,
@@ -34,7 +35,7 @@ import {
   regularUnitRanks,
 } from "./unit-interest/rankings";
 
-import { ScoreManager } from "./scores";
+import { ScoreManager, TensionManager } from "./scores";
 import { createUnitScoreCalculator } from "./unit-interest/unit-score-calculator";
 import {
   getClusters,
@@ -65,6 +66,7 @@ export default class PluginAddon extends SceneController {
   viewportsCount = 2;
 
   u8!: ScoreManager;
+  t5!: TensionManager;
   targets!: CameraTargets;
   unitScore = createUnitScoreCalculator({
     unitRanks: allUnitRanks,
@@ -102,6 +104,7 @@ export default class PluginAddon extends SceneController {
 
   #reset() {
     this.u8.clear();
+    this.t5.clear();
     this.strategyQueue.length = 0;
 
     this.lastActiveQuadrantUpdateMS = 0;
@@ -119,6 +122,8 @@ export default class PluginAddon extends SceneController {
     this.targetGameSpeed = this.config.minReplaySpeed;
   }
 
+  #maxDistance = 0;
+
   public async onEnterScene(prevData: PrevSceneData) {
     this.targets = new CameraTargets(this);
 
@@ -129,6 +134,11 @@ export default class PluginAddon extends SceneController {
     this.parent.add(this.#targetObject2);
 
     this.u8 = new ScoreManager(QUAD_SIZE, this.map.size);
+    this.t5 = new TensionManager(5, this.map.size);
+
+    this.#maxDistance = Math.sqrt(
+      Math.pow(this.map.size[0], 2) + Math.pow(this.map.size[1], 2)
+    );
 
     this.#reset();
 
@@ -389,23 +399,19 @@ export default class PluginAddon extends SceneController {
   #updateScores() {
     let maxScore = 0;
 
+
     for (const quadrant of this.u8.units.grid) {
       let sumScore = 0;
 
-      const _teams = new Array(8).fill(0);
 
       for (const unit of quadrant.value) {
         const unitScore = this.unitScore(unit);
         sumScore += unitScore;
 
-        _teams[unit.owner] += unitScore;
-
         (unit as AO_Unit).extras.autoObserver.score = unitScore;
       }
 
-      const tension = calcCoeff(_teams.filter((_, i) => this.players.get(i)));
       this.u8.action.set(quadrant, sumScore);
-      this.u8.tension.set(quadrant, tension);
 
       if (sumScore > maxScore) {
         maxScore = sumScore;
@@ -424,6 +430,52 @@ export default class PluginAddon extends SceneController {
     for (const quadrant of this.u8.units.grid) {
       this.u8.action.set(quadrant, this.u8.action.get(quadrant) / maxScore);
     }
+
+  }
+
+  #updateTension() {
+    for (const quadrant of this.u8.units.grid) {
+
+      const _teams = new Array(8).fill(0);
+      for (const unit of quadrant.value) {
+        const unitScore = this.unitScore(unit);
+        _teams[unit.owner] += unitScore;
+      }
+
+      const tension = calcCoeff(_teams.filter((_, i) => this.players.get(i)));
+      this.u8.tension.set(quadrant, tension);
+
+      this.t5.world8.fromWorldToGrid(_a2, quadrant.x, quadrant.y);
+      this.t5.prevTension.$get(_a2).value.push(tension);
+
+      if (this.t5.prevTension.$get(_a2).value.length > 10) {
+        this.t5.prevTension.$get(_a2).value.shift();
+      }
+
+    }
+
+    let _tensionI = 0, tc = 0;
+
+    for (const g of this.t5.prevTension.grid  ) {
+      const tensionStd = standardDeviation(this.t5.prevTension.get(g));
+
+      if (tensionStd === 0) continue;
+
+      this.viewport.orbit.getTarget(_c3);
+      this.t5.worldGrid.fromGridToWorld(_a2, g.x, g.y);
+      _a3.set(_a2.x, 0, _a2.y);
+
+      const d = normalizeWorldDistance(_a3, _c3, this.#maxDistance / 2)
+
+      _tensionI += (tensionStd * d)  
+      tc++;
+
+    }
+
+    if (tc === 0) return 0;
+
+    return _tensionI / tc;
+
   }
 
   #sortedQuadrants = new Array<Quadrant>();
@@ -463,6 +515,8 @@ export default class PluginAddon extends SceneController {
     });
   }
 
+  #tensionI = 0;
+
   onFrame(frame: number): void {
     if (this.config.showDebug) {
       this.sendUIMessage({
@@ -494,6 +548,15 @@ export default class PluginAddon extends SceneController {
           }),
         },
       });
+    }
+
+    if (this.gridCameraFatigue < 0 || this.trackingCameraFatigue < 0) {
+      this.#tensionI = this.#updateTension();
+
+      if (this.gridCameraFatigue) {
+        this.gridCameraFatigue -= this.#tensionI * 1000;
+      }
+
     }
 
     // update to a new grid area of focus, 1 second minimum between updates
