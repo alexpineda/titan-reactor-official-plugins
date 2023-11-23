@@ -113,7 +113,7 @@ export class CameraTargets {
     );
 
     //  0-1, 1 is lots of movement on rotation
-    const flow = easeIn((1 + Math.sin(plugin.elapsed / 100_000)) * 0.5, 2);
+    const flow = easeIn(THREE.MathUtils.pingpong(plugin.elapsed, 100_000) / 100_000, 2);
     const rotationDamping = flow * 0.09 + 0.01; // 0.01 - 0.1
     
     plugin.viewport.orbit.rotateAzimuthTo(

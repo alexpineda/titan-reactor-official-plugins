@@ -67,7 +67,7 @@ const rankD: number[] = [
 const rankE: number[] = [
   unitTypes.spiderMine,
   unitTypes.mutaliskCocoon,
-  unitTypes.observer,
+  // unitTypes.observer,
   unitTypes.disruptionWeb,
   unitTypes.overlord,
   unitTypes.scv,

@@ -62,6 +62,11 @@ const _unitClusterA: AO_Unit[][] = [];
 const unitOfInterest = (unit: Unit) =>
    unit.owner < 8 && canSelectUnit(unit) && allUnitRanksFlat.includes(unit.typeId);
 
+const lowHealthUnitScoreReducer = (acc: number, unit: AO_Unit) => {
+  // low health boosts score
+  return acc + unit.extras.autoObserver.score + (1 - unit.hp / unit.extras.dat.hp);
+}
+
 export default class PluginAddon extends SceneController {
   viewportsCount = 2;
 
@@ -133,6 +138,9 @@ export default class PluginAddon extends SceneController {
     this.parent.add(this.#targetObject);
     this.parent.add(this.#targetObject2);
 
+    this.#targetObject.visible = this.config.showDebug;
+    this.#targetObject2.visible = this.config.showDebug;
+    
     this.u8 = new ScoreManager(QUAD_SIZE, this.map.size);
     this.t5 = new TensionManager(5, this.map.size);
 
@@ -457,7 +465,9 @@ export default class PluginAddon extends SceneController {
     let _tensionI = 0, tc = 0;
 
     for (const g of this.t5.prevTension.grid  ) {
+
       const tensionStd = standardDeviation(this.t5.prevTension.get(g));
+      this.t5.tension.set(g, tensionStd)
 
       if (tensionStd === 0) continue;
 
@@ -482,10 +492,13 @@ export default class PluginAddon extends SceneController {
 
   #calcWeighted(quadrant: Quadrant) {
     const scoreQ = this.u8.action.get(quadrant);
-    const adhdQ = (1 - this.u8.adhd.get(quadrant)) * this.config.weightsADHD;
-    const tensionQ = this.u8.tension.get(quadrant) * this.config.weightsTension;
+    const adhdQ = (1 - this.u8.adhd.get(quadrant));
+
+    this.t5.world8.fromWorldToGrid(_a2, quadrant.x, quadrant.y);
+
+    const tensionQ = this.t5.tension.get(_a2); //this.u8.tension.get(quadrant) * this.config.weightsTension;
     const buildingQ =
-      this.u8.strategy.get(quadrant) * this.config.weightsStrategy;
+      this.u8.strategy.get(quadrant);
 
     const gameLullQ =
       (1 +
@@ -499,6 +512,7 @@ export default class PluginAddon extends SceneController {
     const weightedScore =
       scoreQ * gameLullQ * adhdQ + buildingQ * (1 - gameLullQ) + tensionQ;
     this.u8.wScore.set(quadrant, weightedScore);
+  
     return weightedScore;
   }
 
@@ -583,8 +597,8 @@ export default class PluginAddon extends SceneController {
         // otherwise, let tracking camera continue to handle it
         if (clA.distanceTo(_c3) > 10) {
           // pick higher score cluster
-          const scoreA = clAUnits.reduce(unitScoreReducer, 0);
-          const scoreB = clBUnits.reduce(unitScoreReducer, 0);
+          const scoreA = clAUnits.reduce(lowHealthUnitScoreReducer, 0);
+          const scoreB = clBUnits.reduce(lowHealthUnitScoreReducer, 0);
 
           const cl = scoreA > scoreB ? clA : clB;
           const clU = scoreA > scoreB ? clAUnits : clBUnits;
@@ -685,8 +699,6 @@ export default class PluginAddon extends SceneController {
         // if there is tension, bias towards inbetween clusters
         _a3.lerp(clOther, this.u8.tension.get(quadrant) * 0.5);
 
-        this.selectedUnits.set(units);
-
         this.targets.moveTarget.copy(_a3);
 
         // 1 = low speed, 0 = high speed
@@ -698,7 +710,8 @@ export default class PluginAddon extends SceneController {
         const d2 = 1 + 4 * (1 - d) + speedFactor * 2;
         this.targets.lookAtMoveTarget(d2 / this.openBW.gameSpeed, "smooth");
         // if we are moving quickly, add to main camera so we dont jump cut mid move
-        this.gridCameraFatigue += (easeIn(d, 3) * 2000) / this.openBW.gameSpeed; 
+        // temper it by tension, higher tension means we don't delay fatigue as much
+        this.gridCameraFatigue += (easeIn(d, 3) * 2000 * (1- this.#tensionI)) / this.openBW.gameSpeed; 
 
         // debug only
         this.#targetObject.position.copy(cl);

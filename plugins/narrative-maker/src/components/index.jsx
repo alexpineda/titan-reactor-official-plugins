@@ -20,8 +20,8 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
   }
 
   quadrants.quadrants.forEach((q, i) => {
-    const adhdWeight = (1 - q.adhd) * config.weightsADHD;
-    const tensionWeight = q.tension * config.weightsTension;
+    const adhdWeight = (1 - q.adhd);
+    const tensionWeight = q.tension;
 
     q.adhdWeight = adhdWeight;
     q.tensionWeight = tensionWeight;

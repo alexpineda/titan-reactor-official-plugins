@@ -89,38 +89,14 @@
             "value": 1.5,
             "min": 1,
             "max": 16,
-            "step": 1
+            "step": 0.25
         },
         "maxReplaySpeed": {
             "label": "Max Replay Speed",
             "value": 8,
             "min": 1,
             "max": 32,
-            "step": 1
-        },
-        "weightsADHD": {
-            "folder": "Weights",
-            "label": "ADHD",
-            "value": 1,
-            "min": 0,
-            "max": 100,
-            "step": 0.1
-        },
-        "weightsTension": {
-            "folder": "Weights",
-            "label": "Tension",
-            "value": 1,
-            "min": 0,
-            "max": 100,
-            "step": 0.1
-        },
-        "weightsStrategy": {
-            "folder": "Weights",
-            "label": "Strategy",
-            "value": 1,
-            "min": 0,
-            "max": 100,
-            "step": 0.1
+            "step": 0.25
         },
         "autoSelectUnits": {
             "label": "Auto Select Units Taking Damage",
