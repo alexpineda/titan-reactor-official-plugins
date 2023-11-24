@@ -54,7 +54,7 @@ const _a2 = new THREE.Vector2(0, 0);
 const _b2 = new THREE.Vector2(0, 0);
 const _c2 = new THREE.Vector2(0, 0);
 
-const allUnitRanks = [buildingUnitRanks.flat(), ...regularUnitRanks];
+const allUnitRanks = [[...buildingUnitRanks.flat()], ...regularUnitRanks];
 const allUnitRanksFlat = allUnitRanks.flat();
 
 const _unitClusterA: AO_Unit[][] = [];
@@ -100,6 +100,7 @@ export default class PluginAddon extends SceneController {
   activeQuadrant: Quadrant | undefined;
   gridCameraFatigue = 0;
   trackingCameraFatigue = 0;
+  lastTrackingCameraFatigue = 0;
   cameraFatigueAdjustmentTimeoutMS = 0;
 
   #targetObject = new THREE.Mesh(
@@ -454,6 +455,8 @@ export default class PluginAddon extends SceneController {
       const tension = calcCoeff(_teams.filter((_, i) => this.players.get(i)));
       this.u8.tension.set(quadrant, tension);
 
+      this.u8.adhd.defaultDecay = this.config.heatMapDecay * ( 1 - tension );
+
       this.t5.world8.fromWorldToGrid(_a2, quadrant.x, quadrant.y);
       this.t5.prevTension.$get(_a2).value.push(tension);
 
@@ -497,17 +500,17 @@ export default class PluginAddon extends SceneController {
     const tensionQ = this.t5.tension.get(_a2); //this.u8.tension.get(quadrant) * this.config.weightsTension;
     const buildingQ = this.u8.strategy.get(quadrant);
 
-    const gameLullQ =
+    const gameActiveQ =
       (1 +
         Math.sin(
           (this.lastTimeGameStartedActionMS - this.lastTimeGameStartedLullMS) /
             1000
         )) /
-      2;
+      2 + (this.#tensionI - 0.1);
 
     // trying adhd against unit score only rn
     const weightedScore =
-      scoreQ * gameLullQ * adhdQ + buildingQ * (1 - gameLullQ) + tensionQ;
+      scoreQ * gameActiveQ * adhdQ + buildingQ * (1 - gameActiveQ) + tensionQ;
     this.u8.wScore.set(quadrant, weightedScore);
 
     return weightedScore;
@@ -565,7 +568,8 @@ export default class PluginAddon extends SceneController {
       this.#tensionI = this.#updateTension();
 
       if (this.gridCameraFatigue) {
-        this.gridCameraFatigue -= this.#tensionI * 1000;
+        // adjust fatigue based on tension but modulate it by how frequently we're updating the tracking camera
+        this.gridCameraFatigue -= this.#tensionI * 1000 * (this.lastTrackingCameraFatigue / 1000);
       }
     }
 
@@ -723,12 +727,13 @@ export default class PluginAddon extends SceneController {
         this.#targetObject2.updateMatrix();
         this.#targetObject2.updateMatrixWorld();
 
-        const lowSpeedBoost = speedFactor * 400;
+        const lowSpeedBoost = speedFactor * 600;
 
         this.trackingCameraFatigue =
           300 / this.openBW.gameSpeed +
-          this.targets.moveTarget.distanceTo(_c3) * 20 +
+          (1 - d) * 600 +
           lowSpeedBoost;
+        this.lastTrackingCameraFatigue = this.trackingCameraFatigue;
       }
     }
 
@@ -758,7 +763,7 @@ export default class PluginAddon extends SceneController {
       this.targets.moveTarget.copy(target);
       this.targets.lookAtMoveTarget(undefined, isDragStart ? "cut" : "smooth");
       this.gridCameraFatigue = 8000;
-      this.trackingCameraFatigue = 200;
+      this.trackingCameraFatigue = 500;
 
       this.activeQuadrant = this.u8.units.$get(
         this.u8.worldGrid.fromWorldToGrid(_a2, pos.x, pos.y)
@@ -814,9 +819,6 @@ export default class PluginAddon extends SceneController {
   }
 
   uf_NonHarvesting = (unit: Unit) => {
-    if (unit.extras.dat.isBuilding) {
-      return false;
-    }
     if (isWorkerUnit(unit) && isHarvesting(unit)) {
       return false;
     }

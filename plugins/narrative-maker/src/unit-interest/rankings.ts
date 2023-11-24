@@ -65,17 +65,19 @@ const rankD: number[] = [
 ];
 
 const rankE: number[] = [
-  unitTypes.spiderMine,
   unitTypes.mutaliskCocoon,
-  // unitTypes.observer,
   unitTypes.disruptionWeb,
-  unitTypes.overlord,
   unitTypes.scv,
   unitTypes.drone,
   unitTypes.probe,
 ];
 
-export const regularUnitRanks: number[][] = [rankE, rankD, rankC, rankB, rankA];
+const rankF: number[] = [
+  unitTypes.overlord,
+  unitTypes.observer,
+]
+
+export const regularUnitRanks: number[][] = [rankF, rankE, rankD, rankC, rankB, rankA];
 
 const buildingRankA: number[] = [
   unitTypes.templarArchives,
