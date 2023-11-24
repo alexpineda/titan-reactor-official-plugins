@@ -1,13 +1,36 @@
 import React, { useState } from "react";
 import { useMap, usePluginConfig } from "@titan-reactor-runtime/ui";
 
-export default ({ time, pct, styles }) => {
+export default ({ time, pct, speed, styles }) => {
   const config = usePluginConfig();
   const map = useMap();
   const [showPct, setShowPct] = useState(false);
 
+  const Speed = () => (
+    <span>
+      {speed.toFixed(1)}{" "}
+      <svg
+        style={{ display: "inline-block", width: "12px" }}
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+        />
+      </svg>
+    </span>
+  );
+
   return (
-    <div style={{ width: "var(--minimap-width)" }} onClick={() => setShowPct(!showPct)}>
+    <div
+      style={{ width: "var(--minimap-width)" }}
+      onClick={() => setShowPct(!showPct)}
+    >
       <div
         style={{
           color: config.textColor,
@@ -19,7 +42,11 @@ export default ({ time, pct, styles }) => {
           width: "100%",
         }}
       >
-        <span style={{ display: "inline" }}>{time} - {pct}</span>
+        <span style={{ display: "inline" }}>
+          {time}
+          {config.showPct && <span> - {pct}</span>}
+          {config.showSpeed && <span> <Speed /></span>}
+        </span>
       </div>
 
       <span style={{ display: "flex" }}>

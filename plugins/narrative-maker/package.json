@@ -1,13 +1,13 @@
 {
-    "name": "@titan-reactor-plugins/narrative-maker",
+    "name": "@titan-reactor-plugins/auto-observer",
     "version": "0.0.1",
-    "description": "Narrative Maker",
+    "description": "Auto-Observe Camera Controller",
     "author": "Dark Matter",
     "keywords": [
         "titan-reactor-plugin"
     ],
     "peerDependencies": {
-        "titan-reactor-api": "2.0.0"
+        "@titan-reactor-runtime/host": "^2.0.0"
     },
     "config": {
         "_visible": {
@@ -15,90 +15,101 @@
             "label": "UI Visible",
             "folder": "System"
         },
-        "speedScale": {
-            "label": "Speed Scale",
-            "value": 0.5,
-            "min": 0.5,
-            "max": 2,
-            "step": 0.1
-        },
-        "cameraMoveTime": {
-            "label": "Camera Move Time",
-            "value": 2300,
-            "min": 500,
-            "max": 20000,
-            "step": 100
-        },
-        "urgentCameraMoveTime": {
-            "label": "Camera Move Time ( Urgent Events )",
-            "value": 1000,
-            "min": 500,
-            "max": 20000,
-            "step": 100
+        "showDebug": {
+            "label": "Show Debug Info",
+            "value": false,
+            "debug": true
         },
         "tilt": {
-            "label": "Tilt",
+            "folder": "Camera",
+            "label": "Min Polar",
             "min": 0,
             "max": 45,
             "step": 1,
-            "value": 5
+            "value": 15
         },
         "baseDistance": {
-            "label": "Default Distance",
-            "value": 70,
-            "min": 40,
-            "max": 200,
+            "folder": "Camera",
+            "label": "Min Distance",
+            "value": 50,
+            "min": 30,
+            "max": 100,
             "step": 1
         },
         "distanceVariance": {
+            "folder": "Camera",
             "label": "Distance Variance",
-            "value": 100,
+            "value": 60,
             "min": 0,
             "max": 100,
             "step": 1
         },
         "azimuthVariance": {
+            "folder": "Camera",
             "label": "Azimuth Variance",
-            "value": 30,
+            "value": 20,
             "min": 0,
-            "max": 90,
+            "max": 45,
             "step": 1
         },
         "polarVariance": {
+            "folder": "Camera",
             "label": "Polar Variance",
-            "value": 55,
+            "value": 45,
             "min": 0,
             "max": 70,
             "step": 1
         },
         "heatMapDecay": {
             "label": "Heat Map Decay",
-            "value": 0.537,
+            "value": 0.93,
             "min": 0.001,
             "max": 0.999,
-            "step": 0.001
+            "step": 0.001,
+            "debug": true
         },
         "heatmapUpdateInterval": {
             "label": "Heatmap Update Interval",
             "value": 1000,
             "min": 10,
             "max": 10000,
-            "step": 10
+            "step": 10,
+            "debug": true
         },
         "pipSize": {
+            "folder": "PIP",
             "label": "PIP Size",
-            "value": 700,
+            "value": 350,
             "min": 100,
-            "max": 800,
+            "max": 600,
             "step": 25
+        },
+        "minReplaySpeed": {
+            "label": "Min Replay Speed",
+            "value": 1.5,
+            "min": 1,
+            "max": 16,
+            "step": 0.25
         },
         "maxReplaySpeed": {
             "label": "Max Replay Speed",
-            "value": 4,
+            "value": 8,
             "min": 1,
-            "max": 64,
-            "step": 1
+            "max": 32,
+            "step": 0.25
+        },
+        "autoSelectUnits": {
+            "label": "Auto Select Units Taking Damage",
+            "value": false
         }
     },
-    "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5"
+    "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5",
+    "devDependencies": {
+        "@types/three": "^0.158.2",
+        "typescript": "^5.2.2"
+    },
+    "dependencies": {
+        "alea": "^1.0.1",
+        "simplex-noise": "^4.0.1"
+    }
 }

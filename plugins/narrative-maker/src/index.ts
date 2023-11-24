@@ -1,977 +1,827 @@
+import { PrevSceneData, Unit } from "@titan-reactor-runtime/host";
+import {
+  areProximate,
+  areProximateViewports,
+  groundTarget,
+  setupViewports,
+} from "./utils/camera-utils";
+import {
+  AO_Unit,
+  Quadrant,
+  canOnlySelectOne,
+  canSelectUnit,
+  getAverageUnitDirectionAndSpeed,
+  getUnitsFromLargestRepresentedTeam,
+  isHarvesting,
+  isTownCenter,
+  isWorkerUnit,
+  unitIsCompleted,
+} from "./utils/unit-helpers";
+import { PIP_PROXIMITY, POLAR_MIN, QUAD_SIZE } from "./utils/constants";
+import { CameraTargets } from "./camera-targets";
+import {
+  calcCoeff,
+  clamp,
+  constrain,
+  easeIn,
+  easeInSine,
+  moveVectorByAngleAndMagnitude,
+  normalizeWorldDistance,
+  standardDeviation,
+} from "./utils/math-utils";
+import {
+  buildingUnitRanks,
+  regularOrderRanks,
+  regularUnitRanks,
+} from "./unit-interest/rankings";
 
-import { BwDAT, GameViewPort, Unit,  } from "@titan-reactor-runtime/host";
+import { ScoreManager, TensionManager } from "./scores";
+import { createUnitScoreCalculator } from "./unit-interest/unit-score-calculator";
+import {
+  getClusters,
+  getUnitsNearCluster,
+  unitScoreReducer,
+} from "./utils/kmeans-utils";
 
+const _a4 = new THREE.Vector4(0, 0, 0, 0);
+const _b4 = new THREE.Vector4(0, 0, 0, 0);
 
-const _pos = new THREE.Vector3(0, 0, 0);
+const _a3 = new THREE.Vector3(0, 0, 0);
+const _b3 = new THREE.Vector3(0, 0, 0);
+const _c3 = new THREE.Vector3(0, 0, 0);
 
-const unitTypes = enums.unitTypes;
-const orders = enums.orders;
-const UnitFlags = enums.UnitFlags;
+const _a2 = new THREE.Vector2(0, 0);
+const _b2 = new THREE.Vector2(0, 0);
+const _c2 = new THREE.Vector2(0, 0);
 
-const workerTypes = [enums.unitTypes.scv, enums.unitTypes.drone, enums.unitTypes.probe];
+const allUnitRanks = [buildingUnitRanks.flat(), ...regularUnitRanks];
+const allUnitRanksFlat = allUnitRanks.flat();
 
-const DEFAULT_FAR = 256;
-const POLAR_MAX = THREE.MathUtils.degToRad(75);
-const POLAR_MIN = THREE.MathUtils.degToRad(5);
+const _unitClusterA: AO_Unit[][] = [];
 
-const PIP_PROXIMITY = 32;
+const unitOfInterest = (unit: Unit) =>
+  unit.owner < 8 &&
+  canSelectUnit(unit) &&
+  allUnitRanksFlat.includes(unit.typeId);
 
-const _a = new THREE.Vector3();
-const _b = new THREE.Vector3();
-const _c = new THREE.Vector3();
-
-const rankA = [
-  unitTypes.ghost, unitTypes.scienceVessel, unitTypes.battleCruiser,
-  unitTypes.nuclearMissile, unitTypes.ultralisk, unitTypes.guardian, unitTypes.queen, unitTypes.defiler, unitTypes.infestedTerran,
-  unitTypes.darkTemplar, unitTypes.devourer, unitTypes.darkArchon, unitTypes.arbiter, unitTypes.carrier,
-
-  unitTypes.covertOps, unitTypes.physicsLab, unitTypes.infestedCommandCenter, unitTypes.hive, unitTypes.nydusCanal, unitTypes.defilerMound,
-  unitTypes.nuclearSilo, unitTypes.greaterSpire, unitTypes.queensNest, unitTypes.ultraliskCavern,
-
-  unitTypes.templarArchives, unitTypes.fleetBeacon, unitTypes.arbitalTribunal, unitTypes.scarab, unitTypes.scannerSweep,
-
-  unitTypes.commandCenter, unitTypes.nexus, unitTypes.hatchery,
-];
-
-const rankB = [
-  unitTypes.goliath, unitTypes.wraith, unitTypes.siegeTankSiegeMode, unitTypes.broodling, unitTypes.mutalisk, unitTypes.scourge, unitTypes.dropship, unitTypes.valkryie, unitTypes.corsair,
-  unitTypes.highTemplar, unitTypes.archon, unitTypes.scout, unitTypes.reaver,
-
-   unitTypes.starport, unitTypes.scienceFacility, unitTypes.engineeringBay, unitTypes.armory,
-  unitTypes.bunker,
-   unitTypes.lair, unitTypes.spire, unitTypes.darkSwarm,
-   unitTypes.cyberneticsCore, unitTypes.stargate, unitTypes.roboticsSupportBay,
-];
-
-const rankC = [
-  unitTypes.siegeTankTankMode, unitTypes.vulture, unitTypes.firebat, unitTypes.hydralisk, unitTypes.zealot, unitTypes.dragoon, unitTypes.shuttle, unitTypes.lurker,
-
-  unitTypes.barracks, unitTypes.academy, unitTypes.factory, unitTypes.machineShop, unitTypes.missileTurret,
-  unitTypes.hydraliskDen,
-  unitTypes.gateway, unitTypes.photonCannon, unitTypes.citadelOfAdun, unitTypes.roboticsFacility, unitTypes.observatory,
-];
-
-const rankD = [
-  unitTypes.marine, unitTypes.medic, unitTypes.zergling, unitTypes.interceptor, unitTypes.lurkerEgg,
-
-  unitTypes.supplyDepot, unitTypes.refinery, unitTypes.controlTower,
-  unitTypes.evolutionChamber, unitTypes.spawningPool, unitTypes.pylon,
-  unitTypes.forge, unitTypes.shieldBattery
-];
-
-const rankE = [
-  unitTypes.spiderMine, unitTypes.mutaliskCocoon, unitTypes.observer, unitTypes.disruptionWeb,
-
-  unitTypes.comsatStation, unitTypes.creepColony, unitTypes.sporeColony, unitTypes.sunkenColony,
-  unitTypes.extractor,
-  unitTypes.assimilator,
-];
-
-/*
- unitTypes.overlord,
-unitTypes.scv, unitTypes.drone, unitTypes.probe
-*/
-
-function easeOutQuint(x: number): number {
-  return 1 - Math.pow(1 - x, 5);
-}
-
-function easeOutCubic(x: number): number {
-  return 1 - Math.pow(1 - x, 3);
-}
-
-function distance(point1: { x: number, y: number }, point2: { x: number, y: number }): number {
-  const deltaX = point2.x - point1.x;
-  const deltaY = point2.y - point1.y;
-
-  return Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
-}
-
-const unitIsCompleted = (unit: Unit) => {
-  return unit.statusFlags & UnitFlags.Completed;
+const lowHealthUnitScoreReducer = (acc: number, unit: AO_Unit) => {
+  // low health boosts score
+  return (
+    acc + unit.extras.ao_score + (1 - unit.hp / unit.extras.dat.hp)
+  );
 };
-
-const canSelectUnit = (unit: Unit | undefined) => {
-  if (!unit) return null;
-
-  return unit.typeId !== unitTypes.darkSwarm &&
-    unit.typeId !== unitTypes.disruptionWeb &&
-    unit.order !== orders.die &&
-    !unit.extras.dat.isTurret &&
-    (unit.statusFlags & UnitFlags.Loaded) === 0 &&
-    (unit.statusFlags & UnitFlags.InBunker) === 0 &&
-    unit.order !== orders.harvestGas &&
-    unit.typeId !== unitTypes.spiderMine &&
-    (unitIsCompleted(unit) || unit.extras.dat.isZerg || unit.extras.dat.isBuilding)
-    ? unit
-    : null;
-};
-
-const _canOnlySelectOne = [
-  unitTypes.larva,
-  unitTypes.zergEgg,
-  unitTypes.vespeneGeyser,
-  unitTypes.mineral1,
-  unitTypes.mineral2,
-  unitTypes.mineral3,
-  unitTypes.mutaliskCocoon,
-  unitTypes.lurkerEgg,
-];
-
-const canOnlySelectOne = (unit: Unit) =>
-  _canOnlySelectOne.includes(unit.typeId);
-
-type Quadrant<T> = { items: T[], x: number, y: number };
-
-// simple quadrant for items
-/**
- * @public
- */
-class SimpleQuadtree<T> {
-  #size: number;
-  #scale: THREE.Vector2;
-  #offset: THREE.Vector2;
-  #items: Record<string, T[]> = {};
-
-  #normalized = new THREE.Vector2();
-  #radius = new THREE.Vector2();
-
-  #quadrants: Quadrant<T>[] = []
-
-  get quadrants() {
-    return this.#quadrants;
-  }
-
-  get size() {
-    return this.#size;
-  }
-
-  constructor(size: number, scale = new THREE.Vector2(1, 1), offset = new THREE.Vector2(0, 0),) {
-    this.#size = size;
-
-    for (let y = 0; y < this.#size; y++) {
-      for (let x = 0; x < this.#size; x++) {
-        const items = this.#items[`${x},${y}`] = [];
-        this.#quadrants[y * this.#size + x] = { items, x, y };
-      }
-    }
-
-    this.#scale = scale;
-    this.#offset = offset;
-
-  }
-
-  #normalize(out: THREE.Vector2, x: number, y: number, useOffset = true) {
-    out.set(
-      Math.floor(((x + (useOffset ? this.#offset.x : 0)) / this.#scale.x) * this.size), Math.floor(((y + (useOffset ? this.#offset.y : 0)) / this.#scale.y) * this.size));
-  }
-
-  add(x: number, y: number, item: T) {
-    this.#normalize(this.#normalized, x, y);
-    this.#items[`${this.#normalized.x},${this.#normalized.y}`].push(item);
-  }
-
-  getNearby(x: number, y: number, radius = 0) {
-    this.#normalize(this.#normalized, x, y);
-
-    if (radius === 0) {
-      return this.#items[`${this.#normalized.x},${this.#normalized.y}`];f
-    } else {
-      const items: T[] = [];
-
-      this.#normalize(this.#radius, radius, radius, false);
-
-      const minX = Math.floor(Math.max(0, this.#normalized.x - this.#radius.x));
-      const minY = Math.floor(Math.max(0, this.#normalized.y - this.#radius.y));
-      const maxX = Math.floor(Math.min(this.#size - 1, this.#normalized.x + this.#radius.x));
-      const maxY = Math.floor(Math.min(this.#size - 1, this.#normalized.y + this.#radius.y));
-
-      for (let y = minY; y <= maxY; y++) {
-        for (let x = minX; x <= maxX; x++) {
-          items.push(...this.#items[`${x},${y}`]);
-        }
-      }
-
-      return items;
-    }
-  }
-
-  clear() {
-    for (let i = 0; i < this.#size; i++) {
-      for (let j = 0; j < this.#size; j++) {
-        this.#items[`${i},${j}`].length = 0;
-      }
-    }
-  }
-}
-
-type HeatmapValue = { value: number, x: number, y: number };
-
-class SimpleHeatmap {
-  #heatmap: HeatmapValue[] = [];
-  #size: number;
-  defaultDecay = 0.9;
-
-  constructor(size: number) {
-    this.#size = size;
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        this.#heatmap.push({ value: 0, x, y });
-      }
-    }
-  }
-
-  getIndex(x: number, y: number) {
-    const idx = y * this.#size + x;
-    if (this.#heatmap[idx] === undefined) {
-      debugger
-    }
-    return idx;
-  }
-
-  decayAll(decay = this.defaultDecay) {
-    for (const quadrant of this.#heatmap) {
-      quadrant.value *= decay;
-    }
-  }
-
-  decay(x: number, y: number, decay = this.defaultDecay) {
-    const index = this.getIndex(x, y);
-    this.#heatmap[index].value *= decay;
-  }
-
-  get(x: number, y: number) {
-    const index = this.getIndex(x, y);
-    return this.#heatmap[index].value;
-  }
-
-  set(x: number, y: number, value: number | undefined = 1) {
-    const index = this.getIndex(x, y);
-    this.#heatmap[index].value = value;
-  }
-  
-  clear() {
-    for (const quadrant of this.#heatmap) {
-      quadrant.value = 0;
-    }
-  }
-
-  getNearby(x: number, y: number, radius = 0) {
-    const items: HeatmapValue[] = [];
-
-    const minX = Math.floor(Math.max(0, x - radius));
-    const minY = Math.floor(Math.max(0, y - radius));
-    const maxX = Math.floor(Math.min(this.#size - 1, x + radius));
-    const maxY = Math.floor(Math.min(this.#size - 1, y + radius));
-
-    for (let y = minY; y <= maxY; y++) {
-      for (let x = minX; x <= maxX; x++) {
-        const index = this.getIndex(x, y);
-        items.push(this.#heatmap[index]);
-      }
-    }
-
-    return items;
-  }
-}
- 
-
-const getAverage = (arr: number[]) => { 
-  return arr.reduce((a, b) => a + b, 0) / arr.length;
-}
-
-const getMax = (arr: number[]) => {
-  return Math.max(...arr);
-}
-
-type ScoreCalculator = (unit: Unit, orderScore: number, unitScore: number) => number;
-
-/**
- * @public
- */
-class UnitInterestScore {
-  #bwDat: BwDAT;
-
-  constructor(bwDat: BwDAT) {
-    this.#bwDat = bwDat;
-  }
-
-  getAverageScore(units: Unit[], scoreModifier: ScoreCalculator) {
-    return getAverage(units.map(u => this.unitScore(u, scoreModifier)));
-  }
-
-  getMaxScoreUnit(units: Unit[], scoreModifier: ScoreCalculator) {
-    return units.reduce((max, unit) => {
-      const score = this.unitScore(unit, scoreModifier);
-      if (score > this.unitScore(max, scoreModifier)) max = unit;
-      return max
-    }, units[0]);
-  }
-
-  unitScore(unit: Unit, scoreModifier: ScoreCalculator) {
-    return scoreModifier(unit, this.getOrderScore(unit.order!), this.getUnitRankScore(unit));
-  }
-
-  getUnitRankScore(unit: Unit): number {
-    if (rankA.includes(unit.typeId)) {
-      return 1;
-    } else if (rankB.includes(unit.typeId)) {
-      return 0.8;
-    } else if (rankC.includes(unit.typeId)) {
-      return 0.7;
-    } else if (rankD.includes(unit.typeId)) {
-      return 0.5;
-    } else if (rankE.includes(unit.typeId)) {
-      return 0.3;
-    }
-    return 0.1;
-  }
-
-  getOrderScore(order: number) {
-    switch (order) {
-
-      // case orders.harvest1:
-      // case orders.harvest2:
-      // case orders.moveToGas:
-      // case orders.waitForGas:
-      // case orders.harvestGas:
-      // case orders.returnGas:
-      // case orders.moveToMinerals:
-      // case orders.waitForMinerals:
-      // case orders.miningMinerals:
-      // case orders.harvest3:
-      // case orders.harvest4:
-      // case orders.returnMinerals:
-      //   return 0.01;
-
-      case orders.gaurd:
-      case orders.playerGaurd:
-      case orders.turretGaurd:
-      case orders.bunkerGaurd:
-      case orders.placeBuilding:
-      case orders.placeProtossBuilding:
-      case orders.createProtossBuilding:
-      case orders.constructingBuilding:
-      case orders.buildingLand:
-      case orders.buildingLiftOff:
-
-        return 0.1;
-      case orders.holdPosition:
-      case orders.trainFighter:
-      case orders.move:
-      case orders.researchTech:
-      case orders.upgrade:
-      case orders.attackMove:
-      case orders.attackFixedRange:
-        
-        return 0.3;
-      case orders.unburrowing:
-      case orders.medicHeal:
-      case orders.train:
-      case orders.placeAddOn:
-      case orders.buildAddOn:
-        return 0.5;
-
-      case orders.attackUnit:
-
-        return 0.8;
-      case orders.castConsume:
-      case orders.castDarkSwarm:
-      case orders.castDefensiveMatrix:
-      case orders.castDisruptionWeb:
-      case orders.castEmpShockwave:
-      case orders.castEnsnare:
-      case orders.castFeedback:
-      case orders.castHallucination:
-      case orders.castInfestation:
-      case orders.castIrradiate:
-      case orders.castLockdown:
-      case orders.castMaelstrom:
-      case orders.castMindControl:
-      case orders.castNuclearStrike:
-      case orders.castOpticalFlare:
-      case orders.castParasite:
-      case orders.castPlague:
-      case orders.castPsionicStorm:
-      case orders.castRecall:
-      case orders.castRestoration:
-      case orders.castSpawnBroodlings:
-      case orders.castStasisField:
-
-      case orders.repair:
-      case orders.scarabAttack:
-      case orders.die:
-      case orders.interceptorAttack:
-      case orders.unload:
-      case orders.moveUnload:
-      case orders.enterTransport:
-      case orders.sieging:
-      case orders.castScannerSweep:
-      case orders.burrowing:
-
-        return 1;
-
-      default:
-        return 0.01;
-    }
-  }
-
-  unitOfInterestFilter(unit: Unit) {
-    const unitType = this.#bwDat.units[unit.typeId];
-    return !unitType.isResourceContainer && unit.owner < 8 && canSelectUnit(unit);
-  }
-
-}
-
-function spreadFactorVariance(units: THREE.Vector2[]): number {
-  let meanX = 0;
-  let meanY = 0;
-  let n = units.length;
-
-  // Calculate mean coordinates
-  for (let i = 0; i < n; i++) {
-    meanX += units[i].x;
-    meanY += units[i].y;
-  }
-  meanX /= n;
-  meanY /= n;
-
-  // Calculate variance for X and Y
-  let varianceX = 0;
-  let varianceY = 0;
-  for (let i = 0; i < n; i++) {
-    varianceX += Math.pow(units[i].x - meanX, 2);
-    varianceY += Math.pow(units[i].y - meanY, 2);
-  }
-  varianceX /= n;
-  varianceY /= n;
-
-  // Calculate total variance
-  let totalVariance = varianceX + varianceY;
-
-  return totalVariance;
-}
-
-function maxTotalVariance(deltaX: number, deltaY: number): number {
-  // Calculate variance using the function from before
-  // const calculatedVariance = spreadFactorVariance(points);
-
-  // Calculate maximum possible variance within the quartile
-  const maxVarianceX = (Math.pow(0 - deltaX, 2) + Math.pow(deltaX - 0, 2)) / 2;
-  const maxVarianceY = (Math.pow(0 - deltaY, 2) + Math.pow(deltaY - 0, 2)) / 2;
-
-  // Normalize the variance
-  // const normalizedVariance = calculatedVariance / maxTotalVariance;
-
-  return maxVarianceX + maxVarianceY;;
-}
-
-const getCameraDistance = (units: Unit[], mapSize: number[]) => {
-  let meanX = 0;
-  let meanY = 0;
-  let n = units.length;
-
-  // Calculate mean coordinates
-  for (let unit of units) {
-    meanX += unit.x;
-    meanY += unit.y;
-  }
-  meanX /= n;
-  meanY /= n;
-
-  // Calculate variance for X and Y
-  let varianceX = 0;
-  let varianceY = 0;
-  for (let unit of units) {
-    varianceX += Math.pow(unit.x - meanX, 2);
-    varianceY += Math.pow(unit.y - meanY, 2);
-  }
-  varianceX /= n;
-  varianceY /= n;
-
-  // Optional: Normalize the variance by the dimensions of the map
-  const normalizedVarianceX = varianceX / Math.pow(mapSize[0] * 32 / QUAD_SIZE, 2);
-  const normalizedVarianceY = varianceY / Math.pow(mapSize[1] * 32 / QUAD_SIZE, 2);
-
-  // Adjust camera distance. This can be a function of normalized variance.
-  // For this example, let's say we linearly scale camera distance
-  const cameraDistance = Math.sqrt(normalizedVarianceX + normalizedVarianceY);
-
-  return cameraDistance;
-}
-
-const QUAD_SIZE = 8;
-
 
 export default class PluginAddon extends SceneController {
   viewportsCount = 2;
-  
-  #unitWorkerScore: UnitInterestScore;
-  #units: SimpleQuadtree<Unit>;
-  #adhd_uq8: SimpleHeatmap;
-  #scores_uq8: SimpleHeatmap;
-  #redBlueScore: SimpleHeatmap;
 
-  #lastUpdateFrame = 0;
-  #lastHeatMapUpdateFrame = 0;
-  #lastUnitDestroyedFrame = 0;
-  #lastUnitAttackedFrame = 0;
-  #defaultScoreCalculator: ScoreCalculator;
+  u8!: ScoreManager;
+  t5!: TensionManager;
+  targets!: CameraTargets;
+  unitScore = createUnitScoreCalculator({
+    unitRanks: allUnitRanks,
+    unitRankCurve: easeInSine,
+    orderRanks: regularOrderRanks,
+    orderRankCurve: (t) => 0.1 + (t - 0.1), // minimum 0.1
+  });
+  strategyQueue: AO_Unit[] = [];
+  lastSelectedStrategyOwner = -1;
+  timeSinceLastStrategySelectionMS = 0;
 
-  #quadPos: THREE.Vector2 = new THREE.Vector2();
+  lastActiveQuadrantUpdateMS = 0;
+  lastSecondaryActiveQuadrantUpdateMS = 0;
 
-  #getUQ8(unit: Unit) {
-    // because we are using round we need to clamp to QUAD-1
-    this.#quadPos.x = THREE.MathUtils.clamp(Math.round(unit.x / (this.map.size[0] * 32) * QUAD_SIZE), 0, QUAD_SIZE - 1);
-    this.#quadPos.y =  THREE.MathUtils.clamp(Math.round(unit.y / (this.map.size[1] * 32) * QUAD_SIZE), 0, QUAD_SIZE - 1);
-    return this.#quadPos;
+  lastDecayUpdateMS = 0;
+  lastUnitDestroyedMS = 0;
+  lastUnitAttackedMS = 0;
+
+  targetGameSpeed = 1;
+  lastTimeGameStartedActionMS = 0;
+  lastTimeGameStartedLullMS = 0;
+  activeQuadrant: Quadrant | undefined;
+  gridCameraFatigue = 0;
+  trackingCameraFatigue = 0;
+  cameraFatigueAdjustmentTimeoutMS = 0;
+
+  #targetObject = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0xffffff })
+  );
+  #targetObject2 = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+  );
+
+  #reset() {
+    this.u8.clear();
+    this.t5.clear();
+    this.strategyQueue.length = 0;
+
+    this.lastActiveQuadrantUpdateMS = 0;
+    this.lastSecondaryActiveQuadrantUpdateMS = 0;
+    this.lastDecayUpdateMS = 0;
+    this.lastUnitDestroyedMS = 0;
+    this.lastUnitAttackedMS = 0;
+    this.lastTimeGameStartedActionMS = 0;
+    this.lastTimeGameStartedLullMS = 0;
+
+    this.gridCameraFatigue = 0;
+    this.trackingCameraFatigue = 0;
+
+    this.activeQuadrant = undefined;
+    this.targetGameSpeed = this.config.minReplaySpeed;
   }
 
-  init() {
+  #maxDistance = 0;
 
-    this.#unitWorkerScore = new UnitInterestScore(this.assets.bwDat);
+  public async onEnterScene(prevData: PrevSceneData) {
+    this.targets = new CameraTargets(this);
 
-    this.#units = new SimpleQuadtree<Unit>(QUAD_SIZE, new THREE.Vector2(this.map.size[0] * 32, this.map.size[1] * 32), new THREE.Vector2(0, 0));
-    this.#adhd_uq8 = new SimpleHeatmap(QUAD_SIZE);
-    this.#scores_uq8 = new SimpleHeatmap(QUAD_SIZE);
+    this.targets.moveTarget.copy(prevData.target);
+    this.targets.lookAtMoveTarget();
 
-    // this.events.on("pre-run:frame", () => {
-    //     for (const u of this.openBW.iterators.units) {
-    //         if (this.#isArmyUnit(u)) {
-    //             this.#units.insert(u);
-    //         }
-    //     }
-    //     console.log("frame" , this.openBW.getOriginal().getCurrentFrame());
-    // });
+    this.parent.add(this.#targetObject);
+    this.parent.add(this.#targetObject2);
 
-    this.events.on("pre-run:complete", () => {
-      console.log("complete")
-    });
+    this.#targetObject.visible = this.config.showDebug;
+    this.#targetObject2.visible = this.config.showDebug;
 
+    this.u8 = new ScoreManager(QUAD_SIZE, this.map.size);
+    this.t5 = new TensionManager(5, this.map.size);
 
-    this.events.on("unit-completed", () => {
+    this.#maxDistance = Math.sqrt(
+      Math.pow(this.map.size[0], 2) + Math.pow(this.map.size[1], 2)
+    );
 
-    });
+    this.#reset();
 
-    this.events.on("unit-killed", (unit) => {
-      this.#adhd_uq8.set(this.#getUQ8(unit).x, this.#getUQ8(unit).y, 0);
-      this.#lastUnitDestroyedFrame = this.frame;
-      if (this.followedUnits.has(unit)) {
-          // the unit we were following was killed
-          // we need to update the viewport
-          this.#lastUpdateFrame = 0;
-      }
-    }, -1);
+    await setupViewports(this);
+
+    this.events.on(
+      "unit-killed",
+      (unit) => {
+        //reset adhd if unit is killed
+        this.u8.adhd.set(
+          this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y),
+          0
+        );
+
+        this.lastUnitDestroyedMS = this.elapsed;
+
+        this.adjustCameraFatigueBasedOnRecentAction(unit, 20);
+      },
+      -1
+    );
 
     this.events.on("unit-destroyed", (unit) => {
-      if (this.#secondFollowedUnit?.id === unit.id) {
-        this.#secondFollowedUnit = undefined;
+      this.strategyQueue = this.strategyQueue.filter((u) => u.id !== unit.id);
+    });
+
+    this.events.on("unit-created", (unit) => {
+      // reset metadata
+      (unit as AO_Unit).extras.ao_score = 0;
+      (unit as AO_Unit).extras.ao_timeOnStrategyQueueMS = 0;
+      
+
+      if (unitOfInterest(unit) && unit.extras.dat.isBuilding) {
+        this.strategyQueue.push(unit as AO_Unit);
+        (unit as AO_Unit).extras.ao_timeOnStrategyQueueMS =
+          this.elapsed;
       }
     });
 
-    this.events.on("unit-updated", (unit) => {
-      const { x: mX, y: mY } = this.#getUQ8(unit);
-
-      if (this.#unitWorkerScore.unitOfInterestFilter(unit)) {
-        this.#units.add(unit.x, unit.y, unit);
+    this.events.on("unit-updated", (unit: Unit) => {
+      // add selectable player owned non-building units to quadtree
+      if (unitOfInterest(unit)) {
+        // add unit to grid - fyi this grid is cleared every frame
+        this.u8.units
+          .$get(this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y))
+          .value.push(unit as AO_Unit);
       }
+
       if (unit.extras.recievingDamage) {
-        this.#adhd_uq8.decay(mX, mY);
-        if (!canOnlySelectOne(unit)) {
+        this.u8.adhd.decay(this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y));
+
+        if (!canOnlySelectOne(unit) && this.config.autoSelectUnits) {
           this.selectedUnits.add(unit);
         }
-      } else {
+
+        this.adjustCameraFatigueBasedOnRecentAction(unit, 10);
+      } else if (this.config.autoSelectUnits) {
         this.selectedUnits.delete(unit);
       }
 
       if (unit.isAttacking) {
-        this.#adhd_uq8.decay(mX, mY);
-        this.#lastUnitAttackedFrame = this.frame;
+        this.u8.adhd.decay(this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y));
+        this.lastUnitAttackedMS = this.elapsed;
       }
     });
 
     this.events.on("frame-reset", () => {
       this.#reset();
-      this.#adhd_uq8.clear();
-    })
+      this.u8.clear();
+    });
 
-    this.#defaultScoreCalculator = (unit: Unit, orderScore: number, unitScore: number) => {
-      const result = this.#defaultScoreCalculatorUnbound(unit, orderScore, unitScore);
-      return result;
+    this.events.on("selected-units-changed", (units) => {
+      if (!this.config.autoSelectUnits && units.length) {
+        // this.gridCameraFatigue += 3000;
+        // this.trackingCameraFatigue += 500;
+      }
+    });
+  }
+
+  // adjust (detract) camera fatigue based on recent action
+  adjustCameraFatigueBasedOnRecentAction(unit: Unit, distanceFactor: number) {
+    if (
+      this.elapsed > this.cameraFatigueAdjustmentTimeoutMS + 25 &&
+      this.activeQuadrant
+    ) {
+      // if action is happening across the map, decrease camera fatigue
+      const dist = this.pxToWorld
+        .xyz(unit.x, unit.y, _a3)
+        .distanceTo(this.viewport.orbit.getTarget(_b3));
+      let adjustment = -dist * 2;
+
+      const delta =
+        this.u8.action.get(
+          this.u8.pxGrid.fromWorldToGrid(_a2, unit.x, unit.y)
+        ) - this.u8.action.get(this.activeQuadrant);
+      // we tweak the magnitude by how much there is a score difference
+      if (delta > 0) {
+        adjustment = -dist * distanceFactor * delta;
+      }
+      this.gridCameraFatigue += adjustment;
+      this.cameraFatigueAdjustmentTimeoutMS = this.elapsed;
+    }
+  }
+
+  onExitScene() {
+    this.events.dispose();
+    this.openBW.setGameSpeed(1);
+
+    this.settings.input.dampingFactor.reset();
+
+    if (this.config.autoSelectUnits) {
+      this.selectedUnits.clear();
     }
 
-  }
+    this.openBW.setGameSpeed(1);
 
-  #reset() {
-    this.#secondFollowedUnit = undefined;
-    this.followedUnits.clear();
-    this.#units.clear();
-  }
-
-  async #setupCamera(viewport: GameViewPort) {
-    const orbit = viewport.orbit;
-
-    orbit.camera.far = DEFAULT_FAR;
-    orbit.camera.fov = 15;
-    orbit.camera.updateProjectionMatrix();
-
-    orbit.dollyToCursor = true;
-    orbit.verticalDragToForward = true;
-
-    orbit.maxDistance = 128;
-    orbit.minDistance = 20;
-
-    orbit.maxPolarAngle = POLAR_MAX;
-    orbit.minPolarAngle = POLAR_MIN;
-    orbit.maxAzimuthAngle = THREE.MathUtils.degToRad(45);
-    orbit.minAzimuthAngle = -THREE.MathUtils.degToRad(45);
-
-    await orbit.rotatePolarTo(POLAR_MIN, false);
-    await orbit.rotateAzimuthTo(0, false);
-    await orbit.zoomTo(1, false);
-    await orbit.dollyTo(55, false);
-  }
-
-  
-
-  public async onEnterScene(prevData) {
-    this.viewport.fullScreen();
-    this.viewport.rotateSprites = true;
-
-    this.#reset();
-
-    await this.#setupCamera(this.viewport);
-    await this.#setupCamera(this.secondViewport);
-
-    this.secondViewport.height = this.config.pipSize;
-    this.secondViewport.right = 0.05;
-    this.secondViewport.bottom = 0.05;
-    this.secondViewport.orbit.rotatePolarTo(THREE.MathUtils.degToRad(45), false);
-    this.secondViewport.orbit.dollyTo(45, false);
-
-    this.settings.input.unitSelection.set(false);
-    this.settings.input.cursorVisible.set(false);
-
-    this.viewport.cameraShake.enabled = true;
-    this.viewport.cameraShake.maxShakeDistance = 100;
-    this.viewport.orbit.dampingFactor = 0.000001;
-
-    this.viewport.orbit.dollySpeed = 0.01;
-    this.viewport.orbit.truckSpeed = 0.01;
-
-    this.#adhd_uq8.defaultDecay = this.config.heatMapDecay;
-
-    this.#polarTarget = POLAR_MAX;
-    this.#azimuthTarget = 0;
-
+    return {
+      target: this.targets.moveTarget.clone(),
+      position: this.viewport.orbit.getPosition(_a3).clone(),
+    };
   }
 
   onConfigChanged(oldConfig: Record<string, unknown>): void {
     this.secondViewport.height = this.config.pipSize;
-    this.#adhd_uq8.defaultDecay = this.config.heatMapDecay;
-    this.viewport.orbit.minPolarAngle = POLAR_MIN + THREE.MathUtils.degToRad(this.config.tilt);
+    this.u8.adhd.defaultDecay = this.config.heatMapDecay;
+    this.viewport.orbit.minPolarAngle =
+      POLAR_MIN + THREE.MathUtils.degToRad(this.config.tilt);
+
+    this.#targetObject.visible = this.config.showDebug;
+    this.#targetObject2.visible = this.config.showDebug;
   }
 
-  #secondFollowedUnit: Unit | undefined;
+  onTick(delta: number) {
+    this.targets.update();
 
-  #defaultScoreCalculatorUnbound: ScoreCalculator = (unit: Unit, orderScore: number, unitScore: number) => {
-    const unitType = this.assets.bwDat.units[unit.typeId];
+    this.gridCameraFatigue -= delta;
+    this.trackingCameraFatigue -= delta;
 
-    if (unitType.isBuilding) {
-      if (Math.sin(this.elapsed / 20000 * Math.PI * 2) > 0) {
-        return orderScore * unitScore * 2;
+    if (
+      this.elapsed < this.lastUnitAttackedMS + 500 / this.openBW.gameSpeed ||
+      this.elapsed < this.lastUnitDestroyedMS + 3_000 / this.openBW.gameSpeed
+    ) {
+      this.targetGameSpeed = this.config.minReplaySpeed;
+      this.lastTimeGameStartedActionMS = this.elapsed;
+    } else {
+      this.targetGameSpeed = THREE.MathUtils.damp(
+        this.targetGameSpeed,
+        this.config.maxReplaySpeed,
+        0.1,
+        delta / 1000
+      );
+      this.lastTimeGameStartedLullMS = this.elapsed;
+    }
+
+    this.secondViewport.enabled =
+      this.secondViewport.enabled &&
+      !areProximateViewports(this.viewport, this.secondViewport);
+
+    if (
+      this.elapsed - this.lastDecayUpdateMS >
+      this.config.heatmapUpdateInterval
+    ) {
+      this.u8.adhd.decayAll();
+      this.lastDecayUpdateMS = this.elapsed;
+    }
+  }
+
+  #updateStrategy() {
+    if (this.strategyQueue.length === 0) {
+      for (const q of this.u8.units.grid) {
+        for (const unit of q.value) {
+          if (unit.extras.dat.isBuilding) {
+            this.strategyQueue.push(unit as AO_Unit);
+            (unit as AO_Unit).extras.ao_timeOnStrategyQueueMS =
+              this.elapsed;
+          }
+        }
       }
     }
 
-    return orderScore * unitScore;
-  }
-
-
-  #activateSecondQuadrant(quadrant: Quadrant<Unit>) {
-    let maxScoreUnit = this.#secondFollowedUnit = this.#unitWorkerScore.getMaxScoreUnit(quadrant.items, this.#defaultScoreCalculator);
-
-    const nx = maxScoreUnit.x;// quadrant.x / this.#units.size * 32 * this.map.size[0] + 16 * 32;
-    const ny = maxScoreUnit.y;//quadrant.y / this.#units.size * 32 * this.map.size[1] + 16 * 32;
-
-    this.pxToWorld.xyz(nx, ny, _pos);
-
-    this.secondViewport.orbit.moveTo(
-      _pos.x,
-      _pos.y,
-      _pos.z,
-      true
-    );
-    this.secondViewport.orbit.dollyTo(this.config.baseDistance * 3 / 4, true)
-
-    // this.secondViewport.orbit.rotatePolarTo(this.secondViewport.orbit.minPolarAngle + Math.random() * THREE.MathUtils.degToRad(this.config.polarVariance), true);
-    // this.secondViewport.orbit.rotateAzimuthTo((-0.5 + Math.random()) * THREE.MathUtils.degToRad(this.config.azimuthVariance), true);
-
-  }
-
-  #polarTarget = 0;
-  #azimuthTarget = 0;
-  #dollyTarget = 55;
-
-  #activateQuadrant(quadrant: Quadrant<Unit>) {
-    this.followedUnits.clear();
-
-    //todo change to top 3 units?
-    let maxScoreUnit = this.#unitWorkerScore.getMaxScoreUnit(quadrant.items, this.#defaultScoreCalculator);
-
-    const nx = maxScoreUnit.x;// quadrant.x / this.#units.size * 32 * this.map.size[0] + 16 * 32;
-    const ny = maxScoreUnit.y;//quadrant.y / this.#units.size * 32 * this.map.size[1] + 16 * 32;
-
-    // let x = nx, y = ny;
-    // for (const unit of quadrant.items) {
-    //     x = x * (1 - this.#unitWorkerScore.unitScore(unit) / maxScore) + unit.x * (this.#unitWorkerScore.unitScore(unit) / maxScore);
-    //     y = y * (1 - this.#unitWorkerScore.unitScore(unit) / maxScore) + unit.y * (this.#unitWorkerScore.unitScore(unit) / maxScore);
-    // }
-
-    this.pxToWorld.xyz(nx, ny, _pos);
-
-    this.viewport.orbit.getTarget(_a);
-    
-    this.viewport.orbit.moveTo(
-      _pos.x,
-      _pos.y,
-      _pos.z,
-      this.#areProximate(_pos, _a)
+    const hasMultipleOwners = this.strategyQueue.some(
+      (u) => u.owner !== this.strategyQueue[0].owner
     );
 
-    const cameraAdjustment = getCameraDistance(quadrant.items, this.map.size);
-    // const spread = spreadFactorVariance(quadrant.items) / this.#maxTotalSpreadVariance;
-    // console.log("SPREAD", cameraAdjustment, easeOutCubic(cameraAdjustment));
-    // 1 is zoom all the way out]
+    // 30s lifespan
+    this.strategyQueue = this.strategyQueue.filter(
+      (u) =>
+        this.elapsed -
+          (u as AO_Unit).extras.ao_timeOnStrategyQueueMS <
+        30_000
+    );
 
-    this.#dollyTarget= THREE.MathUtils.lerp(this.config.baseDistance, this.config.baseDistance + this.config.distanceVariance, easeOutCubic(cameraAdjustment));
+    this.strategyQueue.sort((a, b) => {
+      // we want to alternate owners
+      if (hasMultipleOwners) {
+        if (a.owner !== this.lastSelectedStrategyOwner) {
+          return -1;
+        }
+        if (b.owner !== this.lastSelectedStrategyOwner) {
+          return 1;
+        }
+      }
 
-    console.log(this.viewport.orbit.azimuthAngle, this.#azimuthTarget);
-    console.log(this.viewport.orbit.polarAngle, this.#polarTarget);
+      const tensionA = this.u8.tension.get(
+        this.u8.pxGrid.fromWorldToGrid(_a2, a.x, a.y)
+      );
+      const tensionB = this.u8.tension.get(
+        this.u8.pxGrid.fromWorldToGrid(_a2, b.x, b.y)
+      );
 
-    if (Math.abs(this.viewport.orbit.azimuthAngle - this.#azimuthTarget) < 0.1  ) {
+      if (isTownCenter(a) && isTownCenter(b) && tensionA && tensionB) {
+        return tensionB - tensionA;
+      }
+      if (isTownCenter(a) && tensionA > 0) return -1;
+      if (isTownCenter(b) && tensionB > 0) return 1;
 
-      this.#azimuthTarget = (-0.5 + Math.random()) * THREE.MathUtils.degToRad(this.config.azimuthVariance);
+      // incomplete buildings take precedence
+      if (!unitIsCompleted(a) && unitIsCompleted(b)) return -1;
+      if (unitIsCompleted(a) && !unitIsCompleted(b)) return 1;
 
+      // buildings just started or nearing completion
+      if (!unitIsCompleted(a) && !unitIsCompleted(b)) {
+        // if one near completion, and the other just starting, pick near completion
+        if (
+          a.remainingBuildTime / a.extras.dat.buildTime < 0.5 &&
+          b.remainingBuildTime / b.extras.dat.buildTime > 0.5
+        )
+          return -1;
+        if (
+          b.remainingBuildTime / b.extras.dat.buildTime < 0.5 &&
+          a.remainingBuildTime / a.extras.dat.buildTime > 0.5
+        )
+          return 1;
+      }
+
+      const biggerElapses = Math.max(
+        (a as AO_Unit).extras.ao_timeOnStrategyQueueMS,
+        (b as AO_Unit).extras.ao_timeOnStrategyQueueMS
+      );
+      const elapsedAWeight =
+        1 -
+        (a as AO_Unit).extras.ao_timeOnStrategyQueueMS /
+          biggerElapses;
+      const elapsedBWeight =
+        1 -
+        (b as AO_Unit).extras.ao_timeOnStrategyQueueMS /
+          biggerElapses;
+
+      // todo:many buildings that are training (macro)
+      return (
+        this.unitScore(b) * elapsedBWeight - this.unitScore(a) * elapsedAWeight
+      );
+    });
+
+    if (this.strategyQueue.length > 10) {
+      this.strategyQueue.length = 10;
+    }
+  }
+
+  #updateScores() {
+    let maxScore = 0;
+
+    for (const quadrant of this.u8.units.grid) {
+      let sumScore = 0;
+
+      for (const unit of quadrant.value) {
+        const unitScore = this.unitScore(unit);
+        sumScore += unitScore;
+
+        (unit as AO_Unit).extras.ao_score = unitScore;
+      }
+
+      this.u8.action.set(quadrant, sumScore);
+
+      if (sumScore > maxScore) {
+        maxScore = sumScore;
+      }
+
+      const building = quadrant.value.find((u) =>
+        this.strategyQueue.includes(u)
+      );
+      const buildingQ = building
+        ? 1 - this.strategyQueue.indexOf(building) / this.strategyQueue.length
+        : 0;
+      this.u8.strategy.set(quadrant, buildingQ);
     }
 
-    if (Math.abs(this.viewport.orbit.polarAngle - this.#polarTarget) < 0.1  ) {
-
-      this.#polarTarget = this.viewport.orbit.minPolarAngle + Math.random() * THREE.MathUtils.degToRad(this.config.polarVariance);
-
+    // normalize scores
+    for (const quadrant of this.u8.units.grid) {
+      this.u8.action.set(quadrant, maxScore === 0 ? 0 : this.u8.action.get(quadrant) / maxScore);
     }
-   
-
-    this.followedUnits.set([maxScoreUnit])
-
-    this.#lastUpdateFrame = this.elapsed;
   }
 
-  #groundTarget(viewport, t) {
-    return viewport.orbit.getTarget(t).setY(0);
+  #updateTension() {
+    for (const quadrant of this.u8.units.grid) {
+      const _teams = new Array(8).fill(0);
+      for (const unit of quadrant.value) {
+        const unitScore = this.unitScore(unit);
+        _teams[unit.owner] += unitScore;
+      }
+
+      const tension = calcCoeff(_teams.filter((_, i) => this.players.get(i)));
+      this.u8.tension.set(quadrant, tension);
+
+      this.t5.world8.fromWorldToGrid(_a2, quadrant.x, quadrant.y);
+      this.t5.prevTension.$get(_a2).value.push(tension);
+
+      if (this.t5.prevTension.$get(_a2).value.length > 10) {
+        this.t5.prevTension.$get(_a2).value.shift();
+      }
+    }
+
+    let _tensionI = 0,
+      tc = 0;
+
+    for (const g of this.t5.prevTension.grid) {
+      const tensionStd = standardDeviation(this.t5.prevTension.get(g));
+      this.t5.tension.set(g, tensionStd);
+
+      if (tensionStd === 0) continue;
+
+      this.viewport.orbit.getTarget(_c3);
+      this.t5.worldGrid.fromGridToWorld(_a2, g.x, g.y);
+      _a3.set(_a2.x, 0, _a2.y);
+
+      const d = normalizeWorldDistance(_a3, _c3, this.#maxDistance / 2);
+
+      _tensionI += tensionStd * d;
+      tc++;
+    }
+
+    if (tc === 0) return 0;
+
+    return _tensionI / tc;
   }
 
-  #areProximate(a, b) {
-    return a.distanceTo(b) < PIP_PROXIMITY;
+  #sortedQuadrants = new Array<Quadrant>();
+
+  #calcWeighted(quadrant: Quadrant) {
+    const scoreQ = this.u8.action.get(quadrant);
+    const adhdQ = 1 - this.u8.adhd.get(quadrant);
+
+    this.t5.world8.fromWorldToGrid(_a2, quadrant.x, quadrant.y);
+
+    const tensionQ = this.t5.tension.get(_a2); //this.u8.tension.get(quadrant) * this.config.weightsTension;
+    const buildingQ = this.u8.strategy.get(quadrant);
+
+    const gameLullQ =
+      (1 +
+        Math.sin(
+          (this.lastTimeGameStartedActionMS - this.lastTimeGameStartedLullMS) /
+            1000
+        )) /
+      2;
+
+    // trying adhd against unit score only rn
+    const weightedScore =
+      scoreQ * gameLullQ * adhdQ + buildingQ * (1 - gameLullQ) + tensionQ;
+    this.u8.wScore.set(quadrant, weightedScore);
+
+    return weightedScore;
   }
 
-  #areProximateViewports(a, b) {
-    return this.#areProximate(
-      this.#groundTarget(a, _a),
-      this.#groundTarget(b, _b)
+  #sortQuadrantsByScores() {
+    for (let q = 0; q < this.u8.units.grid.length; q++) {
+      this.#sortedQuadrants[q] = this.u8.units.grid[q];
+    }
+
+    this.#sortedQuadrants.sort((a, b) => {
+      if (a.value.length === 0) return 1;
+      if (b.value.length === 0) return -1;
+
+      return this.#calcWeighted(b) - this.#calcWeighted(a);
+    });
+  }
+
+  #tensionI = 0;
+
+  onFrame(frame: number): void {
+    if (this.config.showDebug) {
+      this.sendUIMessage({
+        speed: this.openBW.gameSpeed,
+        targetSpeed: this.targetGameSpeed,
+
+        state: {
+          cameraFatigue: this.gridCameraFatigue,
+          cameraFatigue2: this.trackingCameraFatigue,
+          elapsed: this.elapsed,
+          frame,
+          lastTimeGameStartedLullMS: this.lastTimeGameStartedLullMS,
+          lastTimeGameStartedActionMS: this.lastTimeGameStartedActionMS,
+        },
+        data: {
+          size: this.u8.units.size,
+          quadrants: this.u8.units.grid.map((q) => {
+            return {
+              active: q === this.activeQuadrant,
+              x: q.x,
+              y: q.y,
+              score: this.u8.action.get(q),
+              units: q.value.length,
+              adhd: this.u8.adhd.get(q),
+              tension: this.u8.tension.get(q),
+              strategy: this.u8.strategy.get(q),
+              wScore: this.u8.wScore.get(q),
+            };
+          }),
+        },
+      });
+    }
+
+    if (this.gridCameraFatigue < 0 || this.trackingCameraFatigue < 0) {
+      this.#tensionI = this.#updateTension();
+
+      if (this.gridCameraFatigue) {
+        this.gridCameraFatigue -= this.#tensionI * 1000;
+      }
+    }
+
+    // update to a new grid area of focus, 1 second minimum between updates
+    // it should rarely happen that fatigue drops that fast though
+    if (
+      this.gridCameraFatigue < 0 &&
+      this.elapsed > this.lastActiveQuadrantUpdateMS + 1000
+    ) {
+      // update scores
+      this.#updateStrategy();
+      this.#updateScores();
+      this.#sortQuadrantsByScores();
+
+      const quadrant = this.#sortedQuadrants[0];
+
+      this.viewport.orbit.getTarget(_c3);
+
+      const moveToUnits = quadrant.value.filter(this.uf_NonHarvesting);
+
+      if (moveToUnits.length) {
+        const {
+          centroids: { a: clA, b: clB },
+          clusters: { a: clAUnits, b: clBUnits },
+        } = getClusters(this, moveToUnits);
+
+        // if we're far enough away we'll switch focus to the new targets
+        // otherwise, let tracking camera continue to handle it
+        if (clA.distanceTo(_c3) > 10) {
+          // pick higher score cluster
+          const scoreA = clAUnits.reduce(lowHealthUnitScoreReducer, 0);
+          const scoreB = clBUnits.reduce(lowHealthUnitScoreReducer, 0);
+
+          const cl = scoreA > scoreB ? clA : clB;
+          const clU = scoreA > scoreB ? clAUnits : clBUnits;
+
+          const movement = getAverageUnitDirectionAndSpeed(clU);
+          moveVectorByAngleAndMagnitude(
+            _a3.copy(cl),
+            movement.angle,
+            movement.speed
+          );
+
+          this.targets.moveTarget.copy(_a3.lerp(cl, 0.5));
+          this.targets.lookAtMoveTarget();
+        }
+
+        if (this.config.showDebug) {
+          this.#targetObject.position.copy(clA);
+          this.#targetObject2.position.copy(clB);
+          this.#targetObject.updateMatrix();
+          this.#targetObject.updateMatrixWorld();
+          this.#targetObject2.updateMatrix();
+          this.#targetObject2.updateMatrixWorld();
+        }
+      }
+
+      const lowUnitCountPenalty =
+        (1 - clamp(quadrant.value.length / 5, 0, 1)) * 4000;
+
+      this.gridCameraFatigue =
+        4000 / this.openBW.gameSpeed +
+        this.targets.moveTarget.distanceTo(_c3) * 50 -
+        lowUnitCountPenalty;
+      this.trackingCameraFatigue = 500 / this.openBW.gameSpeed;
+
+      this.targets.adjustDollyToUnitSpread(quadrant.value);
+
+      this.lastActiveQuadrantUpdateMS = this.elapsed;
+
+      this.u8.adhd.set(quadrant, 1);
+      this.activeQuadrant = quadrant;
+
+      // strategy buildings that exist in this quadrant
+      const buildings = quadrant.value.filter((u) =>
+        this.strategyQueue.includes(u)
+      );
+      if (buildings.length) {
+        // remove them from the strategy queue
+        this.strategyQueue = this.strategyQueue.filter(
+          (u) => !buildings.includes(u)
+        );
+        this.lastSelectedStrategyOwner = buildings[0].owner ?? -1;
+        this.timeSinceLastStrategySelectionMS = this.elapsed;
+      }
+      // keep moving focus to nearby stuff to keep the camera active
+    } else if (this.trackingCameraFatigue < 0) {
+      this.viewport.orbit.getTarget(_c3);
+      const quadrant = this.u8.worldGrid.fromWorldToGrid(_a2, _c3.x, _c3.z);
+
+      const nearbyUnits = getUnitsNearCluster(
+        this,
+        this.u8.units.getNearbyList(_unitClusterA, quadrant, 1).flat(),
+        _c3,
+        10
+      ).filter(this.uf_NonHarvesting);
+
+      const moveToUnits = nearbyUnits;
+      if (moveToUnits.length) {
+        const {
+          centroids: { a: clA, b: clB },
+          clusters: { a: clAUnits, b: clBUnits },
+        } = getClusters(this, moveToUnits);
+
+        const nearA = 1 - normalizeWorldDistance(clA, _c3, 10);
+        const nearB = 1 - normalizeWorldDistance(clB, _c3, 10);
+
+        const mvmtA = getAverageUnitDirectionAndSpeed(clAUnits);
+        const mvmtB = getAverageUnitDirectionAndSpeed(clBUnits);
+
+        const scoreA = clAUnits.reduce(unitScoreReducer, 0);
+        const scoreB = clBUnits.reduce(unitScoreReducer, 0);
+        const maxScore = Math.max(scoreA, scoreB);
+
+        const weightA =
+          (scoreA / maxScore) * nearA + constrain(mvmtA.speed, 0, 10) * 2;
+        const weightB =
+          (scoreB / maxScore) * nearB + constrain(mvmtB.speed, 0, 10) * 2;
+
+        const cl = weightA > weightB ? clA : clB;
+        const clU = weightA > weightB ? clAUnits : clBUnits;
+        const clOther = weightA > weightB ? clB : clA;
+
+        const units = getUnitsFromLargestRepresentedTeam(clU);
+        const movement = getAverageUnitDirectionAndSpeed(units);
+        moveVectorByAngleAndMagnitude(
+          _a3.copy(cl),
+          movement.angle,
+          movement.speed
+        );
+
+        // if there is tension, bias towards inbetween clusters
+        _a3.lerp(clOther, this.u8.tension.get(quadrant) * 0.5);
+
+        this.targets.moveTarget.copy(_a3);
+
+        // 1 = low speed, 0 = high speed
+        const speedFactor = 1 - clamp(movement.speed, 0, 10) / 10;
+
+        // 1 = far distance, 0 = close distance
+        const d = clamp(_a3.distanceTo(_c3), 1, 10) / 10;
+        // farther we are from target, the faster we move
+        const d2 = 1 + 4 * (1 - d) + speedFactor * 2;
+        this.targets.lookAtMoveTarget(d2 / this.openBW.gameSpeed, "smooth");
+        // if we are moving quickly, add to main camera so we dont jump cut mid move
+        // temper it by tension, higher tension means we don't delay fatigue as much
+        this.gridCameraFatigue +=
+          (easeIn(d, 3) * 1000 * (1 - this.#tensionI)) / this.openBW.gameSpeed;
+
+        // debug only
+        this.#targetObject.position.copy(cl);
+        this.#targetObject2.position.copy(_a3);
+        this.#targetObject.updateMatrix();
+        this.#targetObject.updateMatrixWorld();
+        this.#targetObject2.updateMatrix();
+        this.#targetObject2.updateMatrixWorld();
+
+        const lowSpeedBoost = speedFactor * 400;
+
+        this.trackingCameraFatigue =
+          300 / this.openBW.gameSpeed +
+          this.targets.moveTarget.distanceTo(_c3) * 20 +
+          lowSpeedBoost;
+      }
+    }
+
+    if (this.frame < 30 * 24) {
+      this.targetGameSpeed = this.config.minReplaySpeed;
+    }
+
+    this.u8.units.clear();
+  }
+
+  /**
+   * Manual user minimap drag
+   */
+  onMinimapDragUpdate(
+    pos: THREE.Vector2,
+    isDragStart: boolean,
+    mouseButton: number
+  ) {
+    const viewportsAreProximate = areProximateViewports(
+      this.viewport,
+      this.secondViewport
     );
-  }
-
-  onMinimapDragUpdate(pos, isDragStart, mouseButton) {
 
     if (mouseButton === 0) {
-      _c.set(pos.x, 0, pos.y);
+      this.viewport.orbit.getTarget(_c3);
+      const target = _a3.set(pos.x, 0, pos.y).clone();
+      this.targets.moveTarget.copy(target);
+      this.targets.lookAtMoveTarget(undefined, isDragStart ? "cut" : "smooth");
+      this.gridCameraFatigue = 8000;
+      this.trackingCameraFatigue = 200;
+
+      this.activeQuadrant = this.u8.units.$get(
+        this.u8.worldGrid.fromWorldToGrid(_a2, pos.x, pos.y)
+      );
+
+      if (this.secondViewport.enabled) {
+        this.secondViewport.enabled = !viewportsAreProximate;
+      } else {
+        this.secondViewport.orbit.moveTo(-10000, 0, 0, false);
+      }
+    } else if (mouseButton === 2) {
+      _a3.set(pos.x, 0, pos.y);
+
+      const isProximateToPrevious = areProximate(
+        _a3,
+        groundTarget(this.secondViewport, _b3),
+        PIP_PROXIMITY
+      );
 
       if (isDragStart) {
-        this.secondViewport.enabled = true;
-      }
-
-      this.secondViewport.orbit.moveTo(pos.x, 0, pos.y, !isDragStart);
-
-    }
-
-  }
-
-  #isArmyUnit(unit: Unit): boolean {
-      return this.assets.bwDat.units[unit.typeId].supplyRequired > 0 && !this.#isWorker(unit.typeId);
-  }
-
-  #isWorker(unitTypeId) {
-      return workerTypes.includes(unitTypeId);
-  }
-
-  #targetGameSpeed = 1;
-  #lastSelectedQuadrant: Quadrant<Unit> | undefined;
-
-  onFrame(frame: number, commands: any[]): void {
-
-
-    const dampSpeed = this.#targetGameSpeed > 1 ? 0.5 : 1;
-    this.openBW.setGameSpeed(THREE.MathUtils.damp(this.openBW.gameSpeed, THREE.MathUtils.clamp(this.#targetGameSpeed, 1, this.config.maxReplaySpeed), dampSpeed, this.delta / 1000));
-
-    this.viewport.orbit.rotateAzimuthTo(THREE.MathUtils.damp(this.viewport.orbit.azimuthAngle, this.#azimuthTarget, 1, this.delta / 1000), true);
-    this.viewport.orbit.rotatePolarTo(THREE.MathUtils.damp(this.viewport.orbit.polarAngle, this.#polarTarget, 1, this.delta / 1000), true);
-
-    this.viewport.orbit.dollyTo(THREE.MathUtils.damp(this.viewport.orbit.distance, this.#dollyTarget, 0.5, this.delta / 1000), true)
-
-
-    for (const quadrant of this.#units.quadrants) {
-      let sumScore = 0, avgScore = 0;
-
-      //todo weighted positions
-      for (const unit of quadrant.items) {
-        const unitScore = this.#unitWorkerScore.unitScore(unit, this.#defaultScoreCalculator);
-        if (isNaN(unitScore)) {
-          debugger;
-        }
-        sumScore += unitScore;
-      }
-      avgScore = sumScore / (quadrant.items.length || 1);
-      // todo remove avg since we already know
-      this.#scores_uq8.set(quadrant.x, quadrant.y, avgScore);
-    }
-    
-    this.sendUIMessage({
-      speed: this.openBW.gameSpeed,
-      targetSpeed: this.#targetGameSpeed,
-
-      state: {
-        lastHeatMapUpdateFrame: this.#lastHeatMapUpdateFrame,
-        lastUpdateFrame: this.#lastUpdateFrame,
-        elapsed: this.elapsed,
-        frame,
-      },
-      data: {
-        size: this.#units.size,
-        quadrants: this.#units.quadrants.map((q) => {
-          return {
-            x: q.x,
-            y: q.y,
-            score: this.#scores_uq8.get(q.x, q.y),
-            units: q.items.length,
-            heatmap: this.#adhd_uq8.get(q.x, q.y),
-          }
-        })
-      }
-    })
-
-    if (this.elapsed - this.#lastHeatMapUpdateFrame > this.config.heatmapUpdateInterval) {
-      this.#adhd_uq8.decayAll();
-      this.#lastHeatMapUpdateFrame = this.elapsed;
-    }
-
-    if (this.elapsed - this.#lastUpdateFrame > this.config.cameraMoveTime) {
-
-      let hottestScore = 0;
-      let hottestQuadrant: Quadrant<Unit> | undefined;
-      let secondHottestQuadrant: Quadrant<Unit> | undefined;
-
-      let decayedScore = 0, decayedSecondScore = 0;
-
-
-      //TODO; if a quadrants score doubles from last frame, it should be prioritized
-      for (const quadrant of this.#units.quadrants) {
-        decayedScore = this.#scores_uq8.get(quadrant.x, quadrant.y) * (1 - this.#adhd_uq8.get(quadrant.x, quadrant.y));
-        
-        if (decayedScore > hottestScore) {
-            hottestScore = decayedScore;
-            secondHottestQuadrant = hottestQuadrant;
-            hottestQuadrant = quadrant;
-        }
-      }
-
-      if (hottestQuadrant && hottestQuadrant.items.length > 0) {
-
-        this.#activateQuadrant(hottestQuadrant);
-        this.#adhd_uq8.set(hottestQuadrant.x, hottestQuadrant.y, 1);
-        this.#lastSelectedQuadrant = hottestQuadrant;
-
-        if (secondHottestQuadrant) {
-          decayedSecondScore =this.#scores_uq8.get(secondHottestQuadrant.x, secondHottestQuadrant.y) * (1 - this.#adhd_uq8.get(secondHottestQuadrant.x, secondHottestQuadrant.y));
-          if (decayedSecondScore > hottestScore * distance(hottestQuadrant, secondHottestQuadrant)/8) {
-            this.#activateSecondQuadrant(secondHottestQuadrant);
-            this.secondViewport.enabled = true;
-          } else {
-            this.secondViewport.enabled = false;
-          }
+        if (this.secondViewport.enabled) {
+          this.secondViewport.enabled =
+            !viewportsAreProximate && isProximateToPrevious;
         } else {
-          this.secondViewport.enabled = false;
+          this.secondViewport.enabled = !viewportsAreProximate;
         }
-
-        const nearbyHeat = this.#scores_uq8.getNearby(hottestQuadrant.x, hottestQuadrant.y, 1);
-        let nearbySum = 0;
-        for (const h of nearbyHeat) {
-          nearbySum += h.value// * (1 -0 this.#adhd.get(h.x, h.y));
-        }
-
-        let nearbyAttacking = 0, armyTotal = 1;
-
-        for (const unit of hottestQuadrant.items) {
-          if (this.#isArmyUnit(unit)) {
-            armyTotal++;
-            if (unit.isAttacking) {
-              nearbyAttacking++;
-            }
-          }
-        }
-        // v1- calculated speed on winning quadrant only, obv not great, lets try adding a nearby quadrant too
-        const speedLerpX =  easeOutCubic(nearbySum);
-        
-        this.#targetGameSpeed = THREE.MathUtils.lerp(this.config.maxReplaySpeed, 1, speedLerpX);
-
+      } else {
+        this.secondViewport.enabled =
+          !viewportsAreProximate && isProximateToPrevious;
       }
 
-    }
-
-    if (this.frame < 30 * 24 || this.frame > this.#lastUnitAttackedFrame + 4 * 60 * 24 || this.frame > this.#lastUnitDestroyedFrame + 8 * 60 * 24) {
-          this.#targetGameSpeed = 1;
-    }
-
-    this.#units.clear();
-
-    if (this.followedUnits.size) {
-
-      const pos = this.getFollowedUnitsCenterPosition();
-
-      if (pos) {
-
-        this.viewport.orbit.moveTo(pos.x, pos.y, pos.z, true);
-
+      if (this.secondViewport.enabled) {
+        this.secondViewport.orbit.moveTo(pos.x, 0, pos.y, !isDragStart);
+      } else {
+        this.secondViewport.orbit.moveTo(-10000, 0, 0, false);
       }
-
     }
-
-    if (this.#secondFollowedUnit) {
-      this.pxToWorld.xyz(this.#secondFollowedUnit.x, this.#secondFollowedUnit.y, _pos);
-      this.secondViewport.orbit.moveTo(_pos.x, _pos.y, _pos.z, true);
-    }
-
-    this.secondViewport.enabled = this.secondViewport.enabled && !this.#areProximateViewports(this.viewport, this.secondViewport);
   }
 
-  // #isNearStartLocation(player: Player | undefined, pos: THREE.Vector3): boolean {
+  /**
+   * Manual user wheel scroll
+   */
+  onCameraMouseUpdate(_: number, __: number, scrollY: number) {
+    if (scrollY) {
+      if (scrollY < 0) {
+        this.targets.dollyTarget -= 20;
+        this.viewport.orbit.dolly(-20, true);
+      } else {
+        this.targets.dollyTarget += 20;
+        this.viewport.orbit.dolly(20, true);
+      }
+    }
+  }
 
-  //   const distance = 32;
-  //   for (const p of this.players) {
-  //     if (p.startLocation) {
-  //       if (!this.#isNearOwnStartLocation(player, p.startLocation) && p.startLocation.distanceTo(pos) <= distance) {
-  //         return true;
-  //       }
-  //     }
-  //   }
-  //   return false;
-  // }
+  uf_NonHarvesting = (unit: Unit) => {
+    if (unit.extras.dat.isBuilding) {
+      return false;
+    }
+    if (isWorkerUnit(unit) && isHarvesting(unit)) {
+      return false;
+    }
+    return true;
+  };
 
-  // #isNearOwnStartLocation(player: Player | undefined, pos: THREE.Vector3): boolean {
-  //   if (player == undefined || player.startLocation === undefined) return false;
-
-  //   const distance = 10 * 32
-  //   return (player.startLocation.distanceTo(pos) <= distance);
-  // }
-
-
+  uf_Building = (unit: Unit) => unit.extras.dat.isBuilding;
 }

@@ -1,6 +1,5 @@
-A dynamic camera meant for highly dynamic scenes.
+### Controls
 
-* Left click to ZOOM in *(lens zoom)*
-* Right click to ZOOM out *(lens zoom)*
-* Move the mouse to rotate camera
-* Mouse wheel to raise and lower camera like a crane
+- Hold mouse to rotate the camera
+- Move your mouse to move the camera
+- Mouse wheel to change elevation
