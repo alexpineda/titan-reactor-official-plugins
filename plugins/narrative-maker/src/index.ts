@@ -60,12 +60,16 @@ const allUnitRanksFlat = allUnitRanks.flat();
 const _unitClusterA: AO_Unit[][] = [];
 
 const unitOfInterest = (unit: Unit) =>
-   unit.owner < 8 && canSelectUnit(unit) && allUnitRanksFlat.includes(unit.typeId);
+  unit.owner < 8 &&
+  canSelectUnit(unit) &&
+  allUnitRanksFlat.includes(unit.typeId);
 
 const lowHealthUnitScoreReducer = (acc: number, unit: AO_Unit) => {
   // low health boosts score
-  return acc + unit.extras.autoObserver.score + (1 - unit.hp / unit.extras.dat.hp);
-}
+  return (
+    acc + unit.extras.autoObserver.score + (1 - unit.hp / unit.extras.dat.hp)
+  );
+};
 
 export default class PluginAddon extends SceneController {
   viewportsCount = 2;
@@ -140,7 +144,7 @@ export default class PluginAddon extends SceneController {
 
     this.#targetObject.visible = this.config.showDebug;
     this.#targetObject2.visible = this.config.showDebug;
-    
+
     this.u8 = new ScoreManager(QUAD_SIZE, this.map.size);
     this.t5 = new TensionManager(5, this.map.size);
 
@@ -163,7 +167,7 @@ export default class PluginAddon extends SceneController {
 
         this.lastUnitDestroyedMS = this.elapsed;
 
-        this.adjustCameraFatigueBasedOnRecentAction(unit, 20 );
+        this.adjustCameraFatigueBasedOnRecentAction(unit, 20);
       },
       -1
     );
@@ -202,7 +206,7 @@ export default class PluginAddon extends SceneController {
           this.selectedUnits.add(unit);
         }
 
-        this.adjustCameraFatigueBasedOnRecentAction(unit, 10 );
+        this.adjustCameraFatigueBasedOnRecentAction(unit, 10);
       } else if (this.config.autoSelectUnits) {
         this.selectedUnits.delete(unit);
       }
@@ -316,11 +320,13 @@ export default class PluginAddon extends SceneController {
 
   #updateStrategy() {
     if (this.strategyQueue.length === 0) {
-      for (const unit of this.units) {
-        if (unit.extras.dat.isBuilding) {
-          this.strategyQueue.push(unit as AO_Unit);
-          (unit as AO_Unit).extras.autoObserver.timeOnStrategyQueueMS =
-            this.elapsed;
+      for (const q of this.u8.units.grid) {
+        for (const unit of q.value) {
+          if (unit.extras.dat.isBuilding) {
+            this.strategyQueue.push(unit as AO_Unit);
+            (unit as AO_Unit).extras.autoObserver.timeOnStrategyQueueMS =
+              this.elapsed;
+          }
         }
       }
     }
@@ -407,10 +413,8 @@ export default class PluginAddon extends SceneController {
   #updateScores() {
     let maxScore = 0;
 
-
     for (const quadrant of this.u8.units.grid) {
       let sumScore = 0;
-
 
       for (const unit of quadrant.value) {
         const unitScore = this.unitScore(unit);
@@ -438,12 +442,10 @@ export default class PluginAddon extends SceneController {
     for (const quadrant of this.u8.units.grid) {
       this.u8.action.set(quadrant, this.u8.action.get(quadrant) / maxScore);
     }
-
   }
 
   #updateTension() {
     for (const quadrant of this.u8.units.grid) {
-
       const _teams = new Array(8).fill(0);
       for (const unit of quadrant.value) {
         const unitScore = this.unitScore(unit);
@@ -459,15 +461,14 @@ export default class PluginAddon extends SceneController {
       if (this.t5.prevTension.$get(_a2).value.length > 10) {
         this.t5.prevTension.$get(_a2).value.shift();
       }
-
     }
 
-    let _tensionI = 0, tc = 0;
+    let _tensionI = 0,
+      tc = 0;
 
-    for (const g of this.t5.prevTension.grid  ) {
-
+    for (const g of this.t5.prevTension.grid) {
       const tensionStd = standardDeviation(this.t5.prevTension.get(g));
-      this.t5.tension.set(g, tensionStd)
+      this.t5.tension.set(g, tensionStd);
 
       if (tensionStd === 0) continue;
 
@@ -475,30 +476,27 @@ export default class PluginAddon extends SceneController {
       this.t5.worldGrid.fromGridToWorld(_a2, g.x, g.y);
       _a3.set(_a2.x, 0, _a2.y);
 
-      const d = normalizeWorldDistance(_a3, _c3, this.#maxDistance / 2)
+      const d = normalizeWorldDistance(_a3, _c3, this.#maxDistance / 2);
 
-      _tensionI += (tensionStd * d)  
+      _tensionI += tensionStd * d;
       tc++;
-
     }
 
     if (tc === 0) return 0;
 
     return _tensionI / tc;
-
   }
 
   #sortedQuadrants = new Array<Quadrant>();
 
   #calcWeighted(quadrant: Quadrant) {
     const scoreQ = this.u8.action.get(quadrant);
-    const adhdQ = (1 - this.u8.adhd.get(quadrant));
+    const adhdQ = 1 - this.u8.adhd.get(quadrant);
 
     this.t5.world8.fromWorldToGrid(_a2, quadrant.x, quadrant.y);
 
     const tensionQ = this.t5.tension.get(_a2); //this.u8.tension.get(quadrant) * this.config.weightsTension;
-    const buildingQ =
-      this.u8.strategy.get(quadrant);
+    const buildingQ = this.u8.strategy.get(quadrant);
 
     const gameLullQ =
       (1 +
@@ -512,7 +510,7 @@ export default class PluginAddon extends SceneController {
     const weightedScore =
       scoreQ * gameLullQ * adhdQ + buildingQ * (1 - gameLullQ) + tensionQ;
     this.u8.wScore.set(quadrant, weightedScore);
-  
+
     return weightedScore;
   }
 
@@ -570,12 +568,14 @@ export default class PluginAddon extends SceneController {
       if (this.gridCameraFatigue) {
         this.gridCameraFatigue -= this.#tensionI * 1000;
       }
-
     }
 
     // update to a new grid area of focus, 1 second minimum between updates
     // it should rarely happen that fatigue drops that fast though
-    if (this.gridCameraFatigue < 0 && this.elapsed > this.lastActiveQuadrantUpdateMS + 1000) {
+    if (
+      this.gridCameraFatigue < 0 &&
+      this.elapsed > this.lastActiveQuadrantUpdateMS + 1000
+    ) {
       // update scores
       this.#updateStrategy();
       this.#updateScores();
@@ -629,7 +629,8 @@ export default class PluginAddon extends SceneController {
 
       this.gridCameraFatigue =
         4000 / this.openBW.gameSpeed +
-        this.targets.moveTarget.distanceTo(_c3) * 50 - lowUnitCountPenalty;
+        this.targets.moveTarget.distanceTo(_c3) * 50 -
+        lowUnitCountPenalty;
       this.trackingCameraFatigue = 500 / this.openBW.gameSpeed;
 
       this.targets.adjustDollyToUnitSpread(quadrant.value);
@@ -656,13 +657,12 @@ export default class PluginAddon extends SceneController {
       this.viewport.orbit.getTarget(_c3);
       const quadrant = this.u8.worldGrid.fromWorldToGrid(_a2, _c3.x, _c3.z);
 
-      const nearbyUnits = getUnitsNearCluster(this, this.u8.units
-        .getNearbyList(
-          _unitClusterA,
-          quadrant,
-          1
-        )
-        .flat(), _c3, 10).filter(this.uf_NonHarvesting);
+      const nearbyUnits = getUnitsNearCluster(
+        this,
+        this.u8.units.getNearbyList(_unitClusterA, quadrant, 1).flat(),
+        _c3,
+        10
+      ).filter(this.uf_NonHarvesting);
 
       const moveToUnits = nearbyUnits;
       if (moveToUnits.length) {
@@ -681,14 +681,16 @@ export default class PluginAddon extends SceneController {
         const scoreB = clBUnits.reduce(unitScoreReducer, 0);
         const maxScore = Math.max(scoreA, scoreB);
 
-        const weightA = (scoreA / maxScore) * nearA + constrain(mvmtA.speed, 0, 10) * 2;
-        const weightB = (scoreB / maxScore) * nearB + constrain(mvmtB.speed, 0, 10) * 2;
+        const weightA =
+          (scoreA / maxScore) * nearA + constrain(mvmtA.speed, 0, 10) * 2;
+        const weightB =
+          (scoreB / maxScore) * nearB + constrain(mvmtB.speed, 0, 10) * 2;
 
         const cl = weightA > weightB ? clA : clB;
         const clU = weightA > weightB ? clAUnits : clBUnits;
         const clOther = weightA > weightB ? clB : clA;
 
-        const units = getUnitsFromLargestRepresentedTeam(clU); 
+        const units = getUnitsFromLargestRepresentedTeam(clU);
         const movement = getAverageUnitDirectionAndSpeed(units);
         moveVectorByAngleAndMagnitude(
           _a3.copy(cl),
@@ -702,7 +704,7 @@ export default class PluginAddon extends SceneController {
         this.targets.moveTarget.copy(_a3);
 
         // 1 = low speed, 0 = high speed
-        const speedFactor = 1 - (clamp(movement.speed, 0, 10) / 10);
+        const speedFactor = 1 - clamp(movement.speed, 0, 10) / 10;
 
         // 1 = far distance, 0 = close distance
         const d = clamp(_a3.distanceTo(_c3), 1, 10) / 10;
@@ -711,7 +713,8 @@ export default class PluginAddon extends SceneController {
         this.targets.lookAtMoveTarget(d2 / this.openBW.gameSpeed, "smooth");
         // if we are moving quickly, add to main camera so we dont jump cut mid move
         // temper it by tension, higher tension means we don't delay fatigue as much
-        this.gridCameraFatigue += (easeIn(d, 3) * 2000 * (1- this.#tensionI)) / this.openBW.gameSpeed; 
+        this.gridCameraFatigue +=
+          (easeIn(d, 3) * 2000 * (1 - this.#tensionI)) / this.openBW.gameSpeed;
 
         // debug only
         this.#targetObject.position.copy(cl);
@@ -724,8 +727,9 @@ export default class PluginAddon extends SceneController {
         const lowSpeedBoost = speedFactor * 400;
 
         this.trackingCameraFatigue =
-          (300 / this.openBW.gameSpeed +
-          this.targets.moveTarget.distanceTo(_c3) * 20 + lowSpeedBoost) 
+          300 / this.openBW.gameSpeed +
+          this.targets.moveTarget.distanceTo(_c3) * 20 +
+          lowSpeedBoost;
       }
     }
 
