@@ -109,10 +109,8 @@ export const isTownCenter = (unit: Unit) => {
 
 export interface AO_Unit extends Unit {
   extras: Unit["extras"] & {
-    autoObserver: {
-      score: number;
-      timeOnStrategyQueueMS: number;
-    };
+    ao_score: number;
+    ao_timeOnStrategyQueueMS: number;
   }
 }
 

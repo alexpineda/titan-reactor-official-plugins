@@ -45,7 +45,7 @@ export const getUnitsNearCluster = (plugin: PluginAddon, units: AO_Unit[], clust
 }
 
 export const unitScoreReducer = (acc: number, unit: AO_Unit) => {
-    return acc + unit.extras.autoObserver.score;
+    return acc + unit.extras.ao_score;
 };
 
 export const getScoreUnitsNearCluster = (plugin: PluginAddon, units: AO_Unit[], cluster: THREE.Vector3, radius: number) => {

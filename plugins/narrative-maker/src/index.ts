@@ -67,7 +67,7 @@ const unitOfInterest = (unit: Unit) =>
 const lowHealthUnitScoreReducer = (acc: number, unit: AO_Unit) => {
   // low health boosts score
   return (
-    acc + unit.extras.autoObserver.score + (1 - unit.hp / unit.extras.dat.hp)
+    acc + unit.extras.ao_score + (1 - unit.hp / unit.extras.dat.hp)
   );
 };
 
@@ -178,14 +178,13 @@ export default class PluginAddon extends SceneController {
 
     this.events.on("unit-created", (unit) => {
       // reset metadata
-      (unit as AO_Unit).extras.autoObserver = {
-        score: 0,
-        timeOnStrategyQueueMS: 0,
-      };
+      (unit as AO_Unit).extras.ao_score = 0;
+      (unit as AO_Unit).extras.ao_timeOnStrategyQueueMS = 0;
+      
 
       if (unitOfInterest(unit) && unit.extras.dat.isBuilding) {
         this.strategyQueue.push(unit as AO_Unit);
-        (unit as AO_Unit).extras.autoObserver.timeOnStrategyQueueMS =
+        (unit as AO_Unit).extras.ao_timeOnStrategyQueueMS =
           this.elapsed;
       }
     });
@@ -324,7 +323,7 @@ export default class PluginAddon extends SceneController {
         for (const unit of q.value) {
           if (unit.extras.dat.isBuilding) {
             this.strategyQueue.push(unit as AO_Unit);
-            (unit as AO_Unit).extras.autoObserver.timeOnStrategyQueueMS =
+            (unit as AO_Unit).extras.ao_timeOnStrategyQueueMS =
               this.elapsed;
           }
         }
@@ -339,7 +338,7 @@ export default class PluginAddon extends SceneController {
     this.strategyQueue = this.strategyQueue.filter(
       (u) =>
         this.elapsed -
-          (u as AO_Unit).extras.autoObserver.timeOnStrategyQueueMS <
+          (u as AO_Unit).extras.ao_timeOnStrategyQueueMS <
         30_000
     );
 
@@ -387,16 +386,16 @@ export default class PluginAddon extends SceneController {
       }
 
       const biggerElapses = Math.max(
-        (a as AO_Unit).extras.autoObserver.timeOnStrategyQueueMS,
-        (b as AO_Unit).extras.autoObserver.timeOnStrategyQueueMS
+        (a as AO_Unit).extras.ao_timeOnStrategyQueueMS,
+        (b as AO_Unit).extras.ao_timeOnStrategyQueueMS
       );
       const elapsedAWeight =
         1 -
-        (a as AO_Unit).extras.autoObserver.timeOnStrategyQueueMS /
+        (a as AO_Unit).extras.ao_timeOnStrategyQueueMS /
           biggerElapses;
       const elapsedBWeight =
         1 -
-        (b as AO_Unit).extras.autoObserver.timeOnStrategyQueueMS /
+        (b as AO_Unit).extras.ao_timeOnStrategyQueueMS /
           biggerElapses;
 
       // todo:many buildings that are training (macro)
@@ -420,7 +419,7 @@ export default class PluginAddon extends SceneController {
         const unitScore = this.unitScore(unit);
         sumScore += unitScore;
 
-        (unit as AO_Unit).extras.autoObserver.score = unitScore;
+        (unit as AO_Unit).extras.ao_score = unitScore;
       }
 
       this.u8.action.set(quadrant, sumScore);
@@ -440,7 +439,7 @@ export default class PluginAddon extends SceneController {
 
     // normalize scores
     for (const quadrant of this.u8.units.grid) {
-      this.u8.action.set(quadrant, this.u8.action.get(quadrant) / maxScore);
+      this.u8.action.set(quadrant, maxScore === 0 ? 0 : this.u8.action.get(quadrant) / maxScore);
     }
   }
 
@@ -714,7 +713,7 @@ export default class PluginAddon extends SceneController {
         // if we are moving quickly, add to main camera so we dont jump cut mid move
         // temper it by tension, higher tension means we don't delay fatigue as much
         this.gridCameraFatigue +=
-          (easeIn(d, 3) * 2000 * (1 - this.#tensionI)) / this.openBW.gameSpeed;
+          (easeIn(d, 3) * 1000 * (1 - this.#tensionI)) / this.openBW.gameSpeed;
 
         // debug only
         this.#targetObject.position.copy(cl);

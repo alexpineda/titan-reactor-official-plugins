@@ -27,7 +27,7 @@ registerComponent({ screen: "@replay", snap: "right" }, () => {
     q.tensionWeight = tensionWeight;
   });
 
-  const maxScore = Math.max(...quadrants.quadrants.map((q) => q.tensionWeight));
+  const maxScore = Math.max(...quadrants.quadrants.map((q) => q.wScore));
   const colorScale = d3
     .scaleSequential(d3.interpolateRgb("purple", "blue")) // Start with blue
     .domain([0, maxScore / 2, maxScore]); // Adjust the domain as needed
