@@ -1,7 +1,7 @@
 {
     "name": "@titan-reactor-plugins/camera-standard",
     "version": "2.0.5",
-    "description": "Default Camera Controller",
+    "description": "Standard Camera Controller",
     "author": "DM",
     "keywords": [
         "titan-reactor-plugin"
