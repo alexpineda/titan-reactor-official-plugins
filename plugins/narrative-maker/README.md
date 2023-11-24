@@ -1,10 +1,12 @@
  This plugin automatically tracks and displays key moments in your games! It focuses on important engagements, expansions, and strategic moves, ensuring viewers catch all critical actions without manual input. Suitable for streaming and replay analysis.
 
- ## Instructions
+ ### Controls
 
- You can click on the minute map to help guide the observer, right click the minimap for PIP, or just sit back and enjoy the show!
+- Click the minimap to guide the observer
+- Right click the minimap for PIP
+- Mouse wheel to move the camera further or closer away
 
- ## Options
+ ### Options
 
  - Default Polar
    - The higher the value, the more the camera lowers to the unit height
@@ -18,6 +20,8 @@
    - How much the polar angle is allowed to vary over time
  - PIP Size
    - The size of the PIP
+ -  Min Replay Speed
+   - How slow the replay is allowed to play. Default is 1.
  - Max Replay Speed
    - How fast the replay is allowed to be sped up. Set to 1 to disable.
  - Auto Select Units Taking Damage

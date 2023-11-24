@@ -15,7 +15,7 @@ export default class PluginAddon extends VRSceneController {
   viewerHeight = 10;
 
   async onEnterScene(prevData) {
-    console.log("VR CONTROLLER")
+    console.log("VR CONTROLLER");
     this.viewport.fullScreen();
 
     this.viewport.camera.far = DEFAULT_FAR;
@@ -60,11 +60,13 @@ export default class PluginAddon extends VRSceneController {
 
     // this.controller1.addEventListener("selectstart", onSelectStart);
     // this.controller1.addEventListener("selectend", onSelectEnd);
-    this.controller1.addEventListener("connected", function ({data} : {data: XRInputSource}) {
-    
-      console.log("connected1", event);
-      // this.add(buildController(event.data));1
-    });
+    this.controller1.addEventListener(
+      "connected",
+      function ({ data }: { data: XRInputSource }) {
+        console.log("connected1", event);
+        // this.add(buildController(event.data));1
+      }
+    );
     this.controller1.addEventListener("disconnected", function () {
       // this.remove(this.children[0]);
     });
@@ -124,30 +126,44 @@ export default class PluginAddon extends VRSceneController {
   }
 
   onExitScene(currentData: any) {
-      return {
-        target: _a.set(this.lastWorldPosition.x, 0, this.lastWorldPosition.z),
-        position: this.lastWorldPosition.clone()
-      }
+    return {
+      target: _a.set(this.viewerPosition.x, 0, this.viewerPosition.z),
+      position: this.viewerPosition.clone(),
+    };
   }
 
   onConfigChanged(oldConfig: any) {}
 
-  onCameraKeyboardUpdate(delta, elapsed, move) {
-  }
+  override onTick(delta: number) {
 
-  _groundTarget(viewport: GameViewPort, t) {
-    return viewport.orbit.getTarget(t).setY(0);
-  }
+    const input1 = this.config.swapControllers ? this.input2 : this.input1;
+    const input2 = this.config.swapControllers ? this.input1 : this.input2;
 
-  _areProximate(a: THREE.Vector3, b: GameViewPort) {
-    return a.distanceTo(b) < PIP_PROXIMITY;
-  }
+    if (input1 && input1.gamepad) {
+      // oculus joystick input
+      // [0,0,horizon,vertical]
+      //   -1
+      // -1   1
+      //    1
+      const axes = input1!.gamepad!.axes;
+      _a.set(0, axes[this.config.upDownID] * delta * this.config.sensitivity, 0);
+      this.moveLocal(_a);
+    }
 
-  _areProximateViewports(a: GameViewPort, b: GameViewPort) {
-    return this._areProximate(
-      this._groundTarget(a, _a),
-      this._groundTarget(b, _b)
-    );
+    if (input2 && input2.gamepad) {
+      // oculus joystick input
+      // [0,0,horizon,vertical]
+      //   -1
+      // -1   1
+      //    1
+      const axes = input2!.gamepad!.axes;
+      _a.set(
+        axes[this.config.leftRightID] * delta * this.config.sensitivity,
+        0,
+        axes[this.config.forwardBackID] * delta * this.config.sensitivity
+      );
+      this.moveLocal(_a);
+    }
   }
 
   onMinimapDragUpdate(pos, isDragStart, mouseButton) {
@@ -156,13 +172,5 @@ export default class PluginAddon extends VRSceneController {
     }
   }
 
-  onFrame() {
-    if (this.followedUnits.size) {
-      const pos = this.getFollowedUnitsCenterPosition();
-
-      if (pos) {
-        this.moveWorld(pos.setY(this.viewerHeight));
-      }
-    }
-  }
+  onFrame() {}
 }
