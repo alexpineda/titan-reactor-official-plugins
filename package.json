@@ -21,6 +21,7 @@
     "three-janitor": "^1.0.4"
   },
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "titan-plugin-cli": "^1.1.2"
   }
 }

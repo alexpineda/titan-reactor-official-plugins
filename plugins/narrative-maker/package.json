@@ -106,6 +106,7 @@
     "gitHead": "b992cdb09b9879cd18032ba77c39898d41e8fdb5",
     "devDependencies": {
         "@types/three": "^0.158.2",
+        "titan-plugin-cli": "^1.1.2",
         "typescript": "^5.2.2"
     },
     "dependencies": {
