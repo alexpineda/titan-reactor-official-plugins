@@ -42,6 +42,7 @@ import {
   getUnitsNearCluster,
   unitScoreReducer,
 } from "./utils/kmeans-utils";
+import { Config0_0_1 } from "./config-0.0.1";
 
 const _a4 = new THREE.Vector4(0, 0, 0, 0);
 const _b4 = new THREE.Vector4(0, 0, 0, 0);
@@ -71,7 +72,7 @@ const lowHealthUnitScoreReducer = (acc: number, unit: AO_Unit) => {
   );
 };
 
-export default class PluginAddon extends SceneController {
+export default class PluginAddon extends SceneController<Config0_0_1> {
   viewportsCount = 2;
 
   u8!: ScoreManager;
@@ -130,6 +131,7 @@ export default class PluginAddon extends SceneController {
 
     this.activeQuadrant = undefined;
     this.targetGameSpeed = this.config.minReplaySpeed;
+
   }
 
   #maxDistance = 0;
@@ -500,13 +502,15 @@ export default class PluginAddon extends SceneController {
     const tensionQ = this.t5.tension.get(_a2); //this.u8.tension.get(quadrant) * this.config.weightsTension;
     const buildingQ = this.u8.strategy.get(quadrant);
 
-    const gameActiveQ =
+    const recentAction = (this.lastTimeGameStartedLullMS - this.lastTimeGameStartedActionMS) < 5000 ? 1 : 0;
+
+    const gameActiveQ = THREE.MathUtils.clamp(
       (1 +
         Math.sin(
           (this.lastTimeGameStartedActionMS - this.lastTimeGameStartedLullMS) /
             1000
         )) /
-      2 + (this.#tensionI - 0.1);
+      2 + (this.#tensionI - 0.1) + recentAction, 0, 1) 
 
     // trying adhd against unit score only rn
     const weightedScore =

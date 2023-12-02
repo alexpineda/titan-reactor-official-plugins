@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node ./node_modules/titan-plugin-cli/dist/index.js ./plugins ./dist",
+    "build": "titan-plugin-cli --plugins ./plugins ./dist",
     "serve": "http-server .\\dist -a localhost -p 8091 --cors"
   },
   "author": "Alex Pineda <alexpineda@fastmail.com>",
@@ -22,6 +22,6 @@
   },
   "devDependencies": {
     "http-server": "^14.1.1",
-    "titan-plugin-cli": "^1.0.0"
+    "titan-plugin-cli": "^1.1.2"
   }
 }
