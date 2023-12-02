@@ -13,9 +13,10 @@
     "config": {
         "sensitivity": {
             "label": "Input Sensitivity",
-            "value": 20,
-            "min": 1,
-            "max": 25
+            "value": 0.01,
+            "min": 0.01,
+            "max": 2,
+            "step": 0.01
         },
         "defaultDistance": {
             "label": "Default Distance",
@@ -24,21 +25,21 @@
             "max": 80,
             "step": 1
         },
-        "dollyAmount": {
-            "label": "Dolly",
-            "folder": "Middle Mouse Scroll",
-            "value": 12,
-            "min": 1,
-            "max": 30,
-            "step": 1
+        "swapControllers": {
+            "label": "Swap Controllers",
+            "value": false
         },
-        "rotateAmount": {
-            "label": "Rotate",
-            "folder": "Middle Mouse Scroll",
-            "value": 1,
-            "min": 0,
-            "max": 2,
-            "step": 0.1
+        "upDownID": {
+            "label": "Up Down GamePad Axis",
+            "value": 3
+        },
+        "leftRightID": {
+            "label": "Left Right GamePad Axis",
+            "value": 2
+        },
+        "forwardBackID": {
+            "label": "Forward Backward GamePad Axis",
+            "value": 3
         }
     },
     "devDependencies": {

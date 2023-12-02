@@ -3,6 +3,7 @@
     "version": "2.0.3",
     "description": "Recently Dead Units",
     "author": "Dark Matter",
+    "deprecated": true,
     "keywords": [
         "titan-reactor-plugin",
         "deprecated"

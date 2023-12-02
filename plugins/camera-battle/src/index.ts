@@ -1,12 +1,15 @@
 
 
 import { GameViewPort } from "@titan-reactor-runtime/host";
+import { controlScheme1 } from "./control-scheme-1";
+import { controlScheme2 } from "./control-scheme-2";
+import { Config2_1_0 } from "./types/config-2.1.0";
 
 const BATTLE_FAR = 128;
 
-const deltaYP = new THREE.Vector3();
+export default class PluginAddon extends SceneController<Config2_1_0> {
 
-export default class PluginAddon extends SceneController {
+    #controlScheme: ReturnType<typeof controlScheme1>;
   
     async onEnterScene(prevData) {
 
@@ -45,9 +48,10 @@ export default class PluginAddon extends SceneController {
 
         this.viewport.rotateSprites = true;
 
-        this.surface.togglePointerLock(true);
+        this.surface!.togglePointerLock(true);
 
         this.viewport.audioType = "3d";
+        this.#controlScheme = this.config.controlScheme === "mouse" ? controlScheme1(this) : controlScheme2(this);
 
         this.settings.input.unitSelection.set(false);
         this.settings.input.cursorVisible.set(false);
@@ -55,6 +59,11 @@ export default class PluginAddon extends SceneController {
     }
 
     onConfigChanged(oldConfig) {
+
+        if (this.config.fov !== oldConfig.fov) {
+            this.viewport.camera.fov = this.config.fov;
+            this.viewport.camera.updateProjectionMatrix();
+        }
 
         if (this.config.defaultDistance !== oldConfig.defaultDistance) {
             this.viewport.orbit.dollyTo(this.config.defaultDistance, true);
@@ -68,6 +77,9 @@ export default class PluginAddon extends SceneController {
             this.viewport.orbit.rotatePolarTo((this.config.rotatePolarStart - 1) * (Math.PI / 4), true);
         }
 
+        if (this.config.controlScheme !== oldConfig.controlScheme) {
+         this.#controlScheme = this.config.controlScheme === "mouse" ? controlScheme1(this) : controlScheme2(this);
+        }
     }
 
     onExitScene({ target, position }) {
@@ -84,37 +96,12 @@ export default class PluginAddon extends SceneController {
 
     onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked) {
 
-        const _delta = delta * this.config.sensitivity;
+        this.#controlScheme.onCameraMouseUpdate(delta, elapsed, scrollY, screenDrag, lookAt, mouse, clientX, clientY, clicked);
+    }
 
-        if (clicked) {
-            if (this.surface.isPointerLockLost()) {
-                this.surface.togglePointerLock(true);
-            }
-        }
+    onCameraKeyboardUpdate(delta, elapsed, move) {
 
-        if (mouse.z === 0) {
-            this.viewport.orbit.rotate(-lookAt.x * _delta * this.settings.input.rotateSpeed(), -lookAt.y * _delta * this.settings.input.rotateSpeed(), true);
-        }
-
-
-        if (lookAt.x !== 0 && mouse.z === -1) {
-            this.viewport.orbit.truck(lookAt.x * _delta * this.settings.input.movementSpeed(), 0, true);
-        }
-
-        if (lookAt.y !== 0 && mouse.z === -1) {
-            this.viewport.orbit.forward(-lookAt.y * _delta * this.settings.input.movementSpeed(), true);
-        }
-
-        // elevate the y position if mouse scroll is used
-        if (scrollY) {
-            this.viewport.orbit.getPosition(deltaYP);
-
-            if (scrollY < 0) {
-                this.viewport.orbit.setPosition(deltaYP.x, deltaYP.y - this.config.elevateAmount, deltaYP.z, true);
-            } else {
-                this.viewport.orbit.setPosition(deltaYP.x, deltaYP.y + this.config.elevateAmount, deltaYP.z, true);
-            }
-        }
+        this.#controlScheme.onCameraKeyboardUpdate(delta, elapsed, move);
     }
 
     _groundTarget(viewport: GameViewPort, t: THREE.Vector3) {
@@ -127,21 +114,7 @@ export default class PluginAddon extends SceneController {
 
     }
 
-    onCameraKeyboardUpdate(delta, elapsed, move) {
-
-        const _delta = delta * this.config.sensitivity;
-
-        this.viewport.orbit.dollyToCursor = this.config.controlMode === "fps";
-
-        if (move.x !== 0) {
-            this.viewport.orbit.truck(move.x * _delta * this.settings.input.movementSpeed(), 0, true);
-        }
-
-        if (move.y !== 0) {
-            this.viewport.orbit.forward(move.y * _delta * this.settings.input.movementSpeed(), true);
-        }
-
-    }
+    
 
     onFrame() {
 

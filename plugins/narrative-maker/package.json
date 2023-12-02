@@ -1,13 +1,13 @@
 {
     "name": "@titan-reactor-plugins/auto-observer",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Auto-Observe Camera Controller",
     "author": "Dark Matter",
     "keywords": [
         "titan-reactor-plugin"
     ],
     "peerDependencies": {
-        "@titan-reactor-runtime/host": "^2.0.0"
+        "@titan-reactor-runtime/host": "^2.2.1"
     },
     "config": {
         "_visible": {
